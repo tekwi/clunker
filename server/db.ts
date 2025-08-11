@@ -8,7 +8,7 @@ const dbConfig = {
   port: parseInt(process.env.MYSQL_PORT || '3306'),
   user: process.env.MYSQL_USER || 'car_user',
   password: process.env.MYSQL_PASSWORD || 'password123',
-  database: process.env.MYSQL_DATABASE || 'car_cash_offers',
+  database: process.env.DB_NAME || process.env.MYSQL_DATABASE || 'clunker',
   charset: 'utf8mb4',
 };
 
