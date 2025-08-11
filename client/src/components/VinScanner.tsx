@@ -11,17 +11,19 @@ interface VinScannerProps {
 }
 
 export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
-  const [isScanning, setIsScanning] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manualVin, setManualVin] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const captureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const startCamera = async () => {
+  const startCameraAndCapture = async () => {
     try {
       setError(null);
-      setIsScanning(true);
+      setIsInitializing(true);
 
       // Request camera access with specific constraints for mobile
       const constraints = {
@@ -37,12 +39,21 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
+        
+        // Wait for video to be ready and start automatic capture
+        setIsInitializing(false);
+        
+        // Auto-capture after 3 seconds to allow user to position the VIN
+        captureTimeoutRef.current = setTimeout(() => {
+          captureAndAnalyze();
+        }, 3000);
       }
     } catch (err) {
       console.error('Camera error:', err);
       setError('Unable to access camera. Please enter VIN manually.');
-      setIsScanning(false);
+      setIsInitializing(false);
+      setShowManualInput(true);
     }
   };
 
@@ -51,7 +62,12 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    setIsScanning(false);
+    if (captureTimeoutRef.current) {
+      clearTimeout(captureTimeoutRef.current);
+      captureTimeoutRef.current = null;
+    }
+    setIsInitializing(false);
+    setIsAnalyzing(false);
   };
 
   const handleManualSubmit = () => {
@@ -109,6 +125,9 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
   };
 
   useEffect(() => {
+    // Auto-start camera when component mounts
+    startCameraAndCapture();
+    
     return () => {
       stopCamera();
     };
@@ -118,7 +137,7 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
     <Card className="w-full max-w-md mx-auto">
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Scan VIN</h3>
+          <h3 className="text-lg font-semibold">VIN Scanner</h3>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -130,34 +149,29 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
           </div>
         )}
 
-        {!isScanning ? (
+        {showManualInput ? (
           <div className="space-y-4">
-            <Button onClick={startCamera} className="w-full">
-              <Camera className="h-4 w-4 mr-2" />
-              Start Camera
-            </Button>
-            
-            <div className="text-center text-sm text-gray-500">or</div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Enter VIN manually:</label>
-              <input
-                type="text"
-                value={manualVin}
-                onChange={(e) => setManualVin(e.target.value.toUpperCase())}
-                placeholder="Enter 17-character VIN"
-                className="w-full p-2 border rounded-md"
-                maxLength={17}
-              />
-              <Button 
-                onClick={handleManualSubmit} 
-                disabled={manualVin.length < 17}
-                className="w-full"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Use VIN
-              </Button>
+            <div className="text-center text-sm text-gray-600 mb-4">
+              Camera not available. Please enter VIN manually:
             </div>
+            <input
+              type="text"
+              value={manualVin}
+              onChange={(e) => setManualVin(e.target.value.toUpperCase())}
+              placeholder="Enter 17-character VIN"
+              className="w-full p-3 border rounded-md text-center font-mono"
+              maxLength={17}
+              data-testid="input-manual-vin"
+            />
+            <Button 
+              onClick={handleManualSubmit} 
+              disabled={manualVin.length !== 17}
+              className="w-full"
+              data-testid="button-submit-manual-vin"
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Use This VIN
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -168,32 +182,58 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
                 autoPlay
                 playsInline
                 muted
+                data-testid="video-vin-scanner"
               />
-              <div className="absolute inset-0 border-2 border-white border-dashed m-4 rounded-md opacity-50"></div>
+              <div className="absolute inset-0 border-2 border-white border-dashed m-4 rounded-md opacity-70"></div>
+              <div className="absolute top-2 left-2 right-2 bg-black bg-opacity-50 text-white text-sm p-2 rounded">
+                Position VIN within the frame
+              </div>
+              {isAnalyzing && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                  <div className="bg-white rounded-lg p-4 flex items-center space-x-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <span className="text-sm font-medium">Scanning VIN...</span>
+                  </div>
+                </div>
+              )}
             </div>
             
-            <div className="text-center text-sm text-gray-600">
-              Position the VIN number within the frame
-            </div>
+            {isInitializing ? (
+              <div className="text-center text-sm text-gray-600 flex items-center justify-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Initializing camera...</span>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-gray-600">
+                Auto-scan will start in 3 seconds...
+              </div>
+            )}
             
             <div className="flex gap-2">
-              <Button onClick={stopCamera} variant="outline" className="flex-1" disabled={isAnalyzing}>
-                Stop Camera
+              <Button 
+                onClick={() => setShowManualInput(true)} 
+                variant="outline" 
+                className="flex-1"
+                disabled={isAnalyzing}
+                data-testid="button-manual-entry"
+              >
+                Enter Manually
               </Button>
               <Button 
                 onClick={captureAndAnalyze} 
                 className="flex-1"
-                disabled={!videoRef.current || isAnalyzing}
+                disabled={isInitializing || isAnalyzing}
+                data-testid="button-scan-now"
               >
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
+                    Scanning...
                   </>
                 ) : (
                   <>
                     <Camera className="h-4 w-4 mr-2" />
-                    Scan VIN
+                    Scan Now
                   </>
                 )}
               </Button>
