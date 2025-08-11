@@ -137,11 +137,8 @@ export default function Home() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: SubmissionForm & { photos: string[] }) => {
-      return apiRequest("/api/submissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/submissions", data);
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
@@ -149,7 +146,7 @@ export default function Home() {
         title: "Submission successful!",
         description: "Your vehicle information has been submitted.",
       });
-      setLocation(`/submission/${data.id}`);
+      setLocation(`/view/${data.submissionId}`);
     },
     onError: (error: any) => {
       toast({

@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Camera, X, Check } from 'lucide-react';
+import { Camera, X, Check, Loader2 } from 'lucide-react';
+import { createWorker } from 'tesseract.js';
 
 interface VinScannerProps {
   onVinDetected: (vin: string) => void;
@@ -11,6 +12,7 @@ interface VinScannerProps {
 
 export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manualVin, setManualVin] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -56,6 +58,53 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
     if (manualVin.trim().length >= 17) {
       onVinDetected(manualVin.trim().toUpperCase());
       onClose();
+    }
+  };
+
+  const captureAndAnalyze = async () => {
+    if (!videoRef.current) return;
+
+    try {
+      setIsAnalyzing(true);
+      setError(null);
+
+      // Create canvas to capture current frame
+      const canvas = document.createElement('canvas');
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.drawImage(video, 0, 0);
+      
+      // Create Tesseract worker for OCR
+      const worker = await createWorker('eng');
+      
+      // Perform OCR on the captured image
+      const { data: { text } } = await worker.recognize(canvas);
+      
+      // Clean up worker
+      await worker.terminate();
+      
+      // Extract VIN from detected text
+      // VIN is 17 characters, alphanumeric, excluding I, O, Q
+      const vinRegex = /[A-HJ-NPR-Z0-9]{17}/g;
+      const matches = text.match(vinRegex);
+      
+      if (matches && matches.length > 0) {
+        const detectedVin = matches[0].toUpperCase();
+        onVinDetected(detectedVin);
+        onClose();
+      } else {
+        setError('Could not detect VIN from image. Please try again or enter manually.');
+      }
+    } catch (err) {
+      console.error('VIN analysis error:', err);
+      setError('Failed to analyze image. Please try again or enter manually.');
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -128,19 +177,25 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={stopCamera} variant="outline" className="flex-1">
+              <Button onClick={stopCamera} variant="outline" className="flex-1" disabled={isAnalyzing}>
                 Stop Camera
               </Button>
               <Button 
-                onClick={() => {
-                  // Simulate VIN detection for now
-                  const demoVin = '1HGBH41JXMN109186';
-                  onVinDetected(demoVin);
-                  onClose();
-                }} 
+                onClick={captureAndAnalyze} 
                 className="flex-1"
+                disabled={!videoRef.current || isAnalyzing}
               >
-                Manual Capture
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4 mr-2" />
+                    Scan VIN
+                  </>
+                )}
               </Button>
             </div>
           </div>
