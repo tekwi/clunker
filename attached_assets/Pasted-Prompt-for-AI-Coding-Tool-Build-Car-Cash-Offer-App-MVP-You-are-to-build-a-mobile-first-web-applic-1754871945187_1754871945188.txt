@@ -1,0 +1,203 @@
+Prompt for AI Coding Tool — Build Car Cash Offer App MVP
+
+You are to build a mobile-first web application using the following stack:
+
+Frontend: React (mobile-first responsive design)
+
+Backend: Node.js with Express.js
+
+Database: MySQL (hosted on AWS RDS)
+
+File Storage: AWS S3 (for uploaded pictures)
+
+Hosting: AWS Amplify (frontend) + AWS EC2 or Elastic Beanstalk (backend)
+
+Email/Notification: External API (I will provide API endpoint details — use placeholders for now)
+
+The app allows users to submit unwanted cars for cash offers. It should support both mobile browsers (primary) and desktop browsers (secondary).
+
+App Functional Requirements
+1. User Submission Form
+Fields:
+
+VIN number (allow manual entry or scan via mobile camera barcode/QR scanner).
+
+Owner’s full name.
+
+Contact email (to send the unique link).
+
+Title condition (dropdown: Clean, Salvage, Rebuilt, Missing, Other).
+
+Vehicle condition (optional text or dropdown).
+
+Location of car:
+
+Primary method: Use HTML5 Geolocation API to capture GPS coordinates.
+
+Fallback: Manual address entry (street, city, state, ZIP).
+
+Pictures (multiple file uploads from mobile camera or gallery).
+
+Behavior:
+
+Mobile-first layout, touch-friendly.
+
+Preview pictures with option to remove/reorder before submission.
+
+Auto-fetch GPS location if allowed; otherwise prompt for manual location.
+
+Validate required fields: VIN, name, email, title condition, location, and at least 1 picture.
+
+On submission:
+
+Request pre-signed S3 URLs from backend for each picture.
+
+Upload pictures directly to S3 from the browser.
+
+Submit form data and uploaded S3 file URLs to backend.
+
+Backend generates a UUID-based unique link for this submission.
+
+Backend calls external email API to send the link to the customer.
+
+2. Unique Vehicle Submission Page
+Accessible via /view/:submissionId.
+
+Displays:
+
+VIN, owner’s name, title condition, vehicle condition.
+
+Location on a small map (Google Maps API or Leaflet/OpenStreetMap).
+
+All uploaded pictures.
+
+Two modes:
+
+Customer view: Read-only.
+
+Admin view: Has an input to enter an offer price and optional notes.
+
+3. Admin Offer Entry
+Admin opens unique link in admin mode (via query param or separate login).
+
+Can enter:
+
+Offer price (currency formatted).
+
+Optional notes.
+
+On submission:
+
+Save offer price to MySQL (linked to submission ID).
+
+Trigger API call to notify customer of the offer.
+
+Update customer view to display the offer.
+
+Backend Requirements (Node.js + Express.js)
+Endpoints
+POST /api/submit
+
+Input: vehicle info, owner info, location, picture file names.
+
+Output: submissionId and pre-signed S3 URLs.
+
+Actions: Save submission record, generate UUID, return pre-signed URLs, send email via API.
+
+GET /api/view/:submissionId
+
+Fetch all submission details (vehicle info, pictures, offer if available).
+
+POST /api/offer/:submissionId
+
+Input: offer price, notes.
+
+Action: Save to DB, trigger offer notification API.
+
+GET /api/presign
+
+Input: file name array.
+
+Output: array of pre-signed S3 upload URLs.
+
+Database Schema (MySQL on AWS RDS)
+Table: submissions
+
+pgsql
+Copy
+Edit
+id CHAR(36) PRIMARY KEY,
+vin VARCHAR(17) NOT NULL,
+owner_name VARCHAR(100) NOT NULL,
+email VARCHAR(150) NOT NULL,
+title_condition ENUM('Clean','Salvage','Rebuilt','Missing','Other') NOT NULL,
+vehicle_condition TEXT,
+latitude DECIMAL(10,8),
+longitude DECIMAL(11,8),
+address VARCHAR(255),
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+Table: pictures
+
+pgsql
+Copy
+Edit
+id INT AUTO_INCREMENT PRIMARY KEY,
+submission_id CHAR(36) NOT NULL,
+url TEXT NOT NULL,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+Table: offers
+
+pgsql
+Copy
+Edit
+id INT AUTO_INCREMENT PRIMARY KEY,
+submission_id CHAR(36) NOT NULL,
+offer_price DECIMAL(10,2) NOT NULL,
+notes TEXT,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+AWS S3 Setup
+Use private bucket with CORS enabled.
+
+Generate pre-signed URLs from backend for direct browser uploads.
+
+Store file URLs in MySQL.
+
+Frontend Requirements (React)
+Pages:
+Submission Form
+
+Auto-fetch location → reverse geocode to address (optional display).
+
+VIN input with scanner option.
+
+Picture upload (multiple, preview before upload).
+
+Submit button → triggers backend API.
+
+View Submission
+
+Display submission details + pictures.
+
+If in admin mode: show offer input form.
+
+AI Coding Tool Instructions
+Scaffold React + Node project.
+
+Configure MySQL connection pool.
+
+Create API routes and models for submissions, pictures, offers.
+
+Implement AWS SDK integration for S3 pre-signed URLs.
+
+Create React components for:
+
+Mobile-friendly form with geolocation and picture upload.
+
+Submission view with admin/customer modes.
+
+Ensure all API calls return JSON.
+
+Include .env for DB credentials, AWS keys, and API URLs.
+
+Add basic error handling and validation on both frontend and backend.
