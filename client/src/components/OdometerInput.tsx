@@ -1,8 +1,8 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 interface OdometerInputProps {
@@ -54,61 +54,6 @@ export function OdometerInput({ value, onChange, placeholder = "Enter mileage", 
     setDetectedText([]);
   };
 
-  const captureAndProcess = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    setIsProcessing(true);
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) return;
-
-    // Set canvas size to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    // Draw current video frame to canvas
-    ctx.drawImage(video, 0, 0);
-
-    // Convert canvas to blob
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-
-      try {
-        // Create FormData for the image
-        const formData = new FormData();
-        formData.append('image', blob, 'odometer.jpg');
-
-        // Simple OCR simulation - in production, you'd send this to an OCR API
-        // For now, we'll extract potential numbers from a mock response
-        const mockOcrResponse = await simulateOCR(blob);
-        setDetectedText(mockOcrResponse);
-        
-        if (mockOcrResponse.length > 0) {
-          toast({
-            title: "Text Detected",
-            description: `Found ${mockOcrResponse.length} potential readings. Select the correct one.`,
-          });
-        } else {
-          toast({
-            title: "No Numbers Detected",
-            description: "Try repositioning the camera to get a clearer view of the odometer.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Processing Failed",
-          description: "Unable to process the image. Please try again or enter manually.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-    }, 'image/jpeg', 0.8);
-  };
-
   // Mock OCR function - in production, replace with actual OCR API call
   const simulateOCR = async (blob: Blob): Promise<string[]> => {
     // Simulate API delay
@@ -155,6 +100,57 @@ export function OdometerInput({ value, onChange, placeholder = "Enter mileage", 
   const handleManualInput = (inputValue: string) => {
     const formatted = formatOdometerValue(inputValue);
     onChange(formatted);
+  };
+
+  const captureAndProcess = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    setIsProcessing(true);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      setIsProcessing(false);
+      return;
+    }
+
+    // Set canvas size to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw current video frame to canvas
+    ctx.drawImage(video, 0, 0);
+
+    // Convert canvas to blob
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setIsProcessing(false);
+        return;
+      }
+
+      try {
+        // Simulate OCR processing
+        const detectedNumbers = await simulateOCR(blob);
+        setDetectedText(detectedNumbers);
+        setIsProcessing(false);
+
+        if (detectedNumbers.length === 0) {
+          toast({
+            title: "No Numbers Detected",
+            description: "Unable to detect odometer reading. Please try again or enter manually.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        setIsProcessing(false);
+        toast({
+          title: "Processing Failed",
+          description: "Failed to process image. Please try again or enter manually.",
+          variant: "destructive",
+        });
+      }
+    }, 'image/jpeg', 0.8);
   };
 
   return (
@@ -237,44 +233,34 @@ export function OdometerInput({ value, onChange, placeholder = "Enter mileage", 
             {/* Detected Text Options */}
             {detectedText.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Detected readings - tap to select:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {detectedText.map((text, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                      onClick={() => selectDetectedText(text)}
-                      data-testid={`badge-detected-${index}`}
-                    >
-                      {text}
-                    </Badge>
-                  ))}
-                </div>
+                <p className="text-sm font-medium">Select detected reading:</p>
+                {detectedText.map((text, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    onClick={() => selectDetectedText(text)}
+                    className="w-full justify-start"
+                  >
+                    {text}
+                  </Button>
+                ))}
               </div>
             )}
 
-            {/* Instructions */}
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <div className="flex items-start">
-                <i className="fas fa-info-circle text-blue-500 mt-0.5 mr-2 text-sm"></i>
-                <div className="text-sm text-blue-700 dark:text-blue-300">
-                  <p className="font-medium mb-1">Tips for best results:</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>Ensure good lighting</li>
-                    <li>Keep camera steady</li>
-                    <li>Get close to the odometer</li>
-                    <li>Make sure numbers are clearly visible</li>
-                  </ul>
-                </div>
-              </div>
+            {/* Manual Entry Option */}
+            <div className="pt-4 border-t">
+              <Button
+                variant="ghost"
+                onClick={stopCamera}
+                className="w-full"
+              >
+                Enter Manually Instead
+              </Button>
             </div>
           </div>
 
           {/* Hidden canvas for image processing */}
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
+          <canvas ref={canvasRef} className="hidden" />
         </DialogContent>
       </Dialog>
     </div>

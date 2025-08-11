@@ -258,6 +258,13 @@ export default function Home() {
                               type="button"
                               variant="ghost"
                               size="sm"
+                              onClick={() => {
+                                // For now, show a toast indicating VIN scanning is coming soon
+                                toast({
+                                  title: "VIN Scanner",
+                                  description: "VIN scanning feature coming soon! Please enter VIN manually.",
+                                });
+                              }}
                               className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 h-8 w-8 p-0"
                               data-testid="button-camera-scan"
                             >
