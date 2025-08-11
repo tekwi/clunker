@@ -65,57 +65,73 @@ export default function Home() {
 
   const detectLocation = async () => {
     setIsDetectingLocation(true);
+    
     try {
-      if ("geolocation" in navigator) {
+      if (!("geolocation" in navigator)) {
+        throw new Error("Geolocation is not supported by this browser");
+      }
+
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            form.setValue("latitude", latitude.toString());
-            form.setValue("longitude", longitude.toString());
-            
-            // Reverse geocoding to get address
-            try {
-              const response = await fetch(
-                `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=demo_key`
-              );
-              const data = await response.json();
-              if (data.results && data.results[0]) {
-                const components = data.results[0].components;
-                form.setValue("address", data.results[0].formatted || "");
-                form.setValue("street", `${components.house_number || ""} ${components.road || ""}`.trim());
-                form.setValue("city", components.city || components.town || "");
-                form.setValue("state", components.state || "");
-                form.setValue("zip", components.postcode || "");
-              }
-            } catch (error) {
-              console.log("Reverse geocoding failed:", error);
-            }
-            
-            setLocationDetected(true);
-            setIsDetectingLocation(false);
-            toast({
-              title: "Location detected",
-              description: "Your location has been automatically filled in.",
-            });
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-            setIsDetectingLocation(false);
-            toast({
-              title: "Location access denied",
-              description: "Please enter your location manually.",
-              variant: "destructive",
-            });
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
           }
         );
+      });
+
+      const { latitude, longitude } = position.coords;
+      form.setValue("latitude", latitude.toString());
+      form.setValue("longitude", longitude.toString());
+      
+      // Try reverse geocoding with a fallback
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const address = data.address || {};
+          
+          form.setValue("address", data.display_name || "");
+          form.setValue("street", `${address.house_number || ""} ${address.road || ""}`.trim());
+          form.setValue("city", address.city || address.town || address.village || "");
+          form.setValue("state", address.state || "");
+          form.setValue("zip", address.postcode || "");
+        }
+      } catch (geocodeError) {
+        console.log("Reverse geocoding failed, but location coordinates were set:", geocodeError);
       }
-    } catch (error) {
-      setIsDetectingLocation(false);
+      
+      setLocationDetected(true);
+      toast({
+        title: "Location detected",
+        description: "Your location has been automatically detected.",
+      });
+      
+    } catch (error: any) {
+      console.error("Geolocation error:", error);
+      let message = "Please enter your location manually.";
+      
+      if (error.code === 1) {
+        message = "Location access was denied. Please enable location services and try again.";
+      } else if (error.code === 2) {
+        message = "Location unavailable. Please enter your location manually.";
+      } else if (error.code === 3) {
+        message = "Location request timed out. Please try again or enter manually.";
+      }
+      
       toast({
         title: "Location detection failed",
-        description: "Please enter your location manually.",
+        description: message,
         variant: "destructive",
       });
+    } finally {
+      setIsDetectingLocation(false);
     }
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +8,7 @@ interface ObjectUploaderProps {
   photos: string[];
 }
 
-export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) {
+export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,7 +31,7 @@ export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) 
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -56,18 +55,18 @@ export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) 
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
+
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(video, 0, 0);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        
+
         const newPhotos = [...photos, dataUrl];
         onPhotosChange(newPhotos);
-        
+
         stopCamera();
       }
     }
@@ -75,7 +74,7 @@ export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) 
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    
+
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -114,7 +113,7 @@ export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) 
                 muted
               />
             </div>
-            
+
             <div className="flex gap-2">
               <Button onClick={stopCamera} variant="outline" className="flex-1">
                 Cancel
@@ -125,7 +124,7 @@ export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) 
               </Button>
             </div>
           </div>
-          
+
           <canvas ref={canvasRef} className="hidden" />
         </CardContent>
       </Card>
@@ -139,9 +138,9 @@ export function ObjectUploader({ onPhotosChange, photos }: ObjectUploaderProps) 
           <Camera className="h-4 w-4 mr-2" />
           Camera
         </Button>
-        <Button 
-          onClick={() => fileInputRef.current?.click()} 
-          variant="outline" 
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          variant="outline"
           className="flex-1"
         >
           <Upload className="h-4 w-4 mr-2" />
