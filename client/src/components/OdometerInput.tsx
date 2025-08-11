@@ -1,47 +1,47 @@
 
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Camera, X, Check } from 'lucide-react';
 
 interface OdometerInputProps {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
+  onClose?: () => void;
 }
 
-export function OdometerInput({ value, onChange, placeholder = "Enter mileage", disabled }: OdometerInputProps) {
-  const [showCamera, setShowCamera] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [detectedText, setDetectedText] = useState<string[]>([]);
+export function OdometerInput({ value, onChange, onClose }: OdometerInputProps) {
+  const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [manualReading, setManualReading] = useState(value);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { toast } = useToast();
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment',
+      setError(null);
+      setIsScanning(true);
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
-      });
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        streamRef.current = stream;
+        videoRef.current.play();
       }
-      setShowCamera(true);
-    } catch (error) {
-      toast({
-        title: "Camera Access Failed",
-        description: "Unable to access camera. Please enter odometer reading manually.",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error('Camera error:', err);
+      setError('Unable to access camera. Please enter reading manually.');
+      setIsScanning(false);
     }
   };
 
@@ -50,225 +50,100 @@ export function OdometerInput({ value, onChange, placeholder = "Enter mileage", 
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    setShowCamera(false);
-    setDetectedText([]);
+    setIsScanning(false);
   };
 
-  // Enhanced OCR simulation with more realistic odometer readings
-  const simulateOCR = async (blob: Blob): Promise<string[]> => {
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Generate realistic odometer readings
-    const generateRealisticMileage = () => {
-      const baseMileage = Math.floor(Math.random() * 200000) + 10000;
-      return baseMileage.toString();
-    };
-    
-    const detectedNumbers = [];
-    const numDetections = Math.floor(Math.random() * 3) + 1;
-    
-    for (let i = 0; i < numDetections; i++) {
-      const mileage = generateRealisticMileage();
-      detectedNumbers.push(mileage);
-      if (Math.random() > 0.5) {
-        detectedNumbers.push(parseInt(mileage).toLocaleString());
-      }
-    }
-    
-    return detectedNumbers;
+  const handleManualSubmit = () => {
+    onChange(manualReading);
+    if (onClose) onClose();
   };
 
-  const selectDetectedText = (text: string) => {
-    // Extract just the numbers and format
-    const numbers = text.replace(/[^\d]/g, '');
-    if (numbers) {
-      // Format with commas for readability
-      const formatted = parseInt(numbers).toLocaleString();
-      onChange(formatted);
+  const captureReading = () => {
+    // Simulate odometer reading capture
+    const simulatedReading = Math.floor(Math.random() * 200000).toString();
+    onChange(simulatedReading);
+    stopCamera();
+    if (onClose) onClose();
+  };
+
+  useEffect(() => {
+    setManualReading(value);
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
       stopCamera();
-      toast({
-        title: "Odometer Reading Set",
-        description: `Set to ${formatted} miles`,
-      });
-    }
-  };
+    };
+  }, []);
 
-  const formatOdometerValue = (inputValue: string) => {
-    // Remove all non-digit characters
-    const numbers = inputValue.replace(/[^\d]/g, '');
-    if (!numbers) return '';
-    
-    // Format with commas
-    return parseInt(numbers).toLocaleString();
-  };
-
-  const handleManualInput = (inputValue: string) => {
-    const formatted = formatOdometerValue(inputValue);
-    onChange(formatted);
-  };
-
-  const captureAndProcess = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    setIsProcessing(true);
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      setIsProcessing(false);
-      return;
-    }
-
-    // Set canvas size to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    // Draw current video frame to canvas
-    ctx.drawImage(video, 0, 0);
-
-    // Convert canvas to blob
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setIsProcessing(false);
-        return;
-      }
-
-      try {
-        // Simulate OCR processing
-        const detectedNumbers = await simulateOCR(blob);
-        setDetectedText(detectedNumbers);
-        setIsProcessing(false);
-
-        if (detectedNumbers.length === 0) {
-          toast({
-            title: "No Numbers Detected",
-            description: "Unable to detect odometer reading. Please try again or enter manually.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        setIsProcessing(false);
-        toast({
-          title: "Processing Failed",
-          description: "Failed to process image. Please try again or enter manually.",
-          variant: "destructive",
-        });
-      }
-    }, 'image/jpeg', 0.8);
-  };
-
-  return (
-    <div>
-      <div className="relative">
-        <Input
-          value={value}
-          onChange={(e) => handleManualInput(e.target.value)}
-          placeholder={placeholder}
-          disabled={disabled}
-          className="pr-12"
-          data-testid="input-odometer"
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={startCamera}
-          disabled={disabled}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 h-8 w-8 p-0"
-          data-testid="button-camera-odometer"
-        >
-          <i className="fas fa-camera text-lg"></i>
+  if (!isScanning) {
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            value={manualReading}
+            onChange={(e) => setManualReading(e.target.value)}
+            placeholder="Enter odometer reading"
+            className="flex-1"
+          />
+          <Button onClick={startCamera} size="sm">
+            <Camera className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {error && (
+          <div className="p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+        
+        <Button onClick={handleManualSubmit} className="w-full">
+          <Check className="h-4 w-4 mr-2" />
+          Use Reading
         </Button>
       </div>
+    );
+  }
 
-      <Dialog open={showCamera} onOpenChange={stopCamera}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <i className="fas fa-camera mr-2 text-primary"></i>
-              Scan Odometer Reading
-            </DialogTitle>
-            <DialogDescription>
-              Position your camera to clearly show the odometer display, then tap capture to detect the mileage.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Camera Preview */}
-            <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Overlay guide */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="border-2 border-white border-dashed rounded-lg p-4 bg-black/20">
-                  <p className="text-white text-sm text-center">
-                    Center odometer display here
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Capture Button */}
-            <Button
-              onClick={captureAndProcess}
-              disabled={isProcessing}
-              className="w-full"
-              data-testid="button-capture-odometer"
-            >
-              {isProcessing ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-camera mr-2"></i>
-                  Capture & Detect
-                </>
-              )}
+  return (
+    <Card className="w-full">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Scan Odometer</h3>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
             </Button>
+          )}
+        </div>
 
-            {/* Detected Text Options */}
-            {detectedText.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Select detected reading:</p>
-                {detectedText.map((text, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    onClick={() => selectDetectedText(text)}
-                    className="w-full justify-start"
-                  >
-                    {text}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            {/* Manual Entry Option */}
-            <div className="pt-4 border-t">
-              <Button
-                variant="ghost"
-                onClick={stopCamera}
-                className="w-full"
-              >
-                Enter Manually Instead
-              </Button>
-            </div>
+        <div className="space-y-4">
+          <div className="relative aspect-video bg-black rounded-md overflow-hidden">
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+              muted
+            />
+            <div className="absolute inset-0 border-2 border-white border-dashed m-4 rounded-md opacity-50"></div>
           </div>
-
-          {/* Hidden canvas for image processing */}
-          <canvas ref={canvasRef} className="hidden" />
-        </DialogContent>
-      </Dialog>
-    </div>
+          
+          <div className="text-center text-sm text-gray-600">
+            Position the odometer display within the frame
+          </div>
+          
+          <div className="flex gap-2">
+            <Button onClick={stopCamera} variant="outline" className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={captureReading} className="flex-1">
+              Capture Reading
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
