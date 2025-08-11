@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OdometerInput } from "@/components/OdometerInput";
+import { VinScanner } from "@/components/VinScanner";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { UploadResult } from "@uppy/core";
@@ -254,22 +255,11 @@ export default function Home() {
                               className="pr-12"
                               data-testid="input-vin"
                             />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // For now, show a toast indicating VIN scanning is coming soon
-                                toast({
-                                  title: "VIN Scanner",
-                                  description: "VIN scanning feature coming soon! Please enter VIN manually.",
-                                });
+                            <VinScanner 
+                              onVinDetected={(vin) => {
+                                form.setValue('vin', vin);
                               }}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 h-8 w-8 p-0"
-                              data-testid="button-camera-scan"
-                            >
-                              <i className="fas fa-camera text-lg"></i>
-                            </Button>
+                            />
                           </div>
                         </FormControl>
                         <FormDescription>

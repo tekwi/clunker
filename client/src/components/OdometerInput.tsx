@@ -54,23 +54,29 @@ export function OdometerInput({ value, onChange, placeholder = "Enter mileage", 
     setDetectedText([]);
   };
 
-  // Mock OCR function - in production, replace with actual OCR API call
+  // Enhanced OCR simulation with more realistic odometer readings
   const simulateOCR = async (blob: Blob): Promise<string[]> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Mock detected numbers that might appear on an odometer
-    const mockDetections = [
-      "123,456",
-      "123456", 
-      "123,456 miles",
-      "456",
-      "123"
-    ];
+    // Generate realistic odometer readings
+    const generateRealisticMileage = () => {
+      const baseMileage = Math.floor(Math.random() * 200000) + 10000;
+      return baseMileage.toString();
+    };
     
-    // Return 1-3 random detections
+    const detectedNumbers = [];
     const numDetections = Math.floor(Math.random() * 3) + 1;
-    return mockDetections.slice(0, numDetections);
+    
+    for (let i = 0; i < numDetections; i++) {
+      const mileage = generateRealisticMileage();
+      detectedNumbers.push(mileage);
+      if (Math.random() > 0.5) {
+        detectedNumbers.push(parseInt(mileage).toLocaleString());
+      }
+    }
+    
+    return detectedNumbers;
   };
 
   const selectDetectedText = (text: string) => {

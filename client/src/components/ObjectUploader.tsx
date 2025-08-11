@@ -40,6 +40,10 @@ export function ObjectUploader({
         allowedFileTypes: ['image/*'],
       },
       autoProceed: false,
+      meta: {
+        // Enable mobile camera capture
+        cameraCapture: true,
+      },
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
