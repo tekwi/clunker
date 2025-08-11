@@ -1,0 +1,41 @@
+# MySQL Configuration for Car Cash Offers App
+# Performance and security optimizations
+
+[mysqld]
+# Performance settings
+innodb_buffer_pool_size = 256M
+max_connections = 100
+query_cache_size = 16M
+tmp_table_size = 32M
+max_heap_table_size = 32M
+innodb_log_file_size = 64M
+innodb_flush_method = O_DIRECT
+innodb_file_per_table = 1
+
+# Security settings
+bind-address = 0.0.0.0
+sql_mode = STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+local_infile = 0
+secure_file_priv = /var/lib/mysql-files/
+
+# Character set and collation
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+init_connect = 'SET NAMES utf8mb4'
+
+# Logging
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/mysql-slow.log
+long_query_time = 2
+log_queries_not_using_indexes = 1
+
+# Connection settings
+max_allowed_packet = 16M
+wait_timeout = 600
+interactive_timeout = 600
+
+[mysql]
+default-character-set = utf8mb4
+
+[client]
+default-character-set = utf8mb4
