@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { OdometerInput } from "@/components/OdometerInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { UploadResult } from "@uppy/core";
@@ -20,6 +21,7 @@ const submissionSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   titleCondition: z.string().min(1, "Please select title condition"),
   vehicleCondition: z.string().optional(),
+  odometerReading: z.string().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
   address: z.string().optional(),
@@ -47,6 +49,7 @@ export default function Home() {
       email: "",
       titleCondition: "",
       vehicleCondition: "",
+      odometerReading: "",
       latitude: "",
       longitude: "",
       address: "",
@@ -66,6 +69,7 @@ export default function Home() {
         email: data.email,
         titleCondition: data.titleCondition,
         vehicleCondition: data.vehicleCondition || null,
+        odometerReading: data.odometerReading || null,
         latitude: data.latitude || null,
         longitude: data.longitude || null,
         address: data.address || 
@@ -113,8 +117,10 @@ export default function Home() {
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    const newUrls = result.successful.map(file => file.uploadURL).filter(Boolean);
-    setUploadedPhotos(prev => [...prev, ...newUrls]);
+    if (result.successful) {
+      const newUrls = result.successful.map(file => file.uploadURL).filter((url): url is string => Boolean(url));
+      setUploadedPhotos(prev => [...prev, ...newUrls]);
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -365,6 +371,30 @@ export default function Home() {
                       )}
                     />
                   </div>
+
+                  {/* Odometer Reading */}
+                  <FormField
+                    control={form.control}
+                    name="odometerReading"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Odometer Reading (Miles)
+                        </FormLabel>
+                        <FormControl>
+                          <OdometerInput
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Enter current mileage"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Enter the current mileage or use the camera to scan your odometer
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 {/* Photos Section */}

@@ -327,10 +327,16 @@ export default function ViewSubmission() {
                           <span className="text-sm text-gray-900 dark:text-gray-100">{submission.vehicleCondition}</span>
                         </div>
                       )}
+                      {submission.odometerReading && (
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Odometer Reading:</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-100">{submission.odometerReading} miles</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Submitted:</span>
                         <span className="text-sm text-gray-900 dark:text-gray-100">
-                          {new Date(submission.createdAt).toLocaleDateString()}
+                          {submission.createdAt ? new Date(submission.createdAt).toLocaleDateString() : 'Unknown'}
                         </span>
                       </div>
                     </div>

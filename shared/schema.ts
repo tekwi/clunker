@@ -11,6 +11,7 @@ export const submissions = pgTable("submissions", {
   email: varchar("email", { length: 150 }).notNull(),
   titleCondition: varchar("title_condition", { length: 50 }).notNull(),
   vehicleCondition: varchar("vehicle_condition", { length: 50 }),
+  odometerReading: varchar("odometer_reading", { length: 20 }),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   address: varchar("address", { length: 255 }),
