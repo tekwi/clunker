@@ -592,25 +592,18 @@ export function MultiStepForm() {
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length - 1) {
       const nextStepIndex = currentStep + 1;
+      
+      // Clear the next step's input fields before navigating
+      const nextStepData = steps[nextStepIndex];
+      if (nextStepData.validation) {
+        nextStepData.validation.forEach(field => {
+          form.setValue(field, "");
+          form.clearErrors(field);
+        });
+      }
+
       setCurrentStep(nextStepIndex);
-
-      // Track visited steps and clear fields for new steps
-      setVisitedSteps(prev => {
-        const newVisitedSteps = new Set([...prev, nextStepIndex]);
-
-        // If this is the first time visiting this step, clear its input fields
-        if (!prev.has(nextStepIndex)) {
-          const nextStepData = steps[nextStepIndex];
-          if (nextStepData.validation) {
-            nextStepData.validation.forEach(field => {
-              form.setValue(field, "");
-              form.clearErrors(field);
-            });
-          }
-        }
-
-        return newVisitedSteps;
-      });
+      setVisitedSteps(prev => new Set([...prev, nextStepIndex]));
     }
   };
 
