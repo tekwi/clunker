@@ -22,17 +22,18 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js for REST API endpoints
 - **Database ORM**: Drizzle ORM for type-safe database operations
-- **Database**: PostgreSQL with Neon serverless for scalable data storage
+- **Database**: MySQL with connection pooling for scalable data storage
 - **File Storage**: Google Cloud Storage for uploaded vehicle photos
 - **Validation**: Zod schemas shared between frontend and backend for consistent validation
 
 ### Data Storage Solutions
-- **Primary Database**: PostgreSQL hosted on Neon with connection pooling
+- **Primary Database**: MySQL with connection pooling and UTF8MB4 charset support
 - **Schema Design**: Three main entities:
   - Submissions: Core vehicle submission data (VIN, owner info, location, condition)
   - Pictures: Multiple photos per submission with cloud storage URLs
   - Offers: Cash offers linked to submissions with pricing and notes
 - **File Storage**: Google Cloud Storage for scalable image hosting with ACL-based access control
+- **UUID Generation**: MySQL UUID() function for unique identifiers
 
 ### Authentication and Authorization
 - **Current State**: No authentication system implemented
@@ -40,12 +41,13 @@ Preferred communication style: Simple, everyday language.
 - **Security**: Prepared infrastructure for role-based access (admin vs user permissions)
 
 ### External Dependencies
-- **Database**: Neon PostgreSQL serverless database
+- **Database**: MySQL database with mysql2 driver for connectivity
 - **File Storage**: Google Cloud Storage with Replit sidecar integration
 - **UI Components**: Radix UI primitives for accessibility
 - **Development Tools**: Vite for fast development and building
 - **Email Integration**: Placeholder system ready for external email API integration
 - **Location Services**: HTML5 Geolocation API for automatic location detection
+- **OCR Processing**: Tesseract.js for client-side VIN scanning from photos
 
 ### Key Design Decisions
 
@@ -57,4 +59,4 @@ Preferred communication style: Simple, everyday language.
 
 **Database Relationships**: Normalized schema design allows for multiple photos per submission and maintains referential integrity while supporting future features like multiple offers per vehicle.
 
-**Serverless Architecture**: Neon PostgreSQL and cloud storage solutions provide automatic scaling without infrastructure management overhead.
+**Database Architecture**: MySQL with connection pooling provides reliable data storage with foreign key constraints and performance indexing for production scalability.

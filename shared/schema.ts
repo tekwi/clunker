@@ -1,11 +1,11 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, timestamp, uuid } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, decimal, timestamp, char } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-export const submissions = pgTable("submissions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+export const submissions = mysqlTable("submissions", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
   vin: varchar("vin", { length: 17 }).notNull(),
   ownerName: varchar("owner_name", { length: 100 }).notNull(),
   email: varchar("email", { length: 150 }).notNull(),
@@ -15,23 +15,23 @@ export const submissions = pgTable("submissions", {
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   address: varchar("address", { length: 255 }),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
-export const pictures = pgTable("pictures", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  submissionId: uuid("submission_id").references(() => submissions.id).notNull(),
+export const pictures = mysqlTable("pictures", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  submissionId: char("submission_id", { length: 36 }).references(() => submissions.id).notNull(),
   url: text("url").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const offers = pgTable("offers", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  submissionId: uuid("submission_id").references(() => submissions.id).notNull(),
+export const offers = mysqlTable("offers", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  submissionId: char("submission_id", { length: 36 }).references(() => submissions.id).notNull(),
   offerPrice: decimal("offer_price", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const submissionsRelations = relations(submissions, ({ many, one }) => ({
