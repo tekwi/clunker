@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,6 +52,8 @@ export function MultiStepForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
+
 
   const form = useForm<SubmissionForm>({
     resolver: zodResolver(submissionSchema),
@@ -75,7 +76,7 @@ export function MultiStepForm() {
 
   const detectLocation = async () => {
     setIsDetectingLocation(true);
-    
+
     try {
       if (!("geolocation" in navigator)) {
         throw new Error("Geolocation is not supported by this browser");
@@ -96,16 +97,16 @@ export function MultiStepForm() {
       const { latitude, longitude } = position.coords;
       form.setValue("latitude", latitude.toString());
       form.setValue("longitude", longitude.toString());
-      
+
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
         );
-        
+
         if (response.ok) {
           const data = await response.json();
           const address = data.address || {};
-          
+
           form.setValue("address", data.display_name || "");
           form.setValue("street", `${address.house_number || ""} ${address.road || ""}`.trim());
           form.setValue("city", address.city || address.town || address.village || "");
@@ -115,17 +116,17 @@ export function MultiStepForm() {
       } catch (geocodeError) {
         console.log("Reverse geocoding failed, but location coordinates were set:", geocodeError);
       }
-      
+
       setLocationDetected(true);
       toast({
         title: "Location detected",
         description: "Your location has been automatically detected.",
       });
-      
+
     } catch (error: any) {
       console.error("Geolocation error:", error);
       let message = "Please enter your location manually.";
-      
+
       if (error.code === 1) {
         message = "Location access was denied. Please enable location services and try again.";
       } else if (error.code === 2) {
@@ -133,7 +134,7 @@ export function MultiStepForm() {
       } else if (error.code === 3) {
         message = "Location request timed out. Please try again or enter manually.";
       }
-      
+
       toast({
         title: "Location detection failed",
         description: message,
@@ -216,7 +217,7 @@ export function MultiStepForm() {
               </FormItem>
             )}
           />
-          
+
           {showVinScanner && (
             <VinScanner
               onVinDetected={(vin) => {
@@ -415,7 +416,7 @@ export function MultiStepForm() {
               {isDetectingLocation ? "Detecting..." : "📍 Auto-detect my location"}
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-4">
             <FormField
               control={form.control}
@@ -433,7 +434,7 @@ export function MultiStepForm() {
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -451,7 +452,7 @@ export function MultiStepForm() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="state"
@@ -469,7 +470,7 @@ export function MultiStepForm() {
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="zip"
@@ -532,7 +533,7 @@ export function MultiStepForm() {
               <p className="text-lg">{uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded</p>
             </div>
           </div>
-          
+
           <Button
             onClick={() => onSubmit(form.getValues())}
             disabled={submitMutation.isPending}
@@ -573,6 +574,7 @@ export function MultiStepForm() {
   const nextStep = async () => {
     if (currentStep === 0) {
       setCurrentStep(1);
+      setVisitedSteps(prev => new Set([...prev, 1]));
       return;
     }
 
@@ -589,7 +591,26 @@ export function MultiStepForm() {
 
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextStepIndex = currentStep + 1;
+      setCurrentStep(nextStepIndex);
+
+      // Track visited steps and clear fields for new steps
+      setVisitedSteps(prev => {
+        const newVisitedSteps = new Set([...prev, nextStepIndex]);
+
+        // If this is the first time visiting this step, clear its input fields
+        if (!prev.has(nextStepIndex)) {
+          const nextStepData = steps[nextStepIndex];
+          if (nextStepData.validation) {
+            nextStepData.validation.forEach(field => {
+              form.setValue(field, "");
+              form.clearErrors(field);
+            });
+          }
+        }
+
+        return newVisitedSteps;
+      });
     }
   };
 
