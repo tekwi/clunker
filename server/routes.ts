@@ -5,6 +5,7 @@ import { insertSubmissionSchema, insertOfferSchema, adminLoginSchema } from "@sh
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { s3Storage } from "./s3Storage";
+import { notificationService } from "./notifications";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -138,11 +139,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create submission
       const submission = await storage.createSubmission(validatedData);
 
-      // TODO: Send email notification with unique link
-      // In production, integrate with email service API
-      console.log(`Submission created: ${submission.id}`);
-      console.log(`Send email to: ${submission.email}`);
-      console.log(`Unique link: ${req.protocol}://${req.get('host')}/view/${submission.id}`);
+      // Send email notification via Zapier webhook
+      try {
+        await notificationService.sendSubmissionConfirmation(submission);
+      } catch (error) {
+        console.error('Failed to send submission confirmation email:', error);
+        // Continue processing even if email fails
+      }
 
       res.json({
         submissionId: submission.id,
@@ -198,9 +201,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create offer
       const offer = await storage.createOffer(validatedOffer);
 
-      // TODO: Send offer notification email
-      console.log(`Offer created for submission: ${submissionId}`);
-      console.log(`Send offer notification to: ${submission.email}`);
+      // Send offer notification email via Zapier webhook
+      try {
+        await notificationService.sendOfferNotification(submission, offer);
+      } catch (error) {
+        console.error('Failed to send offer notification email:', error);
+        // Continue processing even if email fails
+      }
 
       res.json({
         offer,
