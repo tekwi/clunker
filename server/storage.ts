@@ -32,13 +32,18 @@ export class DatabaseStorage implements IStorage {
     // Generate ID for the submission
     const submissionId = randomUUID();
     
+    // Handle empty strings for decimal fields - convert to null
+    const cleanedData = {
+      ...insertSubmission,
+      id: submissionId,
+      latitude: insertSubmission.latitude === '' ? null : insertSubmission.latitude,
+      longitude: insertSubmission.longitude === '' ? null : insertSubmission.longitude,
+    };
+    
     // Insert the submission with the generated ID
     await db
       .insert(submissions)
-      .values({
-        ...insertSubmission,
-        id: submissionId,
-      });
+      .values(cleanedData);
 
     // Get the inserted submission
     const submission = await db
