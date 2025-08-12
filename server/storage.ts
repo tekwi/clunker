@@ -202,27 +202,62 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllOffers() {
-    const allOffers = await db
+    const result = await this.db
       .select({
         id: offers.id,
         submissionId: offers.submissionId,
-        offerPrice: offers.offerPrice,
-        notes: offers.notes,
-        createdAt: offers.createdAt,
         vin: submissions.vin,
         ownerName: submissions.ownerName,
         email: submissions.email,
         phoneNumber: submissions.phoneNumber,
+        offerPrice: offers.offerPrice,
+        notes: offers.notes,
+        status: offers.status,
+        acceptedAt: offers.acceptedAt,
+        createdAt: offers.createdAt,
         titleCondition: submissions.titleCondition,
         vehicleCondition: submissions.vehicleCondition,
         odometerReading: submissions.odometerReading,
         address: submissions.address,
       })
       .from(offers)
-      .leftJoin(submissions, eq(offers.submissionId, submissions.id))
+      .innerJoin(submissions, eq(offers.submissionId, submissions.id))
       .orderBy(desc(offers.createdAt));
 
-    return allOffers;
+    return result;
+  }
+
+  async getAllSubmissions() {
+    const result = await this.db
+      .select()
+      .from(submissions)
+      .orderBy(desc(submissions.createdAt));
+
+    // Get related data for each submission
+    const submissionsWithRelations = await Promise.all(
+      result.map(async (submission) => {
+        // Get pictures
+        const submissionPictures = await this.db
+          .select()
+          .from(pictures)
+          .where(eq(pictures.submissionId, submission.id));
+
+        // Get offer if exists
+        const submissionOffer = await this.db
+          .select()
+          .from(offers)
+          .where(eq(offers.submissionId, submission.id))
+          .limit(1);
+
+        return {
+          ...submission,
+          pictures: submissionPictures,
+          offer: submissionOffer[0] || null,
+        };
+      })
+    );
+
+    return submissionsWithRelations;
   }
 
   async updateOffer(offerId: string, updates: any) {

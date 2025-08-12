@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 
 interface AdminOffer {
@@ -26,6 +27,27 @@ interface AdminOffer {
   vehicleCondition: string;
   odometerReading: string;
   address: string;
+}
+
+interface Submission {
+  id: string;
+  vin: string;
+  ownerName: string;
+  email: string;
+  phoneNumber: string;
+  titleCondition: string;
+  vehicleCondition: string;
+  odometerReading: string;
+  address: string;
+  createdAt: string;
+  pictures: Array<{ id: string; url: string; createdAt: string }>;
+  offer?: {
+    id: string;
+    offerPrice: string;
+    notes: string;
+    status: string;
+    createdAt: string;
+  };
 }
 
 export default function AdminDashboard() {
@@ -88,7 +110,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: offers = [], refetch } = useQuery({
+  const { data: offers = [], refetch: refetchOffers } = useQuery({
     queryKey: ["admin-offers"],
     queryFn: async () => {
       const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
@@ -120,12 +142,45 @@ export default function AdminDashboard() {
     },
   });
 
+  const { data: submissions = [], refetch: refetchSubmissions } = useQuery({
+    queryKey: ["admin-submissions"],
+    queryFn: async () => {
+      const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
+      const headers: any = { "Content-Type": "application/json" };
+      if (currentSessionId) {
+        headers.Authorization = `Bearer ${currentSessionId}`;
+      }
+      
+      const response = await fetch("/api/admin/submissions", {
+        method: "GET",
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
+    enabled: isAuthenticated,
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors
+      if (error.message.includes('401')) {
+        setIsAuthenticated(false);
+        setSessionId(null);
+        localStorage.removeItem("adminSessionId");
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
   const updateOfferMutation = useMutation({
     mutationFn: async ({ offerId, updates }: { offerId: string; updates: any }) => {
       await apiRequest("PUT", `/api/admin/offers/${offerId}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
       setEditingOffer(null);
       toast({ title: "Success", description: "Offer updated successfully" });
     },
@@ -140,6 +195,9 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
+      refetchOffers();
+      refetchSubmissions();
       toast({ title: "Success", description: "Offer accepted and customer notified" });
     },
     onError: () => {
@@ -153,6 +211,9 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
+      refetchOffers();
+      refetchSubmissions();
       toast({ title: "Success", description: "Offer rejected" });
     },
     onError: () => {
@@ -166,6 +227,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
       toast({ title: "Success", description: "Offer deleted successfully" });
     },
     onError: () => {
@@ -272,10 +334,13 @@ export default function AdminDashboard() {
   }
 
   const stats = {
-    total: offers.length,
-    pending: offers.filter((o: AdminOffer) => o.status === "pending").length,
-    accepted: offers.filter((o: AdminOffer) => o.status === "accepted").length,
-    rejected: offers.filter((o: AdminOffer) => o.status === "rejected").length,
+    totalSubmissions: submissions.length,
+    submissionsWithOffers: submissions.filter((s: Submission) => s.offer).length,
+    submissionsWithoutOffers: submissions.filter((s: Submission) => !s.offer).length,
+    totalOffers: offers.length,
+    pendingOffers: offers.filter((o: AdminOffer) => o.status === "pending").length,
+    acceptedOffers: offers.filter((o: AdminOffer) => o.status === "accepted").length,
+    rejectedOffers: offers.filter((o: AdminOffer) => o.status === "rejected").length,
   };
 
   return (
@@ -296,151 +361,236 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-primary">{stats.total}</div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Offers</p>
+              <div className="text-2xl font-bold text-primary">{stats.totalSubmissions}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Submissions</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
+              <div className="text-2xl font-bold text-blue-600">{stats.submissionsWithOffers}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">With Offers</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{stats.accepted}</div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Accepted</p>
+              <div className="text-2xl font-bold text-yellow-600">{stats.pendingOffers}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pending Offers</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Rejected</p>
+              <div className="text-2xl font-bold text-green-600">{stats.acceptedOffers}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Accepted Offers</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Offers Table */}
+        {/* Tabbed Interface */}
         <Card>
           <CardHeader>
-            <CardTitle>All Offers</CardTitle>
+            <CardTitle>Data Management</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>VIN</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Offer Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {offers.map((offer: AdminOffer) => (
-                    <TableRow key={offer.id}>
-                      <TableCell className="font-mono text-sm">
-                        <button
-                          onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
-                          className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                          title="View submission details"
-                        >
-                          {offer.vin}
-                        </button>
-                      </TableCell>
-                      <TableCell>{offer.ownerName}</TableCell>
-                      <TableCell>{offer.email}</TableCell>
-                      <TableCell>{offer.phoneNumber}</TableCell>
-                      <TableCell className="font-semibold">
-                        ${parseFloat(offer.offerPrice).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(offer.status)}</TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {formatDate(offer.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          {offer.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => acceptOfferMutation.mutate(offer.id)}
-                                disabled={acceptOfferMutation.isPending}
-                              >
-                                Accept
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => rejectOfferMutation.mutate(offer.id)}
-                                disabled={rejectOfferMutation.isPending}
-                              >
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditOffer(offer)}
-                              >
-                                Edit
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Edit Offer</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="text-sm font-medium">Offer Price</label>
-                                  <Input
-                                    type="number"
-                                    value={editForm.offerPrice}
-                                    onChange={(e) => setEditForm({ ...editForm, offerPrice: e.target.value })}
-                                    placeholder="Enter offer amount"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Notes</label>
-                                  <Textarea
-                                    value={editForm.notes}
-                                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                                    placeholder="Add notes..."
-                                  />
-                                </div>
-                                <div className="flex justify-between">
-                                  <Button
-                                    variant="destructive"
-                                    onClick={() => deleteOfferMutation.mutate(offer.id)}
-                                    disabled={deleteOfferMutation.isPending}
-                                  >
-                                    Delete Offer
-                                  </Button>
-                                  <Button
-                                    onClick={handleUpdateOffer}
-                                    disabled={updateOfferMutation.isPending}
-                                  >
-                                    Update Offer
-                                  </Button>
+            <Tabs defaultValue="submissions" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="submissions">
+                  All Submissions ({stats.totalSubmissions})
+                </TabsTrigger>
+                <TabsTrigger value="offers">
+                  All Offers ({stats.totalOffers})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="submissions" className="mt-6">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>VIN</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Title Condition</TableHead>
+                        <TableHead>Vehicle Condition</TableHead>
+                        <TableHead>Odometer</TableHead>
+                        <TableHead>Photos</TableHead>
+                        <TableHead>Offer Status</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {submissions.map((submission: Submission) => (
+                        <TableRow key={submission.id}>
+                          <TableCell className="font-mono text-sm">
+                            <button
+                              onClick={() => window.open(`/view/${submission.id}`, '_blank')}
+                              className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                              title="View submission details"
+                            >
+                              {submission.vin}
+                            </button>
+                          </TableCell>
+                          <TableCell>{submission.ownerName}</TableCell>
+                          <TableCell>{submission.email}</TableCell>
+                          <TableCell>{submission.phoneNumber}</TableCell>
+                          <TableCell>{submission.titleCondition}</TableCell>
+                          <TableCell>{submission.vehicleCondition || 'Not specified'}</TableCell>
+                          <TableCell>{submission.odometerReading || 'Not specified'}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {submission.pictures.length} photos
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {submission.offer ? (
+                              <div className="space-y-1">
+                                {getStatusBadge(submission.offer.status)}
+                                <div className="text-sm font-semibold text-green-600">
+                                  ${parseFloat(submission.offer.offerPrice).toLocaleString()}
                                 </div>
                               </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                            ) : (
+                              <Badge variant="secondary">No Offer</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {formatDate(submission.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(`/view/${submission.id}`, '_blank')}
+                            >
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="offers" className="mt-6">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>VIN</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Offer Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {offers.map((offer: AdminOffer) => (
+                        <TableRow key={offer.id}>
+                          <TableCell className="font-mono text-sm">
+                            <button
+                              onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
+                              className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                              title="View submission details"
+                            >
+                              {offer.vin}
+                            </button>
+                          </TableCell>
+                          <TableCell>{offer.ownerName}</TableCell>
+                          <TableCell>{offer.email}</TableCell>
+                          <TableCell>{offer.phoneNumber}</TableCell>
+                          <TableCell className="font-semibold">
+                            ${parseFloat(offer.offerPrice).toLocaleString()}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(offer.status)}</TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {formatDate(offer.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              {offer.status === "pending" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => acceptOfferMutation.mutate(offer.id)}
+                                    disabled={acceptOfferMutation.isPending}
+                                  >
+                                    Accept
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => rejectOfferMutation.mutate(offer.id)}
+                                    disabled={rejectOfferMutation.isPending}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditOffer(offer)}
+                                  >
+                                    Edit
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Edit Offer</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="text-sm font-medium">Offer Price</label>
+                                      <Input
+                                        type="number"
+                                        value={editForm.offerPrice}
+                                        onChange={(e) => setEditForm({ ...editForm, offerPrice: e.target.value })}
+                                        placeholder="Enter offer amount"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Notes</label>
+                                      <Textarea
+                                        value={editForm.notes}
+                                        onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                        placeholder="Add notes..."
+                                      />
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => deleteOfferMutation.mutate(offer.id)}
+                                        disabled={deleteOfferMutation.isPending}
+                                      >
+                                        Delete Offer
+                                      </Button>
+                                      <Button
+                                        onClick={handleUpdateOffer}
+                                        disabled={updateOfferMutation.isPending}
+                                      >
+                                        Update Offer
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

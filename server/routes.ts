@@ -101,6 +101,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all submissions (admin only)
+  app.get("/api/admin/submissions", requireAuth, async (req, res) => {
+    try {
+      const submissions = await storage.getAllSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      res.status(500).json({ error: "Failed to fetch submissions" });
+    }
+  });
+
   // Update offer (admin only)
   app.put("/api/admin/offers/:offerId", requireAuth, async (req, res) => {
     try {
