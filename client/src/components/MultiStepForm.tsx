@@ -598,7 +598,7 @@ export function MultiStepForm() {
         const nextStepData = steps[nextStepIndex];
         if (nextStepData.validation) {
           nextStepData.validation.forEach(field => {
-            form.setValue(field, "");
+            form.setValue(field, "", { shouldValidate: false, shouldDirty: false, shouldTouch: false });
             form.clearErrors(field);
           });
         }
