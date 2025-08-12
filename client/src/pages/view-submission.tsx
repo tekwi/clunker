@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { SubmissionWithRelations } from "@shared/schema";
@@ -19,12 +21,22 @@ const offerSchema = z.object({
   notes: z.string().optional(),
 });
 
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
 type OfferForm = z.infer<typeof offerSchema>;
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function ViewSubmission() {
   const [, params] = useRoute("/view/:submissionId");
   const submissionId = params?.submissionId;
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -36,9 +48,94 @@ export default function ViewSubmission() {
     },
   });
 
+  const loginForm = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const editForm = useForm<OfferForm>({
+    resolver: zodResolver(offerSchema),
+  });
+
+  // Check authentication on load
+  useEffect(() => {
+    const storedSessionId = localStorage.getItem('admin_session');
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const { data: submission, isLoading } = useQuery<SubmissionWithRelations>({
     queryKey: ["/api/view", submissionId],
     enabled: !!submissionId,
+  });
+
+  const { data: allOffers } = useQuery({
+    queryKey: ["/api/admin/offers"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/offers", {
+        headers: {
+          'Authorization': `Bearer ${sessionId}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch offers');
+      return response.json();
+    },
+    enabled: isAuthenticated && isAdminMode,
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginForm) => {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Invalid credentials");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSessionId(data.sessionId);
+      setIsAuthenticated(true);
+      setShowLoginDialog(false);
+      localStorage.setItem('admin_session', data.sessionId);
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${data.admin.username}!`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Login Failed",
+        description: "Invalid username or password.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${sessionId}`,
+        },
+      });
+    },
+    onSuccess: () => {
+      setSessionId(null);
+      setIsAuthenticated(false);
+      setIsAdminMode(false);
+      localStorage.removeItem('admin_session');
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+    },
   });
 
   const offerMutation = useMutation({
@@ -52,6 +149,7 @@ export default function ViewSubmission() {
         description: "The customer will be notified via email about the offer.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/view", submissionId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/offers"] });
       setIsAdminMode(false);
     },
     onError: (error) => {
@@ -63,8 +161,91 @@ export default function ViewSubmission() {
     },
   });
 
+  const updateOfferMutation = useMutation({
+    mutationFn: async ({ offerId, data }: { offerId: string; data: OfferForm }) => {
+      const response = await fetch(`/api/admin/offers/${offerId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update offer");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Offer Updated",
+        description: "The offer has been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/offers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/view", submissionId] });
+      setEditingOffer(null);
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update the offer.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteOfferMutation = useMutation({
+    mutationFn: async (offerId: string) => {
+      const response = await fetch(`/api/admin/offers/${offerId}`, {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${sessionId}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to delete offer");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Offer Deleted",
+        description: "The offer has been successfully deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/offers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/view", submissionId] });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the offer.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAdminModeToggle = () => {
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+    } else {
+      setIsAdminMode(!isAdminMode);
+    }
+  };
+
+  const onSubmitLogin = (data: LoginForm) => {
+    loginMutation.mutate(data);
+  };
+
   const onSubmitOffer = (data: OfferForm) => {
     offerMutation.mutate(data);
+  };
+
+  const onUpdateOffer = (data: OfferForm) => {
+    if (editingOffer) {
+      updateOfferMutation.mutate({ offerId: editingOffer.id, data });
+    }
+  };
+
+  const startEditOffer = (offer: any) => {
+    setEditingOffer(offer);
+    editForm.setValue("offerPrice", offer.offerPrice);
+    editForm.setValue("notes", offer.notes || "");
   };
 
   if (!submissionId) {
@@ -115,16 +296,29 @@ export default function ViewSubmission() {
               <h1 className="text-xl font-semibold">Car Cash Offer</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAdminMode(!isAdminMode)}
-                className="text-white border-white hover:bg-white hover:text-primary-700"
-                data-testid="button-toggle-admin"
-              >
-                <i className="fas fa-user-shield mr-2"></i>
-                {isAdminMode ? "Customer View" : "Admin Mode"}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAdminModeToggle}
+                  className="text-white border-white hover:bg-white hover:text-primary-700"
+                  data-testid="button-toggle-admin"
+                >
+                  <i className="fas fa-user-shield mr-2"></i>
+                  {isAdminMode ? "Customer View" : "Admin Mode"}
+                </Button>
+                {isAuthenticated && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => logoutMutation.mutate()}
+                    className="text-white border-white hover:bg-white hover:text-primary-700"
+                  >
+                    <i className="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -132,14 +326,17 @@ export default function ViewSubmission() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 animate-fade-in">
         {isAdminMode ? (
-          /* Admin Offer Entry */
-          <Card className="shadow-sm border border-gray-200 dark:border-gray-800">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-red-50 dark:bg-red-950">
-              <div className="flex items-center">
-                <i className="fas fa-user-shield text-red-600 mr-2"></i>
-                <h2 className="text-lg font-semibold text-red-800 dark:text-red-400">Admin Mode - Enter Cash Offer</h2>
-              </div>
-            </div>
+          /* Admin Dashboard */
+          <div className="space-y-6">
+            {/* Quick Offer Entry for Current Submission */}
+            {submissionId && (
+              <Card className="shadow-sm border border-gray-200 dark:border-gray-800">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-red-50 dark:bg-red-950">
+                  <div className="flex items-center">
+                    <i className="fas fa-user-shield text-red-600 mr-2"></i>
+                    <h2 className="text-lg font-semibold text-red-800 dark:text-red-400">Admin Mode - Enter Cash Offer</h2>
+                  </div>
+                </div>
 
             <CardContent className="px-6 py-6">
               {/* Quick Vehicle Summary */}
@@ -277,6 +474,83 @@ export default function ViewSubmission() {
               </Form>
             </CardContent>
           </Card>
+            )}
+
+            {/* All Offers Management Table */}
+            <Card className="shadow-sm border border-gray-200 dark:border-gray-800">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <i className="fas fa-table mr-2"></i>
+                  All Offers Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {allOffers && allOffers.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>VIN</TableHead>
+                          <TableHead>Owner</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Offer Amount</TableHead>
+                          <TableHead>Notes</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allOffers.map((offer: any) => (
+                          <TableRow key={offer.id}>
+                            <TableCell className="font-mono text-sm">{offer.vin}</TableCell>
+                            <TableCell>{offer.ownerName}</TableCell>
+                            <TableCell>{offer.email}</TableCell>
+                            <TableCell>{offer.phoneNumber}</TableCell>
+                            <TableCell className="font-bold text-green-600">
+                              ${parseFloat(offer.offerPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate">
+                              {offer.notes || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditOffer(offer)}
+                                >
+                                  <i className="fas fa-edit mr-1"></i>
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteOfferMutation.mutate(offer.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <i className="fas fa-trash mr-1"></i>
+                                  Delete
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <i className="fas fa-inbox text-4xl mb-4"></i>
+                    <p>No offers found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           /* Customer View */
           <Card className="shadow-sm border border-gray-200 dark:border-gray-800">
@@ -446,6 +720,121 @@ export default function ViewSubmission() {
           </Card>
         )}
       </div>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Admin Login</DialogTitle>
+          </DialogHeader>
+          <Form {...loginForm}>
+            <form onSubmit={loginForm.handleSubmit(onSubmitLogin)} className="space-y-4">
+              <FormField
+                control={loginForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={loginForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setShowLoginDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loginMutation.isPending}>
+                  {loginMutation.isPending ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Logging in...
+                    </>
+                  ) : (
+                    "Login"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Offer Dialog */}
+      <Dialog open={!!editingOffer} onOpenChange={() => setEditingOffer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Offer</DialogTitle>
+          </DialogHeader>
+          {editingOffer && (
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onUpdateOffer)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="offerPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Offer Amount</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500">$</span>
+                          </div>
+                          <Input {...field} type="number" step="0.01" min="0" className="pl-8" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={3} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setEditingOffer(null)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateOfferMutation.isPending}>
+                    {updateOfferMutation.isPending ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin mr-2"></i>
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Offer"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white mt-12">

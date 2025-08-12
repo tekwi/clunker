@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertSubmissionSchema, insertOfferSchema } from "@shared/schema";
+import { insertSubmissionSchema, insertOfferSchema, adminLoginSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { s3Storage } from "./s3Storage";
@@ -9,6 +9,109 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const objectStorageService = new ObjectStorageService();
+
+  // Simple session storage for demo purposes
+  const sessions = new Map<string, { adminId: string; username: string; expiresAt: number }>();
+
+  // Auth middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
+    const session = sessionId ? sessions.get(sessionId) : null;
+    
+    if (!session || session.expiresAt < Date.now()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    req.admin = { id: session.adminId, username: session.username };
+    next();
+  };
+
+  // Admin login
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const validatedCredentials = adminLoginSchema.parse(req.body);
+      const admin = await storage.authenticateAdmin(validatedCredentials);
+
+      if (!admin) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Create session
+      const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+
+      sessions.set(sessionId, {
+        adminId: admin.id,
+        username: admin.username,
+        expiresAt
+      });
+
+      res.json({
+        sessionId,
+        admin: {
+          id: admin.id,
+          username: admin.username,
+          email: admin.email
+        }
+      });
+    } catch (error) {
+      console.error("Error during login:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // Admin logout
+  app.post("/api/admin/logout", requireAuth, async (req, res) => {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
+    if (sessionId) {
+      sessions.delete(sessionId);
+    }
+    res.json({ message: "Logged out successfully" });
+  });
+
+  // Get all offers (admin only)
+  app.get("/api/admin/offers", requireAuth, async (req, res) => {
+    try {
+      const offers = await storage.getAllOffers();
+      res.json(offers);
+    } catch (error) {
+      console.error("Error fetching offers:", error);
+      res.status(500).json({ error: "Failed to fetch offers" });
+    }
+  });
+
+  // Update offer (admin only)
+  app.put("/api/admin/offers/:offerId", requireAuth, async (req, res) => {
+    try {
+      const { offerId } = req.params;
+      const { offerPrice, notes } = req.body;
+
+      const updates: any = {};
+      if (offerPrice !== undefined) updates.offerPrice = offerPrice;
+      if (notes !== undefined) updates.notes = notes;
+
+      const offer = await storage.updateOffer(offerId, updates);
+      res.json({ offer, message: "Offer updated successfully" });
+    } catch (error) {
+      console.error("Error updating offer:", error);
+      res.status(500).json({ error: "Failed to update offer" });
+    }
+  });
+
+  // Delete offer (admin only)
+  app.delete("/api/admin/offers/:offerId", requireAuth, async (req, res) => {
+    try {
+      const { offerId } = req.params;
+      await storage.deleteOffer(offerId);
+      res.json({ message: "Offer deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting offer:", error);
+      res.status(500).json({ error: "Failed to delete offer" });
+    }
+  });
 
   // Submit new car submission
   app.post("/api/submissions", async (req, res) => {

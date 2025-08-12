@@ -2,16 +2,18 @@ import {
   submissions,
   pictures,
   offers,
+  adminUsers,
   type Submission,
   type Picture,
   type Offer,
   type InsertSubmission,
   type InsertPicture,
   type InsertOffer,
-  type SubmissionWithRelations
+  type SubmissionWithRelations,
+  type AdminLogin
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -25,13 +27,37 @@ export interface IStorage {
   // Offers
   createOffer(offer: InsertOffer): Promise<Offer>;
   getOfferBySubmissionId(submissionId: string): Promise<Offer | undefined>;
+
+  // Admin
+  authenticateAdmin(credentials: AdminLogin): Promise<
+    | {
+        id: string;
+        username: string;
+        email: string;
+      }
+    | null
+  >;
+  getAllOffers(): Promise<
+    (Offer & {
+      vin: string | null;
+      ownerName: string | null;
+      email: string | null;
+      phoneNumber: string | null;
+      titleCondition: string | null;
+      vehicleCondition: string | null;
+      odometerReading: string | null;
+      address: string | null;
+    })[]
+  >;
+  updateOffer(offerId: string, updates: Partial<InsertOffer>): Promise<Offer | undefined>;
+  deleteOffer(offerId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
     // Generate ID for the submission
     const submissionId = randomUUID();
-    
+
     // Handle empty strings for decimal fields - convert to null
     const cleanedData = {
       ...insertSubmission,
@@ -39,7 +65,7 @@ export class DatabaseStorage implements IStorage {
       latitude: insertSubmission.latitude === '' ? null : insertSubmission.latitude,
       longitude: insertSubmission.longitude === '' ? null : insertSubmission.longitude,
     };
-    
+
     // Insert the submission with the generated ID
     await db
       .insert(submissions)
@@ -110,23 +136,91 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOffer(insertOffer: InsertOffer): Promise<Offer> {
-    // Insert the offer
+    const offerId = randomUUID();
+
     await db
       .insert(offers)
-      .values(insertOffer);
+      .values({
+        ...insertOffer,
+        id: offerId,
+      });
 
-    // Get the inserted offer by submission ID
     const offer = await db
       .select()
       .from(offers)
-      .where(eq(offers.submissionId, insertOffer.submissionId));
+      .where(eq(offers.id, offerId))
+      .then(rows => rows[0]);
 
-    if (!offer[0]) {
-      throw new Error('Failed to retrieve created offer');
+    return offer;
+  },
+
+  async authenticateAdmin(credentials: AdminLogin) {
+    const admin = await db
+      .select()
+      .from(adminUsers)
+      .where(eq(adminUsers.username, credentials.username))
+      .then(rows => rows[0]);
+
+    if (!admin || admin.isActive !== 'true') {
+      return null;
     }
 
-    return offer[0];
-  }
+    // Simple password comparison (in production, use bcrypt)
+    if (admin.password === credentials.password) {
+      return {
+        id: admin.id,
+        username: admin.username,
+        email: admin.email
+      };
+    }
+
+    return null;
+  },
+
+  async getAllOffers() {
+    const allOffers = await db
+      .select({
+        id: offers.id,
+        submissionId: offers.submissionId,
+        offerPrice: offers.offerPrice,
+        notes: offers.notes,
+        createdAt: offers.createdAt,
+        vin: submissions.vin,
+        ownerName: submissions.ownerName,
+        email: submissions.email,
+        phoneNumber: submissions.phoneNumber,
+        titleCondition: submissions.titleCondition,
+        vehicleCondition: submissions.vehicleCondition,
+        odometerReading: submissions.odometerReading,
+        address: submissions.address,
+      })
+      .from(offers)
+      .leftJoin(submissions, eq(offers.submissionId, submissions.id))
+      .orderBy(desc(offers.createdAt));
+
+    return allOffers;
+  },
+
+  async updateOffer(offerId: string, updates: Partial<InsertOffer>) {
+    await db
+      .update(offers)
+      .set(updates)
+      .where(eq(offers.id, offerId));
+
+    const offer = await db
+      .select()
+      .from(offers)
+      .where(eq(offers.id, offerId))
+      .then(rows => rows[0]);
+
+    return offer;
+  },
+
+  async deleteOffer(offerId: string) {
+    await db
+      .delete(offers)
+      .where(eq(offers.id, offerId));
+  },
 
   async getOfferBySubmissionId(submissionId: string): Promise<Offer | undefined> {
     const [offer] = await db

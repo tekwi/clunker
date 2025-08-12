@@ -48,6 +48,16 @@ export const offersRelations = relations(offers, ({ one }) => ({
   submission: one(submissions, { fields: [offers.submissionId], references: [submissions.id] }),
 }));
 
+export const adminUsers = mysqlTable("admin_users", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  email: varchar("email", { length: 150 }),
+  isActive: varchar("is_active", { length: 5 }).default("true"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
   createdAt: true,
@@ -64,13 +74,27 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
   createdAt: true,
 });
 
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const adminLoginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type InsertPicture = z.infer<typeof insertPictureSchema>;
 export type InsertOffer = z.infer<typeof insertOfferSchema>;
+export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
+export type AdminLogin = z.infer<typeof adminLoginSchema>;
 
 export type Submission = typeof submissions.$inferSelect;
 export type Picture = typeof pictures.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
+export type AdminUser = typeof adminUsers.$inferSelect;
 
 export type SubmissionWithRelations = Submission & {
   pictures: Picture[];

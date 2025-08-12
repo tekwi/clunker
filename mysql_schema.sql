@@ -69,6 +69,21 @@ CREATE TABLE offers (
     INDEX idx_offers_price (offer_price)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Create admin users table
+CREATE TABLE admin_users (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(150) NULL,
+    is_active VARCHAR(5) DEFAULT 'true',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Add indexes
+    INDEX idx_admin_username (username),
+    INDEX idx_admin_active (is_active)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Insert sample data (optional - for testing)
 -- You can uncomment these lines to add sample data
 
