@@ -28,12 +28,12 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
           contentType: file.type || 'image/jpeg'
         })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to get upload URL');
       }
 
-      const { uploadURL } = await response.json();
+      const { uploadURL, photoUrl } = await response.json();
       const uploadUrl = uploadURL;
 
       // Upload file to object storage
@@ -49,8 +49,8 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
         throw new Error('Failed to upload file');
       }
 
-      // Return the upload URL as the photo URL (will be normalized by server later)
-      return uploadUrl;
+      // Return the clean photo URL for display (not the signed upload URL)
+      return photoUrl || uploadUrl;
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
