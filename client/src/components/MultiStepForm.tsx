@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ObjectUploader } from "@/components/ObjectUploader";
-
 import { VinScanner } from "@/components/VinScanner";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -38,22 +38,80 @@ interface Step {
   id: string;
   title: string;
   subtitle?: string;
-  component: React.ReactNode;
-  validation?: (keyof SubmissionForm)[];
+  fields?: (keyof SubmissionForm)[];
 }
+
+const STEPS: Step[] = [
+  {
+    id: "welcome",
+    title: "Get Cash for Your Car",
+    subtitle: "Submit your vehicle details and get an instant cash offer",
+  },
+  {
+    id: "vin",
+    title: "What's your VIN number?",
+    subtitle: "You can find this on your dashboard or driver's side door",
+    fields: ["vin"],
+  },
+  {
+    id: "odometer",
+    title: "What's your current mileage?",
+    subtitle: "Enter the odometer reading from your dashboard",
+    fields: ["odometerReading"],
+  },
+  {
+    id: "title-condition",
+    title: "What's your title condition?",
+    subtitle: "This affects the value of your vehicle",
+    fields: ["titleCondition"],
+  },
+  {
+    id: "vehicle-condition",
+    title: "What's your vehicle's condition?",
+    subtitle: "Be honest - this helps us give you the best offer",
+    fields: ["vehicleCondition"],
+  },
+  {
+    id: "owner-info",
+    title: "What's your name?",
+    subtitle: "We'll use this for your cash offer",
+    fields: ["ownerName"],
+  },
+  {
+    id: "email",
+    title: "What's your email?",
+    subtitle: "We'll send your cash offer here",
+    fields: ["email"],
+  },
+  {
+    id: "location",
+    title: "Where is your vehicle located?",
+    subtitle: "This helps us arrange pickup if you accept our offer",
+  },
+  {
+    id: "photos",
+    title: "Add some photos",
+    subtitle: "Take pictures of your vehicle's exterior, interior, and any damage",
+  },
+  {
+    id: "review",
+    title: "Ready to get your offer?",
+    subtitle: "Review your information and submit",
+  },
+];
 
 export function MultiStepForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [showVinScanner, setShowVinScanner] = useState(false);
-  
   const [locationDetected, setLocationDetected] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
 
+  // Simple form with direct state management
+  const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
 
   const form = useForm<SubmissionForm>({
     resolver: zodResolver(submissionSchema),
@@ -73,6 +131,15 @@ export function MultiStepForm() {
       zip: "",
     },
   });
+
+  const updateField = (field: keyof SubmissionForm, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    form.setValue(field, value);
+  };
+
+  const getFieldValue = (field: keyof SubmissionForm): string => {
+    return formData[field] || "";
+  };
 
   const detectLocation = async () => {
     setIsDetectingLocation(true);
@@ -95,8 +162,8 @@ export function MultiStepForm() {
       });
 
       const { latitude, longitude } = position.coords;
-      form.setValue("latitude", latitude.toString());
-      form.setValue("longitude", longitude.toString());
+      updateField("latitude", latitude.toString());
+      updateField("longitude", longitude.toString());
 
       try {
         const response = await fetch(
@@ -107,11 +174,11 @@ export function MultiStepForm() {
           const data = await response.json();
           const address = data.address || {};
 
-          form.setValue("address", data.display_name || "");
-          form.setValue("street", `${address.house_number || ""} ${address.road || ""}`.trim());
-          form.setValue("city", address.city || address.town || address.village || "");
-          form.setValue("state", address.state || "");
-          form.setValue("zip", address.postcode || "");
+          updateField("address", data.display_name || "");
+          updateField("street", `${address.house_number || ""} ${address.road || ""}`.trim());
+          updateField("city", address.city || address.town || address.village || "");
+          updateField("state", address.state || "");
+          updateField("zip", address.postcode || "");
         }
       } catch (geocodeError) {
         console.log("Reverse geocoding failed, but location coordinates were set:", geocodeError);
@@ -167,395 +234,26 @@ export function MultiStepForm() {
     },
   });
 
-  const steps: Step[] = [
-    {
-      id: "welcome",
-      title: "Get Cash for Your Car",
-      subtitle: "Submit your vehicle details and get an instant cash offer",
-      component: (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-6">🚗</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
-          <p className="text-gray-600 mb-8">We'll walk you through a few quick questions to get you the best cash offer for your vehicle.</p>
-          <Button onClick={() => setCurrentStep(1)} size="lg" className="w-full max-w-sm">
-            Let's Begin
-          </Button>
-        </div>
-      ),
-    },
-    {
-      id: "vin",
-      title: "What's your VIN number?",
-      subtitle: "You can find this on your dashboard or driver's side door",
-      validation: ["vin"],
-      component: (
-        <div className="space-y-6">
-          <FormField
-            control={form.control}
-            name="vin"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex gap-2">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter 17-character VIN"
-                      className="text-lg p-4 h-14"
-                      maxLength={17}
-                    />
-                  </FormControl>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowVinScanner(true)}
-                    className="h-14 px-6"
-                  >
-                    Scan
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+  const validateStep = (stepIndex: number): boolean => {
+    const step = STEPS[stepIndex];
+    if (!step.fields) return true;
 
-          {showVinScanner && (
-            <VinScanner
-              onVinDetected={(vin) => {
-                form.setValue("vin", vin);
-                setShowVinScanner(false);
-              }}
-              onClose={() => setShowVinScanner(false)}
-            />
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "odometer",
-      title: "What's your current mileage?",
-      subtitle: "Enter the odometer reading from your dashboard",
-      validation: ["odometerReading"],
-      component: (
-        <div className="space-y-6">
-          <FormField
-            control={form.control}
-            name="odometerReading"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="Enter mileage"
-                    className="text-lg p-4 h-14"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "title-condition",
-      title: "What's your title condition?",
-      subtitle: "This affects the value of your vehicle",
-      validation: ["titleCondition"],
-      component: (
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="titleCondition"
-            render={({ field }) => (
-              <FormItem>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="text-lg p-4 h-14">
-                      <SelectValue placeholder="Select title condition" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="clean">Clean Title</SelectItem>
-                    <SelectItem value="salvage">Salvage</SelectItem>
-                    <SelectItem value="rebuilt">Rebuilt</SelectItem>
-                    <SelectItem value="lien">Lien</SelectItem>
-                    <SelectItem value="no-title">No Title</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "vehicle-condition",
-      title: "What's your vehicle's condition?",
-      subtitle: "Be honest - this helps us give you the best offer",
-      validation: ["vehicleCondition"],
-      component: (
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="vehicleCondition"
-            render={({ field }) => (
-              <FormItem>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="text-lg p-4 h-14">
-                      <SelectValue placeholder="Select vehicle condition" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="excellent">Excellent</SelectItem>
-                    <SelectItem value="good">Good</SelectItem>
-                    <SelectItem value="fair">Fair</SelectItem>
-                    <SelectItem value="poor">Poor</SelectItem>
-                    <SelectItem value="junk">Junk/Non-running</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "owner-info",
-      title: "What's your name?",
-      subtitle: "We'll use this for your cash offer",
-      validation: ["ownerName"],
-      component: (
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="ownerName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Enter your full name"
-                    className="text-lg p-4 h-14"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "email",
-      title: "What's your email?",
-      subtitle: "We'll send your cash offer here",
-      validation: ["email"],
-      component: (
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="Enter your email address"
-                    className="text-lg p-4 h-14"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "location",
-      title: "Where is your vehicle located?",
-      subtitle: "This helps us arrange pickup if you accept our offer",
-      component: (
-        <div className="space-y-6">
-          <div className="text-center">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={detectLocation}
-              disabled={isDetectingLocation}
-              className="mb-6"
-            >
-              {isDetectingLocation ? "Detecting..." : "📍 Auto-detect my location"}
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            <FormField
-              control={form.control}
-              name="street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Street address"
-                      className="text-lg p-4 h-14"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="City"
-                        className="text-lg p-4 h-14"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="State"
-                        className="text-lg p-4 h-14"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="zip"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="ZIP code"
-                      className="text-lg p-4 h-14"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "photos",
-      title: "Add some photos",
-      subtitle: "Take pictures of your vehicle's exterior, interior, and any damage",
-      component: (
-        <div className="space-y-6">
-          <ObjectUploader
-            photos={uploadedPhotos}
-            onPhotosChange={setUploadedPhotos}
-          />
-          {uploadedPhotos.length === 0 && (
-            <p className="text-sm text-red-500 text-center">
-              Please upload at least one photo to continue
-            </p>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "review",
-      title: "Ready to get your offer?",
-      subtitle: "Review your information and submit",
-      component: (
-        <div className="space-y-6">
-          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">VIN</label>
-              <p className="text-lg">{form.getValues("vin")}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Mileage</label>
-              <p className="text-lg">{Number(form.getValues("odometerReading")).toLocaleString()} miles</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Condition</label>
-              <p className="text-lg capitalize">{form.getValues("vehicleCondition")}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Photos</label>
-              <p className="text-lg">{uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded</p>
-            </div>
-          </div>
-
-          <Button
-            onClick={() => onSubmit(form.getValues())}
-            disabled={submitMutation.isPending}
-            className="w-full h-14 text-lg"
-            size="lg"
-          >
-            {submitMutation.isPending ? "Getting Your Offer..." : "Get My Cash Offer"}
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  const onSubmit = (data: SubmissionForm) => {
-    if (uploadedPhotos.length === 0) {
-      toast({
-        title: "Photos required",
-        description: "Please upload at least one photo of your vehicle.",
-        variant: "destructive",
-      });
-      return;
+    for (const field of step.fields) {
+      const value = getFieldValue(field);
+      if (!value || value.trim() === "") {
+        return false;
+      }
     }
-
-    submitMutation.mutate({
-      ...data,
-      photos: uploadedPhotos,
-    });
+    return true;
   };
 
-  const validateCurrentStep = async () => {
-    const step = steps[currentStep];
-    if (!step.validation) return true;
-
-    const result = await form.trigger(step.validation);
-    return result;
-  };
-
-  const nextStep = async () => {
+  const nextStep = () => {
     if (currentStep === 0) {
       setCurrentStep(1);
-      setVisitedSteps(prev => new Set([...prev, 1]));
       return;
     }
 
-    if (currentStep === steps.length - 2) { // Photos step
+    if (currentStep === 8) { // Photos step
       if (uploadedPhotos.length === 0) {
         toast({
           title: "Photos required",
@@ -566,27 +264,17 @@ export function MultiStepForm() {
       }
     }
 
-    const isValid = await validateCurrentStep();
-    if (isValid && currentStep < steps.length - 1) {
-      const nextStepIndex = currentStep + 1;
-      
-      // Only clear the next step's input fields if user hasn't visited it before
-      if (!visitedSteps.has(nextStepIndex)) {
-        const nextStepData = steps[nextStepIndex];
-        if (nextStepData.validation) {
-          const currentValues = form.getValues();
-          const clearedValues = { ...currentValues };
-          
-          nextStepData.validation.forEach(field => {
-            clearedValues[field] = "";
-          });
-          
-          form.reset(clearedValues);
-        }
-      }
+    if (!validateStep(currentStep)) {
+      toast({
+        title: "Please fill in all required fields",
+        description: "Complete the current step before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      setCurrentStep(nextStepIndex);
-      setVisitedSteps(prev => new Set([...prev, nextStepIndex]));
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
@@ -596,8 +284,255 @@ export function MultiStepForm() {
     }
   };
 
-  const currentStepData = steps[currentStep];
-  const progress = ((currentStep) / (steps.length - 1)) * 100;
+  const onSubmit = () => {
+    if (uploadedPhotos.length === 0) {
+      toast({
+        title: "Photos required",
+        description: "Please upload at least one photo of your vehicle.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    submitMutation.mutate({
+      ...formData as SubmissionForm,
+      photos: uploadedPhotos,
+    });
+  };
+
+  const renderStepContent = () => {
+    const step = STEPS[currentStep];
+
+    switch (step.id) {
+      case "welcome":
+        return (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-6">🚗</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
+            <p className="text-gray-600 mb-8">We'll walk you through a few quick questions to get you the best cash offer for your vehicle.</p>
+            <Button onClick={nextStep} size="lg" className="w-full max-w-sm">
+              Let's Begin
+            </Button>
+          </div>
+        );
+
+      case "vin":
+        return (
+          <div className="space-y-6">
+            <div className="flex gap-2">
+              <Input
+                value={getFieldValue("vin")}
+                onChange={(e) => updateField("vin", e.target.value)}
+                placeholder="Enter 17-character VIN"
+                className="text-lg p-4 h-14"
+                maxLength={17}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowVinScanner(true)}
+                className="h-14 px-6"
+              >
+                Scan
+              </Button>
+            </div>
+
+            {showVinScanner && (
+              <VinScanner
+                onVinDetected={(vin) => {
+                  updateField("vin", vin);
+                  setShowVinScanner(false);
+                }}
+                onClose={() => setShowVinScanner(false)}
+              />
+            )}
+          </div>
+        );
+
+      case "odometer":
+        return (
+          <div className="space-y-6">
+            <Input
+              value={getFieldValue("odometerReading")}
+              onChange={(e) => updateField("odometerReading", e.target.value)}
+              type="number"
+              placeholder="Enter mileage"
+              className="text-lg p-4 h-14"
+            />
+          </div>
+        );
+
+      case "title-condition":
+        return (
+          <div className="space-y-4">
+            <Select 
+              value={getFieldValue("titleCondition")} 
+              onValueChange={(value) => updateField("titleCondition", value)}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue placeholder="Select title condition" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="clean">Clean Title</SelectItem>
+                <SelectItem value="salvage">Salvage</SelectItem>
+                <SelectItem value="rebuilt">Rebuilt</SelectItem>
+                <SelectItem value="lien">Lien</SelectItem>
+                <SelectItem value="no-title">No Title</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "vehicle-condition":
+        return (
+          <div className="space-y-4">
+            <Select 
+              value={getFieldValue("vehicleCondition")} 
+              onValueChange={(value) => updateField("vehicleCondition", value)}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue placeholder="Select vehicle condition" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="excellent">Excellent</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="fair">Fair</SelectItem>
+                <SelectItem value="poor">Poor</SelectItem>
+                <SelectItem value="junk">Junk/Non-running</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "owner-info":
+        return (
+          <div className="space-y-4">
+            <Input
+              value={getFieldValue("ownerName")}
+              onChange={(e) => updateField("ownerName", e.target.value)}
+              placeholder="Enter your full name"
+              className="text-lg p-4 h-14"
+            />
+          </div>
+        );
+
+      case "email":
+        return (
+          <div className="space-y-4">
+            <Input
+              value={getFieldValue("email")}
+              onChange={(e) => updateField("email", e.target.value)}
+              type="email"
+              placeholder="Enter your email address"
+              className="text-lg p-4 h-14"
+            />
+          </div>
+        );
+
+      case "location":
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={detectLocation}
+                disabled={isDetectingLocation}
+                className="mb-6"
+              >
+                {isDetectingLocation ? "Detecting..." : "📍 Auto-detect my location"}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <Input
+                value={getFieldValue("street")}
+                onChange={(e) => updateField("street", e.target.value)}
+                placeholder="Street address"
+                className="text-lg p-4 h-14"
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  value={getFieldValue("city")}
+                  onChange={(e) => updateField("city", e.target.value)}
+                  placeholder="City"
+                  className="text-lg p-4 h-14"
+                />
+
+                <Input
+                  value={getFieldValue("state")}
+                  onChange={(e) => updateField("state", e.target.value)}
+                  placeholder="State"
+                  className="text-lg p-4 h-14"
+                />
+              </div>
+
+              <Input
+                value={getFieldValue("zip")}
+                onChange={(e) => updateField("zip", e.target.value)}
+                placeholder="ZIP code"
+                className="text-lg p-4 h-14"
+              />
+            </div>
+          </div>
+        );
+
+      case "photos":
+        return (
+          <div className="space-y-6">
+            <ObjectUploader
+              photos={uploadedPhotos}
+              onPhotosChange={setUploadedPhotos}
+            />
+            {uploadedPhotos.length === 0 && (
+              <p className="text-sm text-red-500 text-center">
+                Please upload at least one photo to continue
+              </p>
+            )}
+          </div>
+        );
+
+      case "review":
+        return (
+          <div className="space-y-6">
+            <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-600">VIN</label>
+                <p className="text-lg">{getFieldValue("vin")}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Mileage</label>
+                <p className="text-lg">{Number(getFieldValue("odometerReading")).toLocaleString()} miles</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Condition</label>
+                <p className="text-lg capitalize">{getFieldValue("vehicleCondition")}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Photos</label>
+                <p className="text-lg">{uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded</p>
+              </div>
+            </div>
+
+            <Button
+              onClick={onSubmit}
+              disabled={submitMutation.isPending}
+              className="w-full h-14 text-lg"
+              size="lg"
+            >
+              {submitMutation.isPending ? "Getting Your Offer..." : "Get My Cash Offer"}
+            </Button>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const currentStepData = STEPS[currentStep];
+  const progress = ((currentStep) / (STEPS.length - 1)) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -613,7 +548,7 @@ export function MultiStepForm() {
             </div>
             <div className="text-center">
               <span className="text-sm text-gray-500">
-                Step {currentStep} of {steps.length - 1}
+                Step {currentStep} of {STEPS.length - 1}
               </span>
             </div>
           </div>
@@ -621,52 +556,50 @@ export function MultiStepForm() {
 
         <Card className="border-none shadow-lg">
           <CardContent className="p-8">
-            <Form {...form}>
-              <div className="min-h-[400px]">
-                {/* Header */}
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {currentStepData.title}
-                  </h1>
-                  {currentStepData.subtitle && (
-                    <p className="text-gray-600 text-lg">
-                      {currentStepData.subtitle}
-                    </p>
-                  )}
-                </div>
-
-                {/* Step content */}
-                <div className="mb-8">
-                  {currentStepData.component}
-                </div>
+            <div className="min-h-[400px]">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {currentStepData.title}
+                </h1>
+                {currentStepData.subtitle && (
+                  <p className="text-gray-600 text-lg">
+                    {currentStepData.subtitle}
+                  </p>
+                )}
               </div>
 
-              {/* Navigation */}
-              {currentStep > 0 && (
-                <div className="flex justify-between items-center pt-6 border-t">
+              {/* Step content */}
+              <div className="mb-8">
+                {renderStepContent()}
+              </div>
+            </div>
+
+            {/* Navigation */}
+            {currentStep > 0 && (
+              <div className="flex justify-between items-center pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back
+                </Button>
+
+                {currentStep < STEPS.length - 1 && (
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={prevStep}
+                    onClick={nextStep}
                     className="flex items-center gap-2"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    Back
+                    Continue
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
-
-                  {currentStep < steps.length - 1 && (
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="flex items-center gap-2"
-                    >
-                      Continue
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              )}
-            </Form>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
