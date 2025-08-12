@@ -574,10 +574,14 @@ export function MultiStepForm() {
       if (!visitedSteps.has(nextStepIndex)) {
         const nextStepData = steps[nextStepIndex];
         if (nextStepData.validation) {
+          const currentValues = form.getValues();
+          const clearedValues = { ...currentValues };
+          
           nextStepData.validation.forEach(field => {
-            form.setValue(field, "", { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-            form.clearErrors(field);
+            clearedValues[field] = "";
           });
+          
+          form.reset(clearedValues);
         }
       }
 
