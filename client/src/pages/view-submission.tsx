@@ -904,6 +904,24 @@ export default function ViewSubmission() {
         </DialogContent>
       </Dialog>
 
+      {/* Add New Vehicle Button */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="text-center">
+          <Button
+            onClick={() => window.location.href = '/'}
+            size="lg"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            data-testid="button-add-new-vehicle-bottom"
+          >
+            <i className="fas fa-plus mr-2"></i>
+            Add New Vehicle
+          </Button>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
+            Have another vehicle to sell? Start a new submission
+          </p>
+        </div>
+      </div>
+
       {/* Footer */}
       <footer className="bg-gray-800 text-white mt-12">
         <div className="max-w-4xl mx-auto px-4 py-8">
