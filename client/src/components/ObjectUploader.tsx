@@ -10,6 +10,8 @@ interface ObjectUploaderProps {
 
 export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderProps) {
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,8 +19,13 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = async (file: File): Promise<string> => {
+    setIsUploading(true);
+    setError(null);
+    setUploadProgress(`Preparing ${file.name}...`);
+    
     try {
       // Get upload URL from server
+      setUploadProgress(`Getting upload URL for ${file.name}...`);
       const response = await fetch('/api/objects/upload', {
         method: 'POST',
         headers: {
@@ -37,6 +44,7 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
       const uploadUrl = uploadURL;
 
       // Upload file to object storage
+      setUploadProgress(`Uploading ${file.name}...`);
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: file,
@@ -50,10 +58,14 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
       }
 
       // Return the clean photo URL for display (not the signed upload URL)
+      setUploadProgress('Upload complete!');
       return photoUrl || uploadUrl;
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
+    } finally {
+      setIsUploading(false);
+      setUploadProgress('');
     }
   };
 
@@ -135,6 +147,11 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
         console.error('File upload error:', err);
       }
     }
+    
+    // Reset file input
+    if (event.target) {
+      event.target.value = '';
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -184,7 +201,12 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Button onClick={startCamera} variant="outline" className="flex-1">
+        <Button 
+          onClick={startCamera} 
+          variant="outline" 
+          className="flex-1"
+          disabled={isUploading}
+        >
           <Camera className="h-4 w-4 mr-2" />
           Camera
         </Button>
@@ -192,9 +214,19 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
           onClick={() => fileInputRef.current?.click()}
           variant="outline"
           className="flex-1"
+          disabled={isUploading}
         >
-          <Upload className="h-4 w-4 mr-2" />
-          Upload
+          {isUploading ? (
+            <>
+              <i className="fas fa-spinner fa-spin h-4 w-4 mr-2"></i>
+              Uploading
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload
+            </>
+          )}
         </Button>
       </div>
 
@@ -206,6 +238,13 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
         onChange={handleFileUpload}
         className="hidden"
       />
+
+      {isUploading && (
+        <div className="p-3 bg-blue-100 border border-blue-300 rounded-md text-blue-700 text-sm flex items-center">
+          <i className="fas fa-spinner fa-spin mr-2"></i>
+          {uploadProgress}
+        </div>
+      )}
 
       {error && (
         <div className="p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-sm">
