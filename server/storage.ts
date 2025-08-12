@@ -227,11 +227,18 @@ export class DatabaseStorage implements IStorage {
 
   async updateOffer(offerId: string, updates: any) {
     try {
-      const [updatedOffer] = await db
+      await db
         .update(offers)
         .set(updates)
+        .where(eq(offers.id, offerId));
+
+      // MySQL doesn't support returning, so fetch the updated record
+      const updatedOffer = await db
+        .select()
+        .from(offers)
         .where(eq(offers.id, offerId))
-        .returning();
+        .limit(1)
+        .then(rows => rows[0]);
 
       return updatedOffer;
     } catch (error) {
