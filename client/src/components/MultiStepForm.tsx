@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ObjectUploader } from "@/components/ObjectUploader";
-import { OdometerInput } from "@/components/OdometerInput";
+
 import { VinScanner } from "@/components/VinScanner";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -46,7 +46,7 @@ export function MultiStepForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [showVinScanner, setShowVinScanner] = useState(false);
-  const [showOdometerInput, setShowOdometerInput] = useState(false);
+  
   const [locationDetected, setLocationDetected] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [, setLocation] = useLocation();
@@ -242,37 +242,14 @@ export function MultiStepForm() {
             name="odometerReading"
             render={({ field }) => (
               <FormItem>
-                <div className="space-y-4">
-                  {!showOdometerInput ? (
-                    <div className="flex gap-2">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter mileage"
-                          className="text-lg p-4 h-14"
-                        />
-                      </FormControl>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowOdometerInput(true)}
-                        className="h-14 px-6"
-                      >
-                        Camera
-                      </Button>
-                    </div>
-                  ) : (
-                    <OdometerInput
-                      value={field.value}
-                      onChange={(value) => {
-                        field.onChange(value);
-                        setShowOdometerInput(false);
-                      }}
-                      onClose={() => setShowOdometerInput(false)}
-                    />
-                  )}
-                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    placeholder="Enter mileage"
+                    className="text-lg p-4 h-14"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
