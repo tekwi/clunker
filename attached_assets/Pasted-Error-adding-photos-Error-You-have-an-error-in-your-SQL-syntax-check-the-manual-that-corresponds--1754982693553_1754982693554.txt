@@ -1,0 +1,12 @@
+Error adding photos: Error: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '(select coalesce(json_arrayagg(json_array(`submissions_pictures`.`id`, `submi...' at line 1
+    at PromisePool.query (/var/www/clunker/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at MySql2PreparedQuery.execute (file:///var/www/clunker/node_modules/drizzle-orm/mysql2/session.js:75:33)
+    at QueryPromise.execute (file:///var/www/clunker/node_modules/drizzle-orm/mysql-core/query-builders/query.js:109:27)
+    at QueryPromise.then (file:///var/www/clunker/node_modules/drizzle-orm/query-promise.js:21:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ER_PARSE_ERROR',
+  errno: 1064,
+  sql: "select `submissions`.`id`, `submissions`.`vin`, `submissions`.`owner_name`, `submissions`.`email`, `submissions`.`phone_number`, `submissions`.`title_condition`, `submissions`.`vehicle_condition`, `submissions`.`odometer_reading`, `submissions`.`latitude`, `submissions`.`longitude`, `submissions`.`address`, `submissions`.`created_at`, `submissions`.`updated_at`, `submissions_pictures`.`data` as `pictures`, `submissions_offer`.`data` as `offer` from `submissions` left join lateral (select coalesce(json_arrayagg(json_array(`submissions_pictures`.`id`, `submissions_pictures`.`submission_id`, `submissions_pictures`.`url`, `submissions_pictures`.`created_at`)), json_array()) as `data` from `pictures` `submissions_pictures` where `submissions_pictures`.`submission_id` = `submissions`.`id`) `submissions_pictures` on true left join lateral (select json_array(`submissions_offer`.`id`, `submissions_offer`.`submission_id`, `submissions_offer`.`offer_price`, `submissions_offer`.`notes`, `submissions_offer`.`created_at`) as `data` from (select * from `offers` `submissions_offer` where `submissions_offer`.`submission_id` = `submissions`.`id` limit 1) `submissions_offer`) `submissions_offer` on true where `submissions`.`id` = '7446a0bc-774b-11f0-b027-021bc4892943' limit 1",
+  sqlState: '42000',
+  sqlMessage: "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '(select coalesce(json_arrayagg(json_array(`submissions_pictures`.`id`, `submi...' at line 1"
+}
