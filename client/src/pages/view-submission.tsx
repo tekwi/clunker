@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { SubmissionWithRelations } from "@shared/schema";
@@ -322,40 +323,53 @@ export default function ViewSubmission() {
               <i className="fas fa-car text-2xl"></i>
               <h1 className="text-xl font-semibold">Car Cash Offer</h1>
             </a>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.location.href = '/'}
-                  className="text-primary border-white hover:bg-white hover:text-primary-700"
-                  data-testid="button-add-new-vehicle"
-                >
-                  <i className="fas fa-plus mr-2"></i>
-                  Add New Vehicle
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAdminModeToggle}
-                  className="text-primary border-white hover:bg-white hover:text-primary-700"
-                  data-testid="button-toggle-admin"
-                >
-                  <i className="fas fa-user-shield mr-2"></i>
-                  {isAdminMode ? "Customer View" : "Admin Mode"}
-                </Button>
-                {isAuthenticated && (
+            <div className="flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => logoutMutation.mutate()}
                     className="text-primary border-white hover:bg-white hover:text-primary-700"
+                    data-testid="button-menu-trigger"
                   >
-                    <i className="fas fa-sign-out-alt mr-2"></i>
-                    Logout
+                    <i className="fas fa-bars mr-2"></i>
+                    Menu
+                    <i className="fas fa-chevron-down ml-2 text-xs"></i>
                   </Button>
-                )}
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => window.location.href = '/'}
+                    className="cursor-pointer"
+                    data-testid="menu-add-new-vehicle"
+                  >
+                    <i className="fas fa-plus mr-2 text-sm"></i>
+                    Add New Vehicle
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleAdminModeToggle}
+                    className="cursor-pointer"
+                    data-testid="menu-toggle-admin"
+                  >
+                    <i className="fas fa-user-shield mr-2 text-sm"></i>
+                    {isAdminMode ? "Customer View" : "Admin Mode"}
+                  </DropdownMenuItem>
+                  {isAuthenticated && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => logoutMutation.mutate()}
+                        className="cursor-pointer text-red-600"
+                        data-testid="menu-logout"
+                      >
+                        <i className="fas fa-sign-out-alt mr-2 text-sm"></i>
+                        Logout
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
