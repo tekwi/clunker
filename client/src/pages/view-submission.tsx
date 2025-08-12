@@ -679,7 +679,7 @@ export default function ViewSubmission() {
                       <i className="fas fa-dollar-sign text-secondary mr-2"></i>
                       Cash Offer
                     </h3>
-                    
+
                     {!submission.offer ? (
                       /* No Offer Yet */
                       <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4" data-testid="no-offer-state">
@@ -708,7 +708,7 @@ export default function ViewSubmission() {
                             </Button>
                           </div>
                         </div>
-                        
+
                         {submission.offer.notes && (
                           <div className="mt-4 pt-3 border-t border-secondary-200 dark:border-secondary-700">
                             <p className="text-xs text-secondary-600 dark:text-secondary-400">

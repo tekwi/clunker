@@ -1,4 +1,3 @@
-
 // Using built-in fetch (Node.js 18+)
 
 interface EmailNotification {
@@ -23,7 +22,7 @@ export class NotificationService {
 
     try {
       console.log(`📧 Sending email notification to ${notification.to} via Zapier webhook`);
-      
+
       const response = await fetch(this.zapierWebhookUrl, {
         method: 'POST',
         headers: {
@@ -71,7 +70,7 @@ export class NotificationService {
         <!-- Content -->
         <div style="padding: 40px 32px;">
             <h2 style="color: #1e293b; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">Dear ${submission.ownerName},</h2>
-            
+
             <p style="color: #475569; line-height: 1.6; margin: 0 0 24px 0; font-size: 16px;">
                 Thank you for submitting your vehicle details! We have successfully received your submission and our team is already reviewing it.
             </p>
@@ -140,7 +139,7 @@ export class NotificationService {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(offer.offerPrice);
-    
+
     const body = `
 <!DOCTYPE html>
 <html>
@@ -160,7 +159,7 @@ export class NotificationService {
         <!-- Content -->
         <div style="padding: 40px 32px;">
             <h2 style="color: #1e293b; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">Dear ${submission.ownerName},</h2>
-            
+
             <p style="color: #475569; line-height: 1.6; margin: 0 0 24px 0; font-size: 16px;">
                 <strong style="color: hsl(145, 63%, 42%);">Great news!</strong> We have prepared a competitive cash offer for your vehicle. Here are the details:
             </p>
@@ -233,6 +232,127 @@ export class NotificationService {
       subject,
       body,
     });
+  }
+
+  async sendOfferStatusUpdate(submission: any, offer: any, status: string) {
+    const isAccepted = status === 'accepted';
+    const statusText = isAccepted ? 'Accepted' : 'Rejected';
+    const statusColor = isAccepted ? '#22c55e' : '#ef4444';
+
+    const emailData = {
+      to: submission.email,
+      name: submission.ownerName,
+      subject: `Your Car Offer Has Been ${statusText} - ${submission.vin}`,
+      body: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Offer ${statusText}</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">TrackWala</h1>
+              <p style="color: #bfdbfe; margin: 10px 0 0 0; font-size: 16px;">Your Car Cash Offer</p>
+            </div>
+
+            <!-- Status Banner -->
+            <div style="background-color: ${statusColor}; color: white; padding: 20px; text-align: center;">
+              <h2 style="margin: 0; font-size: 24px;">Offer ${statusText}!</h2>
+            </div>
+
+            <!-- Content -->
+            <div style="padding: 40px 30px;">
+              <h3 style="color: #374151; margin: 0 0 20px 0; font-size: 20px;">Hello ${submission.ownerName},</h3>
+
+              ${isAccepted 
+                ? `<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                     Great news! We've accepted your vehicle submission and are ready to proceed with our cash offer.
+                   </p>`
+                : `<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                     Thank you for your submission. After review, we've decided not to proceed with an offer at this time.
+                   </p>`
+              }
+
+              <!-- Vehicle Details -->
+              <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin: 24px 0;">
+                <h4 style="color: #374151; margin: 0 0 16px 0; font-size: 18px;">Vehicle Details</h4>
+                <div style="display: grid; gap: 12px;">
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
+                    <span style="color: #6b7280; font-weight: 500;">VIN:</span>
+                    <span style="color: #374151; font-family: monospace;">${submission.vin}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
+                    <span style="color: #6b7280; font-weight: 500;">Title Condition:</span>
+                    <span style="color: #374151;">${submission.titleCondition}</span>
+                  </div>
+                  ${submission.vehicleCondition ? `
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
+                      <span style="color: #6b7280; font-weight: 500;">Vehicle Condition:</span>
+                      <span style="color: #374151;">${submission.vehicleCondition}</span>
+                    </div>
+                  ` : ''}
+                  ${isAccepted ? `
+                    <div style="display: flex; justify-content: space-between; background-color: #dcfce7; padding: 12px; border-radius: 6px; margin-top: 12px;">
+                      <span style="color: #166534; font-weight: 600;">Offer Amount:</span>
+                      <span style="color: #166534; font-weight: 700; font-size: 18px;">$${parseFloat(offer.offerPrice).toLocaleString()}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              ${isAccepted 
+                ? `<div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0;">
+                     <h4 style="color: #1e40af; margin: 0 0 12px 0;">Next Steps:</h4>
+                     <ul style="color: #1e40af; margin: 0; padding-left: 20px;">
+                       <li>We'll contact you within 24 hours to arrange pickup</li>
+                       <li>Have your title and registration ready</li>
+                       <li>Payment will be processed upon vehicle inspection</li>
+                     </ul>
+                   </div>`
+                : `<div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 24px 0;">
+                     <p style="color: #dc2626; margin: 0;">
+                       While we couldn't make an offer this time, thank you for considering TrackWala. 
+                       Feel free to submit another vehicle in the future.
+                     </p>
+                   </div>`
+              }
+
+              ${offer.notes ? `
+                <div style="margin: 24px 0;">
+                  <h4 style="color: #374151; margin: 0 0 12px 0;">Additional Notes:</h4>
+                  <p style="color: #4b5563; font-style: italic; margin: 0;">${offer.notes}</p>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; margin: 0 0 16px 0; font-size: 14px;">
+                Questions? Contact us anytime.
+              </p>
+              <div style="margin: 20px 0;">
+                <a href="https://trackwala.com" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                  Visit TrackWala
+                </a>
+              </div>
+              <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+                © 2024 TrackWala. All rights reserved.
+              </p>
+            </div>
+
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    // Send to Zapier webhook
+    await this.sendToZapier(emailData);
   }
 }
 

@@ -32,6 +32,8 @@ export const offers = mysqlTable("offers", {
   submissionId: char("submission_id", { length: 36 }).references(() => submissions.id).notNull(),
   offerPrice: decimal("offer_price", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
+  status: varchar("status", { length: 20 }).default("pending"),
+  acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

@@ -55,6 +55,8 @@ CREATE TABLE offers (
     submission_id CHAR(36) NOT NULL,
     offer_price DECIMAL(10, 2) NOT NULL,
     notes TEXT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    accepted_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Foreign key constraint

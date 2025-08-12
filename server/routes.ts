@@ -105,13 +105,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/offers/:offerId", requireAuth, async (req, res) => {
     try {
       const { offerId } = req.params;
-      const { offerPrice, notes } = req.body;
+      const { offerPrice, notes, status } = req.body;
 
       const updates: any = {};
       if (offerPrice !== undefined) updates.offerPrice = offerPrice;
       if (notes !== undefined) updates.notes = notes;
+      if (status !== undefined) {
+        updates.status = status;
+        if (status === "accepted") {
+          updates.acceptedAt = new Date();
+        }
+      }
 
       const offer = await storage.updateOffer(offerId, updates);
+
+      // Send notification if status changed
+      if (status === "accepted" || status === "rejected") {
+        try {
+          const submission = await storage.getSubmissionByOfferId(offerId);
+          if (submission) {
+            await notificationService.sendOfferStatusUpdate(submission, offer, status);
+          }
+        } catch (error) {
+          console.error('Failed to send status update notification:', error);
+        }
+      }
+
       res.json({ offer, message: "Offer updated successfully" });
     } catch (error) {
       console.error("Error updating offer:", error);

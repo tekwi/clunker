@@ -225,19 +225,37 @@ export class DatabaseStorage implements IStorage {
     return allOffers;
   }
 
-  async updateOffer(offerId: string, updates: Partial<InsertOffer>) {
-    await db
-      .update(offers)
-      .set(updates)
-      .where(eq(offers.id, offerId));
+  async updateOffer(offerId: string, updates: any) {
+    try {
+      const [updatedOffer] = await db
+        .update(offers)
+        .set(updates)
+        .where(eq(offers.id, offerId))
+        .returning();
 
-    const offer = await db
-      .select()
-      .from(offers)
-      .where(eq(offers.id, offerId))
-      .then(rows => rows[0]);
+      return updatedOffer;
+    } catch (error) {
+      console.error("Error updating offer:", error);
+      throw error;
+    }
+  }
 
-    return offer;
+  async getSubmissionByOfferId(offerId: string) {
+    try {
+      const offer = await db
+        .select()
+        .from(offers)
+        .where(eq(offers.id, offerId))
+        .limit(1);
+
+      if (!offer.length) return null;
+
+      const submission = await this.getSubmission(offer[0].submissionId);
+      return submission;
+    } catch (error) {
+      console.error("Error getting submission by offer ID:", error);
+      throw error;
+    }
   }
 
   async deleteOffer(offerId: string) {
