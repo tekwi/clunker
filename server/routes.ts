@@ -10,7 +10,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const objectStorageService = new ObjectStorageService();
 
   // Submit new car submission
-  app.post("/api/submit", async (req, res) => {
+  app.post("/api/submissions", async (req, res) => {
     try {
       const validatedData = insertSubmissionSchema.parse(req.body);
 

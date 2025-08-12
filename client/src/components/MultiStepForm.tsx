@@ -222,8 +222,19 @@ export function MultiStepForm() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: SubmissionForm & { photos: string[] }) => {
-      const response = await apiRequest("POST", "/api/submissions", data);
-      return response.json();
+      // First submit the main form data
+      const { photos, ...submissionData } = data;
+      const response = await apiRequest("POST", "/api/submissions", submissionData);
+      const result = await response.json();
+      
+      // Then submit photos if any
+      if (photos.length > 0) {
+        await apiRequest("POST", `/api/submissions/${result.submissionId}/photos`, {
+          photoUrls: photos
+        });
+      }
+      
+      return result;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
@@ -303,7 +314,16 @@ export function MultiStepForm() {
     }
 
     submitMutation.mutate({
-      ...formData as SubmissionForm,
+      vin: getFieldValue("vin"),
+      ownerName: getFieldValue("ownerName"),
+      email: getFieldValue("email"),
+      phoneNumber: getFieldValue("phoneNumber"),
+      titleCondition: getFieldValue("titleCondition"),
+      vehicleCondition: getFieldValue("vehicleCondition"),
+      odometerReading: getFieldValue("odometerReading"),
+      latitude: getFieldValue("latitude"),
+      longitude: getFieldValue("longitude"),
+      address: getFieldValue("address"),
       photos: uploadedPhotos,
     });
   };
