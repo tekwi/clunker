@@ -20,6 +20,7 @@ const submissionSchema = z.object({
   vin: z.string().min(17, "VIN must be 17 characters"),
   ownerName: z.string().min(1, "Owner name is required"),
   email: z.string().email("Valid email is required"),
+  phoneNumber: z.string().min(10, "Phone number is required"),
   titleCondition: z.string().min(1, "Title condition is required"),
   vehicleCondition: z.string().min(1, "Vehicle condition is required"),
   odometerReading: z.string().min(1, "Odometer reading is required"),
@@ -84,6 +85,12 @@ const STEPS: Step[] = [
     fields: ["email"],
   },
   {
+    id: "phone",
+    title: "What's your phone number?",
+    subtitle: "We may need to contact you about your offer",
+    fields: ["phoneNumber"],
+  },
+  {
     id: "location",
     title: "Where is your vehicle located?",
     subtitle: "This helps us arrange pickup if you accept our offer",
@@ -119,6 +126,7 @@ export function MultiStepForm() {
       vin: "",
       ownerName: "",
       email: "",
+      phoneNumber: "",
       titleCondition: "",
       vehicleCondition: "",
       odometerReading: "",
@@ -253,7 +261,7 @@ export function MultiStepForm() {
       return;
     }
 
-    if (currentStep === 8) { // Photos step
+    if (currentStep === 9) { // Photos step
       if (uploadedPhotos.length === 0) {
         toast({
           title: "Photos required",
@@ -424,6 +432,19 @@ export function MultiStepForm() {
               onChange={(e) => updateField("email", e.target.value)}
               type="email"
               placeholder="Enter your email address"
+              className="text-lg p-4 h-14"
+            />
+          </div>
+        );
+
+      case "phone":
+        return (
+          <div className="space-y-4">
+            <Input
+              value={getFieldValue("phoneNumber")}
+              onChange={(e) => updateField("phoneNumber", e.target.value)}
+              type="tel"
+              placeholder="Enter your phone number"
               className="text-lg p-4 h-14"
             />
           </div>

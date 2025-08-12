@@ -15,6 +15,7 @@ CREATE TABLE submissions (
     vin VARCHAR(17) NOT NULL,
     owner_name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
     title_condition VARCHAR(50) NOT NULL,
     vehicle_condition VARCHAR(50) NULL,
     odometer_reading VARCHAR(20) NULL,

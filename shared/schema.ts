@@ -9,6 +9,7 @@ export const submissions = mysqlTable("submissions", {
   vin: varchar("vin", { length: 17 }).notNull(),
   ownerName: varchar("owner_name", { length: 100 }).notNull(),
   email: varchar("email", { length: 150 }).notNull(),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
   titleCondition: varchar("title_condition", { length: 50 }).notNull(),
   vehicleCondition: varchar("vehicle_condition", { length: 50 }),
   odometerReading: varchar("odometer_reading", { length: 20 }),
