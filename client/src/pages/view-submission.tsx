@@ -503,7 +503,15 @@ export default function ViewSubmission() {
                       <TableBody>
                         {allOffers.map((offer: any) => (
                           <TableRow key={offer.id}>
-                            <TableCell className="font-mono text-sm">{offer.vin}</TableCell>
+                            <TableCell className="font-mono text-sm">
+                              <button
+                                onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
+                                className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                                title="View submission details"
+                              >
+                                {offer.vin}
+                              </button>
+                            </TableCell>
                             <TableCell>{offer.ownerName}</TableCell>
                             <TableCell>{offer.email}</TableCell>
                             <TableCell>{offer.phoneNumber}</TableCell>
