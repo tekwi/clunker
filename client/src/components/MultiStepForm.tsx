@@ -292,7 +292,7 @@ export function MultiStepForm() {
             name="titleCondition"
             render={({ field }) => (
               <FormItem>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="text-lg p-4 h-14">
                       <SelectValue placeholder="Select title condition" />
@@ -325,7 +325,7 @@ export function MultiStepForm() {
             name="vehicleCondition"
             render={({ field }) => (
               <FormItem>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="text-lg p-4 h-14">
                       <SelectValue placeholder="Select vehicle condition" />
