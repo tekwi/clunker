@@ -199,6 +199,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accept offer
+  app.post("/api/offers/:offerId/accept", async (req, res) => {
+    try {
+      const { offerId } = req.params;
+      
+      const updatedOffer = await storage.updateOffer(offerId, {
+        status: "accepted",
+        acceptedAt: new Date()
+      });
+
+      if (!updatedOffer) {
+        return res.status(404).json({ error: "Offer not found" });
+      }
+
+      // Send notification
+      try {
+        const submission = await storage.getSubmissionByOfferId(offerId);
+        if (submission) {
+          await notificationService.sendOfferStatusUpdate(submission, updatedOffer, "accepted");
+        }
+      } catch (error) {
+        console.error('Failed to send acceptance notification:', error);
+      }
+
+      res.json({ 
+        message: "Offer accepted successfully",
+        offer: updatedOffer 
+      });
+    } catch (error) {
+      console.error("Error accepting offer:", error);
+      res.status(500).json({ error: "Failed to accept offer" });
+    }
+  });
+
   // Create offer for submission
   app.post("/api/offer/:submissionId", async (req, res) => {
     try {

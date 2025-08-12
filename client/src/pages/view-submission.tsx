@@ -220,6 +220,33 @@ export default function ViewSubmission() {
     },
   });
 
+  const acceptOfferMutation = useMutation({
+    mutationFn: async (offerId: string) => {
+      const response = await fetch(`/api/offers/${offerId}/accept`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to accept offer");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Offer Accepted!",
+        description: "Thank you! We'll contact you within 24 hours to arrange pickup.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/view", submissionId] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Accept Offer",
+        description: "Something went wrong. Please try again or contact support.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAdminModeToggle = () => {
     if (!isAuthenticated) {
       setShowLoginDialog(true);
@@ -710,8 +737,20 @@ export default function ViewSubmission() {
                           </div>
                           <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-3">Cash Offer</p>
                           <div className="space-y-2">
-                            <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90" data-testid="button-accept-offer">
-                              Accept Offer
+                            <Button 
+                              className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90" 
+                              data-testid="button-accept-offer"
+                              onClick={() => submission.offer && acceptOfferMutation.mutate(submission.offer.id)}
+                              disabled={acceptOfferMutation.isPending}
+                            >
+                              {acceptOfferMutation.isPending ? (
+                                <>
+                                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                                  Accepting...
+                                </>
+                              ) : (
+                                "Accept Offer"
+                              )}
                             </Button>
                           </div>
                         </div>
