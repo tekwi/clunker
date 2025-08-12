@@ -18,15 +18,25 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
 
   const uploadFile = async (file: File): Promise<string> => {
     try {
-      // Get S3 upload URL from server
-      const response = await fetch(`/api/upload-url?contentType=${encodeURIComponent(file.type)}`);
+      // Get upload URL from server
+      const response = await fetch('/api/objects/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contentType: file.type || 'image/jpeg'
+        })
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to get upload URL');
       }
 
-      const { uploadUrl, photoUrl } = await response.json();
+      const { uploadURL } = await response.json();
+      const uploadUrl = uploadURL;
 
-      // Upload file to S3
+      // Upload file to object storage
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: file,
@@ -36,10 +46,11 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload file to S3');
+        throw new Error('Failed to upload file');
       }
 
-      return photoUrl; // Return the permanent S3 URL
+      // Return the upload URL as the photo URL (will be normalized by server later)
+      return uploadUrl;
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
