@@ -152,7 +152,7 @@ export class DatabaseStorage implements IStorage {
       .then(rows => rows[0]);
 
     return offer;
-  },
+  }
 
   async authenticateAdmin(credentials: AdminLogin) {
     console.log("🔍 Authenticating admin:", { username: credentials.username });
@@ -199,7 +199,7 @@ export class DatabaseStorage implements IStorage {
       console.error("💥 Database error in authenticateAdmin:", error);
       throw error;
     }
-  },
+  }
 
   async getAllOffers() {
     const allOffers = await db
@@ -223,7 +223,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(offers.createdAt));
 
     return allOffers;
-  },
+  }
 
   async updateOffer(offerId: string, updates: Partial<InsertOffer>) {
     await db
@@ -238,13 +238,13 @@ export class DatabaseStorage implements IStorage {
       .then(rows => rows[0]);
 
     return offer;
-  },
+  }
 
   async deleteOffer(offerId: string) {
     await db
       .delete(offers)
       .where(eq(offers.id, offerId));
-  },
+  }
 
   async getOfferBySubmissionId(submissionId: string): Promise<Offer | undefined> {
     const [offer] = await db
