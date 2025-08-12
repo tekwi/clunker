@@ -301,7 +301,7 @@ export default function ViewSubmission() {
                   variant="outline"
                   size="sm"
                   onClick={handleAdminModeToggle}
-                  className="text-white border-white hover:bg-white hover:text-primary-700"
+                  className="text-primary border-white hover:bg-white hover:text-primary-700"
                   data-testid="button-toggle-admin"
                 >
                   <i className="fas fa-user-shield mr-2"></i>

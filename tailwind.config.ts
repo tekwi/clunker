@@ -24,12 +24,12 @@ export default {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          50: "#E3F2FD",
-          100: "#BBDEFB",
-          500: "#1565C0",
-          600: "#1976D2", 
-          700: "#1565C0",
-          900: "#0D47A1",
+          50: "#F3E8FF",
+          100: "#E9D5FF",
+          500: "#8B5CF6",
+          600: "#7C3AED", 
+          700: "#6D28D9",
+          900: "#4C1D95",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
