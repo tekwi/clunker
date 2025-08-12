@@ -155,26 +155,50 @@ export class DatabaseStorage implements IStorage {
   },
 
   async authenticateAdmin(credentials: AdminLogin) {
-    const admin = await db
-      .select()
-      .from(adminUsers)
-      .where(eq(adminUsers.username, credentials.username))
-      .then(rows => rows[0]);
+    console.log("🔍 Authenticating admin:", { username: credentials.username });
 
-    if (!admin || admin.isActive !== 'true') {
+    try {
+      const admin = await db
+        .select()
+        .from(adminUsers)
+        .where(eq(adminUsers.username, credentials.username))
+        .then(rows => rows[0]);
+
+      console.log("📊 Database query result:", {
+        found: !!admin,
+        adminId: admin?.id,
+        storedPassword: admin?.password ? `${admin.password.substring(0, 3)}...` : 'none',
+        providedPassword: credentials.password ? `${credentials.password.substring(0, 3)}...` : 'none'
+      });
+
+      if (!admin || admin.isActive !== 'true') {
+        console.log("❌ Admin user not found or inactive for username:", credentials.username);
+        return null;
+      }
+
+      // Simple password comparison (in production, use bcrypt)
+      const passwordMatch = admin.password === credentials.password;
+      console.log("🔑 Password comparison:", {
+        match: passwordMatch,
+        storedLength: admin.password?.length,
+        providedLength: credentials.password?.length
+      });
+
+      if (passwordMatch) {
+        console.log("✅ Authentication successful for:", admin.username);
+        return {
+          id: admin.id,
+          username: admin.username,
+          email: admin.email
+        };
+      }
+
+      console.log("❌ Password mismatch for user:", admin.username);
       return null;
+    } catch (error) {
+      console.error("💥 Database error in authenticateAdmin:", error);
+      throw error;
     }
-
-    // Simple password comparison (in production, use bcrypt)
-    if (admin.password === credentials.password) {
-      return {
-        id: admin.id,
-        username: admin.username,
-        email: admin.email
-      };
-    }
-
-    return null;
   },
 
   async getAllOffers() {

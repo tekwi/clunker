@@ -29,10 +29,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin login
   app.post("/api/admin/login", async (req, res) => {
     try {
+      console.log("🔐 Admin login attempt:", { 
+        username: req.body.username, 
+        hasPassword: !!req.body.password,
+        passwordLength: req.body.password?.length 
+      });
+
       const validatedCredentials = adminLoginSchema.parse(req.body);
+      console.log("✅ Credentials validated:", { username: validatedCredentials.username });
+
       const admin = await storage.authenticateAdmin(validatedCredentials);
+      console.log("🔍 Authentication result:", { 
+        found: !!admin, 
+        adminId: admin?.id,
+        adminUsername: admin?.username 
+      });
 
       if (!admin) {
+        console.log("❌ Authentication failed - invalid credentials");
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
@@ -46,6 +60,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt
       });
 
+      console.log("✅ Session created:", { sessionId, adminId: admin.id });
+
       res.json({
         sessionId,
         admin: {
@@ -55,8 +71,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Error during login:", error);
+      console.error("❌ Error during login:", error);
       if (error instanceof z.ZodError) {
+        console.log("🚨 Validation error:", error.errors);
         return res.status(400).json({ error: "Invalid input", details: error.errors });
       }
       res.status(500).json({ error: "Login failed" });
