@@ -312,7 +312,7 @@ export default function ViewSubmission() {
                     variant="outline"
                     size="sm"
                     onClick={() => logoutMutation.mutate()}
-                    className="text-white border-white hover:bg-white hover:text-primary-700"
+                    className="text-primary border-white hover:bg-white hover:text-primary-700"
                   >
                     <i className="fas fa-sign-out-alt mr-2"></i>
                     Logout
