@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Submissions
@@ -28,34 +29,61 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
-    // Insert the submission
-    const result = await db
+    // Generate ID for the submission
+    const submissionId = randomUUID();
+    
+    // Insert the submission with the generated ID
+    await db
       .insert(submissions)
-      .values(insertSubmission);
+      .values({
+        ...insertSubmission,
+        id: submissionId,
+      });
 
-    // Get the inserted submission by finding the most recent one with the same VIN
-    // This is a workaround for MySQL not supporting RETURNING
-    const submission = await db.query.submissions.findFirst({
-      where: eq(submissions.vin, insertSubmission.vin),
-      orderBy: (submissions, { desc }) => [desc(submissions.createdAt)]
-    });
+    // Get the inserted submission
+    const submission = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .limit(1);
 
-    if (!submission) {
+    if (!submission[0]) {
       throw new Error('Failed to retrieve created submission');
     }
 
-    return submission;
+    return submission[0];
   }
 
   async getSubmission(id: string): Promise<SubmissionWithRelations | undefined> {
-    const submission = await db.query.submissions.findFirst({
-      where: eq(submissions.id, id),
-      with: {
-        pictures: true,
-        offer: true,
-      },
-    });
-    return submission;
+    // Get the submission first
+    const submission = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, id))
+      .limit(1);
+
+    if (!submission[0]) {
+      return undefined;
+    }
+
+    // Get related pictures
+    const submissionPictures = await db
+      .select()
+      .from(pictures)
+      .where(eq(pictures.submissionId, id));
+
+    // Get related offer
+    const submissionOffer = await db
+      .select()
+      .from(offers)
+      .where(eq(offers.submissionId, id))
+      .limit(1);
+
+    return {
+      ...submission[0],
+      pictures: submissionPictures,
+      offer: submissionOffer[0] || undefined,
+    };
   }
 
   async addPictures(insertPictures: InsertPicture[]): Promise<Picture[]> {
