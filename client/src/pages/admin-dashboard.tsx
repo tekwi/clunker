@@ -215,9 +215,11 @@ export default function AdminDashboard() {
       rejected: "destructive",
     };
     
+    const safeStatus = status || "pending";
+    
     return (
-      <Badge variant={statusColors[status as keyof typeof statusColors] || "secondary"}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <Badge variant={statusColors[safeStatus as keyof typeof statusColors] || "secondary"}>
+        {safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1)}
       </Badge>
     );
   };
