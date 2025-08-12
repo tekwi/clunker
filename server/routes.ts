@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertSubmissionSchema, insertOfferSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
+import { s3Storage } from "./s3Storage";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -100,8 +101,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get upload URL for object
   app.post("/api/objects/upload", async (req, res) => {
     try {
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
+      // Use S3 in production, Replit Object Storage in development
+      if (process.env.NODE_ENV === 'production' && process.env.AWS_S3_BUCKET) {
+        const { uploadUrl, photoUrl } = await s3Storage.getUploadUrl(req.body.contentType);
+        res.json({ uploadURL: uploadUrl, photoUrl });
+      } else {
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        res.json({ uploadURL });
+      }
     } catch (error) {
       console.error("Error getting upload URL:", error);
       res.status(500).json({ error: "Failed to get upload URL" });
