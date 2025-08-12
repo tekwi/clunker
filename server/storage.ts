@@ -202,7 +202,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllOffers() {
-    const result = await this.db
+    const result = await db
       .select({
         id: offers.id,
         submissionId: offers.submissionId,
@@ -228,7 +228,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSubmissions() {
-    const result = await this.db
+    const result = await db
       .select()
       .from(submissions)
       .orderBy(desc(submissions.createdAt));
@@ -237,13 +237,13 @@ export class DatabaseStorage implements IStorage {
     const submissionsWithRelations = await Promise.all(
       result.map(async (submission) => {
         // Get pictures
-        const submissionPictures = await this.db
+        const submissionPictures = await db
           .select()
           .from(pictures)
           .where(eq(pictures.submissionId, submission.id));
 
         // Get offer if exists
-        const submissionOffer = await this.db
+        const submissionOffer = await db
           .select()
           .from(offers)
           .where(eq(offers.submissionId, submission.id))
