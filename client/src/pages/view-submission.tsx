@@ -703,9 +703,6 @@ export default function ViewSubmission() {
                             <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90" data-testid="button-accept-offer">
                               Accept Offer
                             </Button>
-                            <Button variant="outline" className="w-full" data-testid="button-counter-offer">
-                              Counter Offer
-                            </Button>
                           </div>
                         </div>
 
