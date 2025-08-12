@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedOffer = insertOfferSchema.parse({
         submissionId,
-        offerPrice: parseFloat(offerPrice),
+        offerPrice: offerPrice, // Keep as string for decimal type
         notes
       });
 
