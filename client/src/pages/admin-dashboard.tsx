@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -118,7 +117,7 @@ export default function AdminDashboard() {
       if (currentSessionId) {
         headers.Authorization = `Bearer ${currentSessionId}`;
       }
-      
+
       const response = await fetch("/api/admin/offers", {
         method: "GET",
         headers,
@@ -132,7 +131,7 @@ export default function AdminDashboard() {
     enabled: isAuthenticated,
     retry: (failureCount, error) => {
       // Don't retry on auth errors
-      if (error.message.includes('401')) {
+      if (error.message.includes('401') || error.message.includes('Authentication required')) {
         setIsAuthenticated(false);
         setSessionId(null);
         localStorage.removeItem("adminSessionId");
@@ -150,7 +149,7 @@ export default function AdminDashboard() {
       if (currentSessionId) {
         headers.Authorization = `Bearer ${currentSessionId}`;
       }
-      
+
       const response = await fetch("/api/admin/submissions", {
         method: "GET",
         headers,
@@ -164,7 +163,7 @@ export default function AdminDashboard() {
     enabled: isAuthenticated,
     retry: (failureCount, error) => {
       // Don't retry on auth errors
-      if (error.message.includes('401')) {
+      if (error.message.includes('401') || error.message.includes('Authentication required')) {
         setIsAuthenticated(false);
         setSessionId(null);
         localStorage.removeItem("adminSessionId");
@@ -246,7 +245,7 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Logout error:", error);
     }
-    
+
     setIsAuthenticated(false);
     setSessionId(null);
     localStorage.removeItem("adminSessionId");
@@ -260,7 +259,7 @@ export default function AdminDashboard() {
 
   const handleUpdateOffer = () => {
     if (!editingOffer) return;
-    
+
     updateOfferMutation.mutate({
       offerId: editingOffer.id,
       updates: {
@@ -276,9 +275,9 @@ export default function AdminDashboard() {
       accepted: "default",
       rejected: "destructive",
     };
-    
+
     const safeStatus = status || "pending";
-    
+
     return (
       <Badge variant={statusColors[safeStatus as keyof typeof statusColors] || "secondary"}>
         {safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1)}
@@ -400,7 +399,7 @@ export default function AdminDashboard() {
                   All Offers ({stats.totalOffers})
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="submissions" className="mt-6">
                 <div className="overflow-x-auto">
                   <Table>

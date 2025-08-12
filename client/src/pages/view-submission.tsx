@@ -61,14 +61,16 @@ export default function ViewSubmission() {
     resolver: zodResolver(offerSchema),
   });
 
-  // Check authentication on load
+  // Check for admin session on mount
   useEffect(() => {
-    const storedSessionId = localStorage.getItem('admin_session');
-    if (storedSessionId) {
-      setSessionId(storedSessionId);
+    const savedSessionId = localStorage.getItem('admin_session');
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
       setIsAuthenticated(true);
+      // Force queries to refetch with the restored session
+      queryClient.invalidateQueries({ queryKey: ["/api/view", submissionId] });
     }
-  }, []);
+  }, [queryClient, submissionId]);
 
   const { data: submission, isLoading } = useQuery<SubmissionWithRelations>({
     queryKey: ["/api/view", submissionId],
