@@ -351,8 +351,7 @@ export class NotificationService {
       `
     };
 
-    // Send to Zapier webhook
-    await this.sendToZapier(emailData);
+    await this.sendEmail(emailData);
   }
 }
 
