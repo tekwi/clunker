@@ -291,12 +291,22 @@ export default function ViewSubmission() {
       <header className="bg-primary-700 text-white shadow-lg">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <a href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
               <i className="fas fa-car text-2xl"></i>
               <h1 className="text-xl font-semibold">Car Cash Offer</h1>
-            </div>
+            </a>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.href = '/'}
+                  className="text-primary border-white hover:bg-white hover:text-primary-700"
+                  data-testid="button-add-new-vehicle"
+                >
+                  <i className="fas fa-plus mr-2"></i>
+                  Add New Vehicle
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
