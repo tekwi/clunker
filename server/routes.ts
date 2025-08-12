@@ -13,16 +13,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/submit", async (req, res) => {
     try {
       const validatedData = insertSubmissionSchema.parse(req.body);
-      
+
       // Create submission
       const submission = await storage.createSubmission(validatedData);
-      
+
       // TODO: Send email notification with unique link
       // In production, integrate with email service API
       console.log(`Submission created: ${submission.id}`);
       console.log(`Send email to: ${submission.email}`);
       console.log(`Unique link: ${req.protocol}://${req.get('host')}/view/${submission.id}`);
-      
+
       res.json({
         submissionId: submission.id,
         message: "Submission created successfully"
@@ -44,11 +44,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { submissionId } = req.params;
       const submission = await storage.getSubmission(submissionId);
-      
+
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
-      
+
       res.json(submission);
     } catch (error) {
       console.error("Error fetching submission:", error);
@@ -61,26 +61,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { submissionId } = req.params;
       const { offerPrice, notes } = req.body;
-      
+
       const validatedOffer = insertOfferSchema.parse({
         submissionId,
         offerPrice: parseFloat(offerPrice),
         notes
       });
-      
+
       // Check if submission exists
       const submission = await storage.getSubmission(submissionId);
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
-      
+
       // Create offer
       const offer = await storage.createOffer(validatedOffer);
-      
+
       // TODO: Send offer notification email
       console.log(`Offer created for submission: ${submissionId}`);
       console.log(`Send offer notification to: ${submission.email}`);
-      
+
       res.json({
         offer,
         message: "Offer created successfully"
@@ -127,25 +127,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { submissionId } = req.params;
       const { photoUrls } = req.body;
-      
+
       if (!Array.isArray(photoUrls) || photoUrls.length === 0) {
         return res.status(400).json({ error: "photoUrls array is required" });
       }
-      
+
       // Verify submission exists
       const submission = await storage.getSubmission(submissionId);
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
-      
+
       // Normalize URLs and create picture records
       const pictureData = photoUrls.map(url => ({
         submissionId,
         url: objectStorageService.normalizeObjectEntityPath(url)
       }));
-      
+
       const pictures = await storage.addPictures(pictureData);
-      
+
       res.json({
         pictures,
         message: "Photos added successfully"

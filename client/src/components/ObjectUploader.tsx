@@ -16,6 +16,36 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const uploadFile = async (file: File): Promise<string> => {
+    try {
+      // Get S3 upload URL from server
+      const response = await fetch(`/api/upload-url?contentType=${encodeURIComponent(file.type)}`);
+      if (!response.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { uploadUrl, photoUrl } = await response.json();
+
+      // Upload file to S3
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type || 'image/jpeg'
+        }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file to S3');
+      }
+
+      return photoUrl; // Return the permanent S3 URL
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
   const startCamera = async () => {
     try {
       setError(null);
@@ -51,7 +81,7 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
     setIsCapturing(false);
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
@@ -64,27 +94,36 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
         ctx.drawImage(video, 0, 0);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
-        const newPhotos = [...photos, dataUrl];
-        onPhotosChange(newPhotos);
+        // Convert data URL to a File object
+        const blob = await fetch(dataUrl).then(res => res.blob());
+        const file = new File([blob], 'photo.jpeg', { type: 'image/jpeg' });
 
-        stopCamera();
+        try {
+          const uploadedUrl = await uploadFile(file);
+          const newPhotos = [...photos, uploadedUrl];
+          onPhotosChange(newPhotos);
+          stopCamera();
+        } catch (err) {
+          setError('Failed to upload photo. Please try again.');
+          console.error('Capture and upload error:', err);
+        }
       }
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          const newPhotos = [...photos, e.target.result as string];
-          onPhotosChange(newPhotos);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of files) {
+      try {
+        const uploadedUrl = await uploadFile(file);
+        const newPhotos = [...photos, uploadedUrl];
+        onPhotosChange(newPhotos);
+      } catch (err) {
+        setError(`Failed to upload ${file.name}. Please try again.`);
+        console.error('File upload error:', err);
+      }
+    }
   };
 
   const removePhoto = (index: number) => {
