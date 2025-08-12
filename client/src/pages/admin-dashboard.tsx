@@ -46,8 +46,9 @@ export default function AdminDashboard() {
 
   const apiRequest = async (method: string, url: string, data?: any) => {
     const headers: any = { "Content-Type": "application/json" };
-    if (sessionId) {
-      headers.Authorization = `Bearer ${sessionId}`;
+    const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
+    if (currentSessionId) {
+      headers.Authorization = `Bearer ${currentSessionId}`;
     }
 
     const response = await fetch(url, {
@@ -90,10 +91,33 @@ export default function AdminDashboard() {
   const { data: offers = [], refetch } = useQuery({
     queryKey: ["admin-offers"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/admin/offers");
+      const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
+      const headers: any = { "Content-Type": "application/json" };
+      if (currentSessionId) {
+        headers.Authorization = `Bearer ${currentSessionId}`;
+      }
+      
+      const response = await fetch("/api/admin/offers", {
+        method: "GET",
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       return response.json();
     },
     enabled: isAuthenticated,
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors
+      if (error.message.includes('401')) {
+        setIsAuthenticated(false);
+        setSessionId(null);
+        localStorage.removeItem("adminSessionId");
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   const updateOfferMutation = useMutation({
