@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -226,14 +225,14 @@ export function MultiStepForm() {
       const { photos, ...submissionData } = data;
       const response = await apiRequest("POST", "/api/submissions", submissionData);
       const result = await response.json();
-      
+
       // Then submit photos if any
       if (photos.length > 0) {
         await apiRequest("POST", `/api/submissions/${result.submissionId}/photos`, {
           photoUrls: photos
         });
       }
-      
+
       return result;
     },
     onSuccess: (data) => {
@@ -393,8 +392,8 @@ export function MultiStepForm() {
       case "title-condition":
         return (
           <div className="space-y-4">
-            <Select 
-              value={getFieldValue("titleCondition")} 
+            <Select
+              value={getFieldValue("titleCondition")}
               onValueChange={(value) => updateField("titleCondition", value)}
             >
               <SelectTrigger className="text-lg p-4 h-14">
@@ -414,8 +413,8 @@ export function MultiStepForm() {
       case "vehicle-condition":
         return (
           <div className="space-y-4">
-            <Select 
-              value={getFieldValue("vehicleCondition")} 
+            <Select
+              value={getFieldValue("vehicleCondition")}
               onValueChange={(value) => updateField("vehicleCondition", value)}
             >
               <SelectTrigger className="text-lg p-4 h-14">
@@ -583,7 +582,7 @@ export function MultiStepForm() {
           <div className="mb-8">
             <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
