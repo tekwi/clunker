@@ -1,0 +1,50 @@
+Executive Summary
+
+Company Overview
+
+DockChron is an AI-enabled Software as a Service (SaaS) tool designed to automate the recovery of trucking fees using telematics and operational data. We leverage advanced AI agents to optimize fee collection processes for trucking companies.
+
+Market Opportunity
+Total Addressable Market (TAM): $32 billion annually
+Serviceable Available Market (SAM): $4.7 billion annually
+Serviceable Obtainable Market (SOM): $341 million annually
+(Assumptions: 25,000 fleet locations x $13,656 Average Revenue per Account)
+
+The Problem
+Trucking companies lose billions each year due to uncollected accessorial fees. An estimated $11 billion is lost annually due to detention-related (one of the accessorial fees) productivity and safety events. Efficient tracking and documentation are significant challenges, with:
+50% of detention claims are unpaid.
+70% of fleets not consistently invoicing detention fees.
+
+Business Model
+Our revenue model includes subscription tiers for fleets:
+WIN: $999/month + 4% of recovered revenue for 200+ trucks.
+GROW: $499/month + 4% for 50+ trucks.
+START: $299/month + 4% for 10-50 trucks.
+
+Go-To-Market Strategy
+Leverage existing connections in the fleet industry.
+Launch campaigns for lead generation.
+Soft launch product in September 2025, with ongoing marketing and partnerships to expand services.
+
+Our Growth Engine
+DockChron’s growth strategy leverages industry partnerships, targeted marketing campaigns, and valuable user feedback to iterate on product features. Our growth trajectory will focus on:
+Expanding our user base through referral programs and success stories.
+Enhancing product visibility via industry events and targeted online advertising.
+Building strategic relationships with telematics and TMS providers and transportation associations to create a network effect.
+
+Our Defensible Moat
+DockChron is uniquely positioned in the market with several defensive barriers to entry, including:
+Proprietary Technology: Our AI-driven algorithms for fee recovery provide a competitive edge.
+Data Network Effects: As more users tap into our system, we gain valuable insights and data that improve our service and create high barriers for competitors.
+Customer Loyalty: By delivering consistent value and improving fee collection processes, we build long-term relationships with customers that are hard for new entrants to disrupt.
+
+
+Milestones
+Achieved MVP launch with strong user demand.
+Targets: 1000 paid users and $1.5 million ARR within the next 12 months.
+Plans to integrate more Electronic Logging Device (ELD) vendors and expand features.
+
+Conclusion
+
+Invest in DockChron to access an AI tool providing instant ROI for trucking companies. Our solution addresses critical revenue losses, harnesses cutting-edge AI, and meets evolving regulations.
+

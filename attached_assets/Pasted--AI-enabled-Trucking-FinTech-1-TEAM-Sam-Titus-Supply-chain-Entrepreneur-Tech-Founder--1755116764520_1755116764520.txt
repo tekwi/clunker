@@ -1,0 +1,133 @@
+   AI-enabled Trucking FinTech
+ 1
+
+  TEAM
+        Sam Titus
+Supply chain Entrepreneur, Tech Founder
+Ex-HP Ex-Nike
+D.J. Crandall
+Product, Data,
+& Supply Chain Leader
+Ex-Amazon Ex-Nike
+Chacko Poothicote
+Connected Devices/ Telematics Expert
+Ex-Ford Ex-Carrier Global
+Desiree Titus
+Supply chain Entrepreneur, Marketing Expert
+Ex-Home Depot Supplier
+                                
+  Trucking companies lose billions each year to uncollected fees —and most of them don’t know the full scale of it.
+    3
+
+ THE PROBLEM
+Fleets are Bleeding Money Due to uncollected Accessorial Fees
+X
+Missed Delivery
+School
+Impacts
+             Delay
+Delay
+Missed Shipments
+Safety Risks
+Damaged Partnerships
+           Fleet Manager
+Construction Site
+Shipper Warehouse
+   An estimated $11 billion dollars is lost annually due to just detention related productivity and safety events
+    4
+
+ ANCILLARY FEES ARE RARELY COLLECTED
+      Hard to Track
+50% of Detention claims are
+unpaid due to inefficient tracking and documentation
+Billed Inconsistently 70% of fleets do not consistently
+invoice detention fees
+Time Consuming
+Tracking details, disputing claims, and chasing payments can outweigh the cost of the ancillary fees
+      5
+
+ OUR SOLUTION
+DockChron is a AI-enabled SaaS tool for automating trucking fee
+recovery using telematics and operational data 6
+      
+ And yes, we use AI agents
+  7
+
+ BUSINESS MODEL
+SaaS with Subscription Tiers
+$999/mo. per fleet
++ 4% of recovered revenue
+$499/mo. per fleet
++ 4% of recovered revenue
+$299/mo. per fleet
++ 4% of recovered revenue
+     WIN
+200+ trucks
+GROW
+(Basic & predictive analytics: dock score, benchmarking, port demurrage, AI assists, etc. 50+ trucks.)
+START
+(Automatic tracking, invoicing and billing 10-50 trucks))
+      8
+
+   MARKET
+OPPORTUNITY (Revenue Potential)
+$32 BILLION
+ANNUALLY (TAM)
+$4.7 BILLION
+ANNUALLY (SAM)
+    Total Available Market (TAM):
+Serviceable Available Market (SAM):
+$32 BILLION
+$4.7 BILLION
+$341 MILLION
+ANNUALLY (SOM)
+        Serviceable Obtainable Market (SOM)
+ $341 MILLION Assumptions: 25,000 fleet locations x $13,656 ARR = $341M
+9
+   
+  Go-To-Market Strategy
+  +10 Ancillary Fee Agents
+ELD Partnership Launches
++10 Ancillary Fee Agents
+Ideal Customer Profile (ICP)
+Fleet Managers in Medium to Large Trucking Companies
+     +5 Ancillary Fee Agents
+  Current Strategy
+● Reach out to existing warm connections in the fleet industry
+● Run outbound lead generation campaigns
+● Onboard pilot customers: 2 onboarded, 8 in pipeline for August 2025
+● Soft launch product in September 2025 with press and media coverage
+  Future Strategy
+ ● Expand our offering to other ancillary fees and into ports, railyards and international markets
+● Run targeted digital marketing campaigns
+● Partner and Integrate with TMS, WMS, YMS & TOS vendors
+● Establish channel sales & affiliate marketing partnerships 10
+   
+  WHY NOW?
+Fleets are motivated.. With fuel, labor, and equipment expenses climbing, margins are thin and uncollected ancillary fees are an increasingly painful loss.
+Consistent data and AI are available. Advances in AI models and legally required electronic logging devices (ELDs) provide consistent data and capabilities to predict, track and collect ancillary fees.
+Regulations are becoming more stringent. New regulations are requiring greater transparency & accountability in supply chain operations.
+         11
+
+  MILESTONES
+  Accomplished
+Launched MVP
+Pilot users
+Strong demand generation Excellent founding team
+Next 12 Months
+- 1000 paid users
+- $1.5M ARR
+- Add other ancillary fees, AI agents for
+fee recovery, port storage &
+demurrage features
+- Integrate 10 more ELD vendors
+- Partner with TMS, YMS & TOS systems
+           12
+
+  Conclusion
+Invest in an AI tool with
+instant ROI for trucking companies
+     13
+
+   AI-enabled Trucking FinTech
+ 14
