@@ -250,6 +250,33 @@ export default function ViewSubmission() {
     },
   });
 
+  const rejectOfferMutation = useMutation({
+    mutationFn: async (offerId: string) => {
+      const response = await fetch(`/api/offers/${offerId}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to reject offer");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Offer Rejected",
+        description: "The offer has been rejected. Thank you for your consideration.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/view", submissionId] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Reject Offer",
+        description: "Something went wrong. Please try again or contact support.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAdminModeToggle = () => {
     if (!isAuthenticated) {
       setShowLoginDialog(true);
@@ -766,6 +793,21 @@ export default function ViewSubmission() {
                                 </>
                               ) : (
                                 "Accept Offer"
+                              )}
+                            </Button>
+                            <Button 
+                              className="w-full bg-red-600 text-white hover:bg-red-700" 
+                              data-testid="button-reject-offer"
+                              onClick={() => submission.offer && rejectOfferMutation.mutate(submission.offer.id)}
+                              disabled={rejectOfferMutation.isPending}
+                            >
+                              {rejectOfferMutation.isPending ? (
+                                <>
+                                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                                  Rejecting...
+                                </>
+                              ) : (
+                                "Reject Offer"
                               )}
                             </Button>
                           </div>

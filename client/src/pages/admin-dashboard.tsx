@@ -357,7 +357,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-primary">{stats.totalSubmissions}</div>
@@ -380,6 +380,12 @@ export default function AdminDashboard() {
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-green-600">{stats.acceptedOffers}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Accepted Offers</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-red-600">{stats.rejectedOffers}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Rejected Offers</p>
             </CardContent>
           </Card>
         </div>

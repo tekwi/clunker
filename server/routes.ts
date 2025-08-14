@@ -244,6 +244,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reject offer
+  app.post("/api/offers/:offerId/reject", async (req, res) => {
+    try {
+      const { offerId } = req.params;
+      
+      const updatedOffer = await storage.updateOffer(offerId, {
+        status: "rejected"
+      });
+
+      if (!updatedOffer) {
+        return res.status(404).json({ error: "Offer not found" });
+      }
+
+      // Send notification
+      try {
+        const submission = await storage.getSubmissionByOfferId(offerId);
+        if (submission) {
+          await notificationService.sendOfferStatusUpdate(submission, updatedOffer, "rejected");
+        }
+      } catch (error) {
+        console.error('Failed to send rejection notification:', error);
+      }
+
+      res.json({ 
+        message: "Offer rejected successfully",
+        offer: updatedOffer 
+      });
+    } catch (error) {
+      console.error("Error rejecting offer:", error);
+      res.status(500).json({ error: "Failed to reject offer" });
+    }
+  });
+
   // Create offer for submission
   app.post("/api/offer/:submissionId", async (req, res) => {
     try {
