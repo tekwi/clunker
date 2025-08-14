@@ -169,11 +169,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create submission
       const submission = await storage.createSubmission(validatedData);
 
-      // Send email notification via Zapier webhook
+      // Send email notifications via Zapier webhook
       try {
         await notificationService.sendSubmissionConfirmation(submission);
       } catch (error) {
         console.error('Failed to send submission confirmation email:', error);
+        // Continue processing even if email fails
+      }
+
+      // Send admin notification email
+      try {
+        await notificationService.sendAdminSubmissionNotification(submission);
+      } catch (error) {
+        console.error('Failed to send admin notification email:', error);
         // Continue processing even if email fails
       }
 

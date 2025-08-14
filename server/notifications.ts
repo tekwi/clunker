@@ -234,6 +234,116 @@ export class NotificationService {
     });
   }
 
+  async sendAdminSubmissionNotification(submission: any): Promise<void> {
+    const subject = 'New Vehicle Submission Received - Admin Alert';
+    const viewUrl = `https://trackwala.com/view/${submission.id}`;
+    const body = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Vehicle Submission</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, hsl(220, 83%, 53%) 0%, hsl(220, 83%, 43%) 100%); padding: 40px 32px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">🚗 New Submission Alert</h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 16px;">A new vehicle submission has been received</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 40px 32px;">
+            <h2 style="color: #1e293b; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">New Vehicle Submission</h2>
+
+            <p style="color: #475569; line-height: 1.6; margin: 0 0 24px 0; font-size: 16px;">
+                A new vehicle submission has been received and is ready for review. Here are the details:
+            </p>
+
+            <!-- Submission Details Card -->
+            <div style="background-color: #f1f5f9; border-radius: 8px; padding: 24px; margin: 24px 0; border-left: 4px solid hsl(220, 83%, 53%);">
+                <h3 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Submission Details</h3>
+                <div style="display: grid; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Owner Name:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${submission.ownerName}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Email:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${submission.email}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Phone:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${submission.phoneNumber}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Vehicle VIN:</span>
+                        <span style="color: #1e293b; font-family: monospace; font-weight: 600;">${submission.vin}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Title Condition:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${submission.titleCondition}</span>
+                    </div>
+                    ${submission.vehicleCondition ? `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Vehicle Condition:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${submission.vehicleCondition}</span>
+                    </div>
+                    ` : ''}
+                    ${submission.odometer ? `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Odometer:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${submission.odometer.toLocaleString()} miles</span>
+                    </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                        <span style="color: #64748b; font-weight: 500;">Submission ID:</span>
+                        <span style="color: #1e293b; font-family: monospace; font-weight: 600;">${submission.id}</span>
+                    </div>
+                </div>
+            </div>
+
+            <p style="color: #475569; line-height: 1.6; margin: 24px 0; font-size: 16px;">
+                This submission is now available for review in the admin dashboard. You can create and send an offer to the customer.
+            </p>
+
+            <!-- Call to Action Button -->
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${viewUrl}" style="display: inline-block; background: linear-gradient(135deg, hsl(220, 83%, 53%) 0%, hsl(220, 83%, 43%) 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;">
+                    Review Submission
+                </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 24px 0 0 0; text-align: center;">
+                View the submission details at:<br>
+                <a href="${viewUrl}" style="color: hsl(220, 83%, 53%); text-decoration: none;">${viewUrl}</a>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #64748b; margin: 0; font-size: 14px;">
+                Admin Notification<br>
+                <strong style="color: #1e293b;">Car Cash Offer System</strong>
+            </p>
+            <p style="color: #94a3b8; margin: 16px 0 0 0; font-size: 12px;">
+                This notification was sent to the admin team for new submission alerts.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `.trim();
+
+    await this.sendEmail({
+      to: 'samvtitus@gmail.com',
+      name: 'Sam Titus',
+      subject,
+      body,
+    });
+  }
+
   async sendOfferStatusUpdate(submission: any, offer: any, status: string) {
     const isAccepted = status === 'accepted';
     const statusText = isAccepted ? 'Accepted' : 'Rejected';
