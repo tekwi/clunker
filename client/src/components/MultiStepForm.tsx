@@ -223,7 +223,17 @@ export function MultiStepForm() {
     mutationFn: async (data: SubmissionForm & { photos: string[] }) => {
       // First submit the main form data
       const { photos, ...submissionData } = data;
-      const response = await apiRequest("POST", "/api/submissions", submissionData);
+      
+      // Check for affiliate code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const affiliateCode = urlParams.get('ref');
+      
+      const finalData = {
+        ...submissionData,
+        affiliateCode: affiliateCode || undefined
+      };
+      
+      const response = await apiRequest("POST", "/api/submissions", finalData);
       const result = await response.json();
 
       // Then submit photos if any

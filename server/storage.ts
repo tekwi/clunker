@@ -3,12 +3,18 @@ import {
   pictures,
   offers,
   adminUsers,
+  affiliates,
+  affiliateSubmissions,
   type Submission,
   type Picture,
   type Offer,
+  type Affiliate,
+  type AffiliateSubmission,
   type InsertSubmission,
   type InsertPicture,
   type InsertOffer,
+  type InsertAffiliate,
+  type InsertAffiliateSubmission,
   type SubmissionWithRelations,
   type AdminLogin
 } from "@shared/schema";
@@ -51,6 +57,18 @@ export interface IStorage {
   >;
   updateOffer(offerId: string, updates: Partial<InsertOffer>): Promise<Offer | undefined>;
   deleteOffer(offerId: string): Promise<void>;
+
+  // Affiliates
+  createAffiliate(affiliate: InsertAffiliate): Promise<Affiliate>;
+  getAllAffiliates(): Promise<Affiliate[]>;
+  getAffiliateByCode(code: string): Promise<Affiliate | undefined>;
+  updateAffiliate(affiliateId: string, updates: Partial<InsertAffiliate>): Promise<Affiliate | undefined>;
+  deleteAffiliate(affiliateId: string): Promise<void>;
+  
+  // Affiliate Submissions
+  createAffiliateSubmission(affiliateSubmission: InsertAffiliateSubmission): Promise<AffiliateSubmission>;
+  getAffiliateSubmissions(affiliateId: string): Promise<AffiliateSubmission[]>;
+  updateCommissionStatus(submissionId: string, status: string, commissionAmount?: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -312,6 +330,109 @@ export class DatabaseStorage implements IStorage {
       .from(offers)
       .where(eq(offers.submissionId, submissionId));
     return offer || undefined;
+  }
+
+  // Affiliate methods
+  async createAffiliate(insertAffiliate: InsertAffiliate): Promise<Affiliate> {
+    const affiliateId = randomUUID();
+    const uniqueCode = Math.random().toString(36).substring(2, 12).toUpperCase();
+
+    await db
+      .insert(affiliates)
+      .values({
+        ...insertAffiliate,
+        id: affiliateId,
+        uniqueCode,
+      });
+
+    const affiliate = await db
+      .select()
+      .from(affiliates)
+      .where(eq(affiliates.id, affiliateId))
+      .limit(1);
+
+    if (!affiliate[0]) {
+      throw new Error('Failed to retrieve created affiliate');
+    }
+
+    return affiliate[0];
+  }
+
+  async getAllAffiliates(): Promise<Affiliate[]> {
+    return await db
+      .select()
+      .from(affiliates)
+      .orderBy(desc(affiliates.createdAt));
+  }
+
+  async getAffiliateByCode(code: string): Promise<Affiliate | undefined> {
+    const [affiliate] = await db
+      .select()
+      .from(affiliates)
+      .where(eq(affiliates.uniqueCode, code))
+      .limit(1);
+    return affiliate || undefined;
+  }
+
+  async updateAffiliate(affiliateId: string, updates: any): Promise<Affiliate | undefined> {
+    await db
+      .update(affiliates)
+      .set(updates)
+      .where(eq(affiliates.id, affiliateId));
+
+    const updatedAffiliate = await db
+      .select()
+      .from(affiliates)
+      .where(eq(affiliates.id, affiliateId))
+      .limit(1)
+      .then(rows => rows[0]);
+
+    return updatedAffiliate;
+  }
+
+  async deleteAffiliate(affiliateId: string): Promise<void> {
+    await db
+      .delete(affiliates)
+      .where(eq(affiliates.id, affiliateId));
+  }
+
+  async createAffiliateSubmission(insertAffiliateSubmission: InsertAffiliateSubmission): Promise<AffiliateSubmission> {
+    const affiliateSubmissionId = randomUUID();
+
+    await db
+      .insert(affiliateSubmissions)
+      .values({
+        ...insertAffiliateSubmission,
+        id: affiliateSubmissionId,
+      });
+
+    const affiliateSubmission = await db
+      .select()
+      .from(affiliateSubmissions)
+      .where(eq(affiliateSubmissions.id, affiliateSubmissionId))
+      .then(rows => rows[0]);
+
+    return affiliateSubmission;
+  }
+
+  async getAffiliateSubmissions(affiliateId: string): Promise<AffiliateSubmission[]> {
+    return await db
+      .select()
+      .from(affiliateSubmissions)
+      .where(eq(affiliateSubmissions.affiliateId, affiliateId))
+      .orderBy(desc(affiliateSubmissions.createdAt));
+  }
+
+  async updateCommissionStatus(submissionId: string, status: string, commissionAmount?: string): Promise<void> {
+    const updates: any = { status };
+    if (commissionAmount) {
+      updates.commissionAmount = commissionAmount;
+    }
+
+    await db
+      .update(affiliateSubmissions)
+      .set(updates)
+      .where(eq(affiliateSubmissions.submissionId, submissionId));
   }
 }
 

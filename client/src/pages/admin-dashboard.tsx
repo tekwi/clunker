@@ -9,6 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Form, FormItem, FormLabel, FormControl, FormField } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface AdminOffer {
   id: string;
@@ -49,13 +54,41 @@ interface Submission {
   };
 }
 
+interface Affiliate {
+  id: string;
+  name: string;
+  email: string;
+  uniqueCode: string;
+  commissionRate: string;
+  isActive: string;
+  createdAt: string;
+}
+
+const affiliateFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  commissionRate: z.string().min(1, "Commission rate is required"),
+});
+
 export default function AdminDashboard() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editingOffer, setEditingOffer] = useState<AdminOffer | null>(null);
   const [editForm, setEditForm] = useState({ offerPrice: "", notes: "" });
+  const [activeTab, setActiveTab] = useState<"offers" | "submissions" | "affiliates">("offers");
   const queryClient = useQueryClient();
+
+  const form = useForm<z.infer<typeof affiliateFormSchema>>({
+    resolver: zodResolver(affiliateFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      commissionRate: "",
+    },
+  });
 
   useEffect(() => {
     const savedSessionId = localStorage.getItem("adminSessionId");
@@ -79,6 +112,12 @@ export default function AdminDashboard() {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        setIsAuthenticated(false);
+        setSessionId(null);
+        localStorage.removeItem("adminSessionId");
+        toast({ title: "Session Expired", description: "Please log in again.", variant: "destructive" });
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response;
@@ -109,7 +148,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: offers = [], refetch: refetchOffers } = useQuery({
+  const { data: offers = [], refetch: refetchOffers } = useQuery<AdminOffer[]>({
     queryKey: ["admin-offers"],
     queryFn: async () => {
       const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
@@ -129,8 +168,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     enabled: isAuthenticated,
-    retry: (failureCount, error) => {
-      // Don't retry on auth errors
+    retry: (failureCount, error: any) => {
       if (error.message.includes('401') || error.message.includes('Authentication required')) {
         setIsAuthenticated(false);
         setSessionId(null);
@@ -141,7 +179,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: submissions = [], refetch: refetchSubmissions } = useQuery({
+  const { data: submissions = [], refetch: refetchSubmissions } = useQuery<Submission[]>({
     queryKey: ["admin-submissions"],
     queryFn: async () => {
       const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
@@ -161,8 +199,38 @@ export default function AdminDashboard() {
       return response.json();
     },
     enabled: isAuthenticated,
-    retry: (failureCount, error) => {
-      // Don't retry on auth errors
+    retry: (failureCount, error: any) => {
+      if (error.message.includes('401') || error.message.includes('Authentication required')) {
+        setIsAuthenticated(false);
+        setSessionId(null);
+        localStorage.removeItem("adminSessionId");
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
+  const { data: affiliates = [], refetch: refetchAffiliates } = useQuery<Affiliate[]>({
+    queryKey: ["admin-affiliates"],
+    queryFn: async () => {
+      const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
+      const headers: any = { "Content-Type": "application/json" };
+      if (currentSessionId) {
+        headers.Authorization = `Bearer ${currentSessionId}`;
+      }
+
+      const response = await fetch("/api/admin/affiliates", {
+        method: "GET",
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
+    enabled: isAuthenticated,
+    retry: (failureCount, error: any) => {
       if (error.message.includes('401') || error.message.includes('Authentication required')) {
         setIsAuthenticated(false);
         setSessionId(null);
@@ -222,15 +290,45 @@ export default function AdminDashboard() {
 
   const deleteOfferMutation = useMutation({
     mutationFn: async (offerId: string) => {
-      await apiRequest("DELETE", `/api/admin/offers/${offerId}`);
+      await apiRequest("DELETE", `/api/admin/offers/${offerId}`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
       queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
+      refetchOffers();
+      refetchSubmissions();
       toast({ title: "Success", description: "Offer deleted successfully" });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete offer", variant: "destructive" });
+    },
+  });
+
+  const createAffiliateMutation = useMutation({
+    mutationFn: async (affiliateData: any) => {
+      await apiRequest("POST", "/api/admin/affiliates", affiliateData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-affiliates"] });
+      refetchAffiliates();
+      toast({ title: "Success", description: "Affiliate created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create affiliate", variant: "destructive" });
+    },
+  });
+
+  const updateAffiliateMutation = useMutation({
+    mutationFn: async ({ affiliateId, data }: { affiliateId: string; data: any }) => {
+      await apiRequest("PUT", `/api/admin/affiliates/${affiliateId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-affiliates"] });
+      refetchAffiliates();
+      toast({ title: "Success", description: "Affiliate updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update affiliate", variant: "destructive" });
     },
   });
 
@@ -332,6 +430,7 @@ export default function AdminDashboard() {
     );
   }
 
+  // Calculate stats
   const stats = {
     totalSubmissions: submissions.length,
     submissionsWithOffers: submissions.filter((s: Submission) => s.offer).length,
@@ -340,6 +439,8 @@ export default function AdminDashboard() {
     pendingOffers: offers.filter((o: AdminOffer) => o.status === "pending").length,
     acceptedOffers: offers.filter((o: AdminOffer) => o.status === "accepted").length,
     rejectedOffers: offers.filter((o: AdminOffer) => o.status === "rejected").length,
+    totalAffiliates: affiliates.length,
+    activeAffiliates: affiliates.filter((a: Affiliate) => a.isActive === "true").length,
   };
 
   return (
@@ -394,208 +495,359 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Data Management</CardTitle>
+            <div className="flex space-x-2 mt-2">
+              <Button
+                variant={activeTab === "submissions" ? "default" : "outline"}
+                onClick={() => setActiveTab("submissions")}
+              >
+                Submissions ({stats.totalSubmissions})
+              </Button>
+              <Button
+                variant={activeTab === "offers" ? "default" : "outline"}
+                onClick={() => setActiveTab("offers")}
+              >
+                Offers ({stats.totalOffers})
+              </Button>
+              <Button
+                variant={activeTab === "affiliates" ? "default" : "outline"}
+                onClick={() => setActiveTab("affiliates")}
+              >
+                Affiliates ({stats.totalAffiliates})
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="submissions" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="submissions">
-                  All Submissions ({stats.totalSubmissions})
-                </TabsTrigger>
-                <TabsTrigger value="offers">
-                  All Offers ({stats.totalOffers})
-                </TabsTrigger>
-              </TabsList>
+            {activeTab === "submissions" && (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>VIN</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Title Condition</TableHead>
+                      <TableHead>Vehicle Condition</TableHead>
+                      <TableHead>Odometer</TableHead>
+                      <TableHead>Photos</TableHead>
+                      <TableHead>Offer Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {submissions.map((submission: Submission) => (
+                      <TableRow key={submission.id}>
+                        <TableCell className="font-mono text-sm">
+                          <button
+                            onClick={() => window.open(`/view/${submission.id}`, '_blank')}
+                            className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                            title="View submission details"
+                          >
+                            {submission.vin}
+                          </button>
+                        </TableCell>
+                        <TableCell>{submission.ownerName}</TableCell>
+                        <TableCell>{submission.email}</TableCell>
+                        <TableCell>{submission.phoneNumber}</TableCell>
+                        <TableCell>{submission.titleCondition}</TableCell>
+                        <TableCell>{submission.vehicleCondition || 'Not specified'}</TableCell>
+                        <TableCell>{submission.odometerReading || 'Not specified'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {submission.pictures.length} photos
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {submission.offer ? (
+                            <div className="space-y-1">
+                              {getStatusBadge(submission.offer.status)}
+                              <div className="text-sm font-semibold text-green-600">
+                                ${parseFloat(submission.offer.offerPrice).toLocaleString()}
+                              </div>
+                            </div>
+                          ) : (
+                            <Badge variant="secondary">No Offer</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {formatDate(submission.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(`/view/${submission.id}`, '_blank')}
+                          >
+                            View Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
 
-              <TabsContent value="submissions" className="mt-6">
-                <div className="overflow-x-auto">
+            {activeTab === "offers" && (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>VIN</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Offer Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {offers.map((offer: AdminOffer) => (
+                      <TableRow key={offer.id}>
+                        <TableCell className="font-mono text-sm">
+                          <button
+                            onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
+                            className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                            title="View submission details"
+                          >
+                            {offer.vin}
+                          </button>
+                        </TableCell>
+                        <TableCell>{offer.ownerName}</TableCell>
+                        <TableCell>{offer.email}</TableCell>
+                        <TableCell>{offer.phoneNumber}</TableCell>
+                        <TableCell className="font-semibold">
+                          ${parseFloat(offer.offerPrice).toLocaleString()}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(offer.status)}</TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {formatDate(offer.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            {offer.status === "pending" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => acceptOfferMutation.mutate(offer.id)}
+                                  disabled={acceptOfferMutation.isPending}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => rejectOfferMutation.mutate(offer.id)}
+                                  disabled={rejectOfferMutation.isPending}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditOffer(offer)}
+                                >
+                                  Edit
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Edit Offer</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <label className="text-sm font-medium">Offer Price</label>
+                                    <Input
+                                      type="number"
+                                      value={editForm.offerPrice}
+                                      onChange={(e) => setEditForm({ ...editForm, offerPrice: e.target.value })}
+                                      placeholder="Enter offer amount"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Notes</label>
+                                    <Textarea
+                                      value={editForm.notes}
+                                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                      placeholder="Add notes..."
+                                    />
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() => deleteOfferMutation.mutate(offer.id)}
+                                      disabled={deleteOfferMutation.isPending}
+                                    >
+                                      Delete Offer
+                                    </Button>
+                                    <Button
+                                      onClick={handleUpdateOffer}
+                                      disabled={updateOfferMutation.isPending}
+                                    >
+                                      Update Offer
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {activeTab === "affiliates" && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Affiliate Management</CardTitle>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <i className="fas fa-plus mr-2"></i>
+                        Add Affiliate
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New Affiliate</DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit((data) => createAffiliateMutation.mutate(data))}>
+                          <div className="space-y-4">
+                            <FormField
+                              control={form.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Name</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="Affiliate name" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Email</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} type="email" placeholder="affiliate@example.com" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="phone"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Phone</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="(555) 123-4567" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="commissionRate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Commission Rate</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="0.05" step="0.01" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button type="submit" className="w-full">
+                              Create Affiliate
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>VIN</TableHead>
-                        <TableHead>Owner</TableHead>
+                        <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Title Condition</TableHead>
-                        <TableHead>Vehicle Condition</TableHead>
-                        <TableHead>Odometer</TableHead>
-                        <TableHead>Photos</TableHead>
-                        <TableHead>Offer Status</TableHead>
-                        <TableHead>Created</TableHead>
+                        <TableHead>Unique Code</TableHead>
+                        <TableHead>Commission Rate</TableHead>
+                        <TableHead>Referral Link</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {submissions.map((submission: Submission) => (
-                        <TableRow key={submission.id}>
-                          <TableCell className="font-mono text-sm">
-                            <button
-                              onClick={() => window.open(`/view/${submission.id}`, '_blank')}
-                              className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                              title="View submission details"
-                            >
-                              {submission.vin}
-                            </button>
-                          </TableCell>
-                          <TableCell>{submission.ownerName}</TableCell>
-                          <TableCell>{submission.email}</TableCell>
-                          <TableCell>{submission.phoneNumber}</TableCell>
-                          <TableCell>{submission.titleCondition}</TableCell>
-                          <TableCell>{submission.vehicleCondition || 'Not specified'}</TableCell>
-                          <TableCell>{submission.odometerReading || 'Not specified'}</TableCell>
+                      {affiliates.map((affiliate: Affiliate) => (
+                        <TableRow key={affiliate.id}>
+                          <TableCell>{affiliate.name}</TableCell>
+                          <TableCell>{affiliate.email}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">
-                              {submission.pictures.length} photos
+                            <Badge variant="secondary">{affiliate.uniqueCode}</Badge>
+                          </TableCell>
+                          <TableCell>{(parseFloat(affiliate.commissionRate) * 100).toFixed(2)}%</TableCell>
+                          <TableCell>
+                            <code className="text-xs bg-gray-100 p-1 rounded">
+                              {window.location.origin}/ref/{affiliate.uniqueCode}
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={affiliate.isActive === "true" ? "default" : "destructive"}>
+                              {affiliate.isActive === "true" ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {submission.offer ? (
-                              <div className="space-y-1">
-                                {getStatusBadge(submission.offer.status)}
-                                <div className="text-sm font-semibold text-green-600">
-                                  ${parseFloat(submission.offer.offerPrice).toLocaleString()}
-                                </div>
-                              </div>
-                            ) : (
-                              <Badge variant="secondary">No Offer</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-gray-600">
-                            {formatDate(submission.createdAt)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => window.open(`/view/${submission.id}`, '_blank')}
-                            >
-                              View Details
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="offers" className="mt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>VIN</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Offer Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {offers.map((offer: AdminOffer) => (
-                        <TableRow key={offer.id}>
-                          <TableCell className="font-mono text-sm">
-                            <button
-                              onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
-                              className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                              title="View submission details"
-                            >
-                              {offer.vin}
-                            </button>
-                          </TableCell>
-                          <TableCell>{offer.ownerName}</TableCell>
-                          <TableCell>{offer.email}</TableCell>
-                          <TableCell>{offer.phoneNumber}</TableCell>
-                          <TableCell className="font-semibold">
-                            ${parseFloat(offer.offerPrice).toLocaleString()}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(offer.status)}</TableCell>
-                          <TableCell className="text-sm text-gray-600">
-                            {formatDate(offer.createdAt)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              {offer.status === "pending" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="default"
-                                    onClick={() => acceptOfferMutation.mutate(offer.id)}
-                                    disabled={acceptOfferMutation.isPending}
-                                  >
-                                    Accept
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => rejectOfferMutation.mutate(offer.id)}
-                                    disabled={rejectOfferMutation.isPending}
-                                  >
-                                    Reject
-                                  </Button>
-                                </>
-                              )}
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleEditOffer(offer)}
-                                  >
-                                    Edit
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Edit Offer</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div>
-                                      <label className="text-sm font-medium">Offer Price</label>
-                                      <Input
-                                        type="number"
-                                        value={editForm.offerPrice}
-                                        onChange={(e) => setEditForm({ ...editForm, offerPrice: e.target.value })}
-                                        placeholder="Enter offer amount"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium">Notes</label>
-                                      <Textarea
-                                        value={editForm.notes}
-                                        onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                                        placeholder="Add notes..."
-                                      />
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <Button
-                                        variant="destructive"
-                                        onClick={() => deleteOfferMutation.mutate(offer.id)}
-                                        disabled={deleteOfferMutation.isPending}
-                                      >
-                                        Delete Offer
-                                      </Button>
-                                      <Button
-                                        onClick={handleUpdateOffer}
-                                        disabled={updateOfferMutation.isPending}
-                                      >
-                                        Update Offer
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <i className="fas fa-ellipsis-h"></i>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => navigator.clipboard.writeText(`${window.location.origin}/ref/${affiliate.uniqueCode}`)}
+                                >
+                                  <i className="fas fa-copy mr-2"></i>
+                                  Copy Link
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => updateAffiliateMutation.mutate({
+                                    affiliateId: affiliate.id,
+                                    data: { isActive: affiliate.isActive === "true" ? "false" : "true" }
+                                  })}
+                                >
+                                  <i className={`fas ${affiliate.isActive === "true" ? "fa-pause" : "fa-play"} mr-2`}></i>
+                                  {affiliate.isActive === "true" ? "Deactivate" : "Activate"}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </div>
-              </TabsContent>
-            </Tabs>
+                </CardContent>
+              </Card>
+            )}
           </CardContent>
         </Card>
       </div>

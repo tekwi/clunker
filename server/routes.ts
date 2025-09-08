@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertSubmissionSchema, insertOfferSchema, adminLoginSchema } from "@shared/schema";
+import { insertSubmissionSchema, insertOfferSchema, adminLoginSchema, insertAffiliateSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { s3Storage } from "./s3Storage";
@@ -161,6 +161,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all affiliates (admin only)
+  app.get("/api/admin/affiliates", requireAuth, async (req, res) => {
+    try {
+      const affiliates = await storage.getAllAffiliates();
+      res.json(affiliates);
+    } catch (error) {
+      console.error("Error fetching affiliates:", error);
+      res.status(500).json({ error: "Failed to fetch affiliates" });
+    }
+  });
+
+  // Create affiliate (admin only)
+  app.post("/api/admin/affiliates", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertAffiliateSchema.parse(req.body);
+      const affiliate = await storage.createAffiliate(validatedData);
+      res.json({ affiliate, message: "Affiliate created successfully" });
+    } catch (error) {
+      console.error("Error creating affiliate:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation error", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: "Failed to create affiliate" });
+    }
+  });
+
+  // Update affiliate (admin only)
+  app.put("/api/admin/affiliates/:affiliateId", requireAuth, async (req, res) => {
+    try {
+      const { affiliateId } = req.params;
+      const { name, email, phone, commissionRate, isActive } = req.body;
+
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (email !== undefined) updates.email = email;
+      if (phone !== undefined) updates.phone = phone;
+      if (commissionRate !== undefined) updates.commissionRate = commissionRate;
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const affiliate = await storage.updateAffiliate(affiliateId, updates);
+      res.json({ affiliate, message: "Affiliate updated successfully" });
+    } catch (error) {
+      console.error("Error updating affiliate:", error);
+      res.status(500).json({ error: "Failed to update affiliate" });
+    }
+  });
+
+  // Delete affiliate (admin only)
+  app.delete("/api/admin/affiliates/:affiliateId", requireAuth, async (req, res) => {
+    try {
+      const { affiliateId } = req.params;
+      await storage.deleteAffiliate(affiliateId);
+      res.json({ message: "Affiliate deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting affiliate:", error);
+      res.status(500).json({ error: "Failed to delete affiliate" });
+    }
+  });
+
+  // Get affiliate submissions (admin only)
+  app.get("/api/admin/affiliates/:affiliateId/submissions", requireAuth, async (req, res) => {
+    try {
+      const { affiliateId } = req.params;
+      const submissions = await storage.getAffiliateSubmissions(affiliateId);
+      res.json(submissions);
+    } catch (error) {
+      console.error("Error fetching affiliate submissions:", error);
+      res.status(500).json({ error: "Failed to fetch affiliate submissions" });
+    }
+  });
+
   // Submit new car submission
   app.post("/api/submissions", async (req, res) => {
     try {
@@ -168,6 +242,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create submission
       const submission = await storage.createSubmission(validatedData);
+
+      // If submission has affiliate code, create affiliate submission tracking
+      if (submission.affiliateCode) {
+        try {
+          const affiliate = await storage.getAffiliateByCode(submission.affiliateCode);
+          if (affiliate) {
+            await storage.createAffiliateSubmission({
+              affiliateId: affiliate.id,
+              submissionId: submission.id,
+              status: "pending"
+            });
+          }
+        } catch (error) {
+          console.error('Failed to create affiliate submission tracking:', error);
+          // Continue processing even if affiliate tracking fails
+        }
+      }
 
       // Send email notifications via Zapier webhook
       try {
@@ -218,6 +309,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Affiliate landing page redirect
+  app.get("/ref/:affiliateCode", async (req, res) => {
+    try {
+      const { affiliateCode } = req.params;
+      
+      // Verify affiliate exists and is active
+      const affiliate = await storage.getAffiliateByCode(affiliateCode.toUpperCase());
+      
+      if (!affiliate || affiliate.isActive !== "true") {
+        return res.redirect("/");
+      }
+
+      // Redirect to home page with affiliate code in URL
+      res.redirect(`/?ref=${affiliateCode.toUpperCase()}`);
+    } catch (error) {
+      console.error("Error processing affiliate link:", error);
+      res.redirect("/");
+    }
+  });
+
   // Accept offer
   app.post("/api/offers/:offerId/accept", async (req, res) => {
     try {
@@ -230,6 +341,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!updatedOffer) {
         return res.status(404).json({ error: "Offer not found" });
+      }
+
+      // Handle affiliate commission calculation
+      try {
+        const submission = await storage.getSubmissionByOfferId(offerId);
+        if (submission && submission.affiliateCode) {
+          const affiliate = await storage.getAffiliateByCode(submission.affiliateCode);
+          if (affiliate) {
+            const commissionAmount = (parseFloat(updatedOffer.offerPrice) * parseFloat(affiliate.commissionRate)).toFixed(2);
+            await storage.updateCommissionStatus(submission.id, "earned", commissionAmount);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to calculate affiliate commission:', error);
       }
 
       // Send notification
