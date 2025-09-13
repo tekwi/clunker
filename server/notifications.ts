@@ -463,6 +463,246 @@ export class NotificationService {
 
     await this.sendEmail(emailData);
   }
+
+  async sendAdminAffiliateCreationNotification(affiliate: any): Promise<void> {
+    const subject = 'New Affiliate Created - Admin Alert';
+    const affiliateLink = `https://trackwala.com/ref/${affiliate.uniqueCode}`;
+    const body = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Affiliate Created</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, hsl(280, 70%, 50%) 0%, hsl(280, 70%, 40%) 100%); padding: 40px 32px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">🤝 New Affiliate Created</h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 16px;">A new affiliate has been added to the system</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 40px 32px;">
+            <h2 style="color: #1e293b; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">New Affiliate Details</h2>
+
+            <p style="color: #475569; line-height: 1.6; margin: 0 0 24px 0; font-size: 16px;">
+                A new affiliate has been successfully created and is ready to start referring customers.
+            </p>
+
+            <!-- Affiliate Details Card -->
+            <div style="background-color: #f1f5f9; border-radius: 8px; padding: 24px; margin: 24px 0; border-left: 4px solid hsl(280, 70%, 50%);">
+                <h3 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Affiliate Information</h3>
+                <div style="display: grid; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Name:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${affiliate.name}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Email:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${affiliate.email}</span>
+                    </div>
+                    ${affiliate.phone ? `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Phone:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${affiliate.phone}</span>
+                    </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Unique Code:</span>
+                        <span style="color: #1e293b; font-family: monospace; font-weight: 600;">${affiliate.uniqueCode}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                        <span style="color: #64748b; font-weight: 500;">Commission Rate:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${(parseFloat(affiliate.commissionRate) * 100).toFixed(2)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Link -->
+            <div style="background: linear-gradient(135deg, hsl(280, 70%, 50%) 0%, hsl(280, 70%, 40%) 100%); border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center; color: white;">
+                <h3 style="color: white; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Affiliate Referral Link</h3>
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px; margin: 16px 0; font-family: monospace; word-break: break-all; font-size: 14px; font-weight: 600;">
+                    ${affiliateLink}
+                </div>
+                <a href="${affiliateLink}" style="display: inline-block; background: rgba(255, 255, 255, 0.2); color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-top: 12px;">
+                    Test Link
+                </a>
+            </div>
+
+            <!-- Instructions -->
+            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0;">
+                <h4 style="color: #1e40af; margin: 0 0 12px 0;">How the Affiliate Link Works:</h4>
+                <ul style="color: #1e40af; margin: 0; padding-left: 20px; line-height: 1.6;">
+                    <li>When customers click the affiliate link, they're redirected to the main site with the affiliate code tracked</li>
+                    <li>If they submit a vehicle and the offer is accepted, the affiliate earns their commission</li>
+                    <li>Commission is calculated automatically based on the accepted offer amount</li>
+                    <li>The affiliate will receive login credentials to track their referrals and earnings</li>
+                </ul>
+            </div>
+
+            <p style="color: #475569; line-height: 1.6; margin: 24px 0 0 0; font-size: 16px;">
+                The affiliate has been sent their welcome email with login instructions and their referral link. You can manage this affiliate from the admin dashboard.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #64748b; margin: 0; font-size: 14px;">
+                Admin Notification<br>
+                <strong style="color: #1e293b;">Car Cash Offer System</strong>
+            </p>
+            <p style="color: #94a3b8; margin: 16px 0 0 0; font-size: 12px;">
+                This notification was sent to the admin team for affiliate management.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `.trim();
+
+    await this.sendEmail({
+      to: 'samvtitus@gmail.com',
+      name: 'Sam Titus',
+      subject,
+      body,
+    });
+  }
+
+  async sendAffiliateWelcomeEmail(affiliate: any): Promise<void> {
+    const subject = 'Welcome to the Affiliate Program - Your Account & Referral Link';
+    const affiliateLink = `https://trackwala.com/ref/${affiliate.uniqueCode}`;
+    const dashboardUrl = `https://trackwala.com/affiliate-dashboard?code=${affiliate.uniqueCode}`;
+    
+    const body = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Affiliate Program</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, hsl(145, 63%, 42%) 0%, hsl(145, 63%, 32%) 100%); padding: 40px 32px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">🎉 Welcome to the Team!</h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 16px;">Your affiliate account is ready</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 40px 32px;">
+            <h2 style="color: #1e293b; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">Hello ${affiliate.name}!</h2>
+
+            <p style="color: #475569; line-height: 1.6; margin: 0 0 24px 0; font-size: 16px;">
+                Welcome to the <strong style="color: hsl(145, 63%, 42%);">Car Cash Offer Affiliate Program</strong>! Your account has been created and you're ready to start earning commissions by referring customers to our vehicle buying service.
+            </p>
+
+            <!-- Account Details Card -->
+            <div style="background-color: #f1f5f9; border-radius: 8px; padding: 24px; margin: 24px 0; border-left: 4px solid hsl(145, 63%, 42%);">
+                <h3 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Your Account Details</h3>
+                <div style="display: grid; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Affiliate Code:</span>
+                        <span style="color: #1e293b; font-family: monospace; font-weight: 600;">${affiliate.uniqueCode}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-weight: 500;">Commission Rate:</span>
+                        <span style="color: #1e293b; font-weight: 600;">${(parseFloat(affiliate.commissionRate) * 100).toFixed(2)}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                        <span style="color: #64748b; font-weight: 500;">Account Status:</span>
+                        <span style="color: hsl(145, 63%, 42%); font-weight: 600;">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Link -->
+            <div style="background: linear-gradient(135deg, hsl(145, 63%, 42%) 0%, hsl(145, 63%, 32%) 100%); border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center; color: white;">
+                <h3 style="color: white; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">🔗 Your Unique Referral Link</h3>
+                <p style="color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; font-size: 14px;">Share this link to start earning commissions</p>
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px; margin: 16px 0; font-family: monospace; word-break: break-all; font-size: 14px; font-weight: 600;">
+                    ${affiliateLink}
+                </div>
+                <button onclick="navigator.clipboard.writeText('${affiliateLink}')" style="background: rgba(255, 255, 255, 0.2); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 12px;">
+                    📋 Copy Link
+                </button>
+            </div>
+
+            <!-- How it Works -->
+            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0;">
+                <h4 style="color: #1e40af; margin: 0 0 16px 0;">How the Affiliate Program Works:</h4>
+                <ol style="color: #1e40af; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li><strong>Share your link:</strong> Send your unique referral link to potential customers</li>
+                    <li><strong>Customer clicks:</strong> When they click your link, they're tracked as your referral</li>
+                    <li><strong>Customer submits vehicle:</strong> They fill out the vehicle submission form</li>
+                    <li><strong>Offer accepted:</strong> If our offer is accepted, you earn ${(parseFloat(affiliate.commissionRate) * 100).toFixed(2)}% commission</li>
+                    <li><strong>Get paid:</strong> Commission is tracked and paid out regularly</li>
+                </ol>
+            </div>
+
+            <!-- Track Your Success -->
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 24px 0;">
+                <h4 style="color: #92400e; margin: 0 0 12px 0;">Track Your Referrals & Earnings:</h4>
+                <p style="color: #92400e; margin: 0 0 16px 0; line-height: 1.6;">
+                    Access your affiliate dashboard to track referrals, view commission status, and monitor your earnings.
+                </p>
+                <a href="${dashboardUrl}" style="display: inline-block; background-color: #f59e0b; color: white; text-decoration: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                    Access Dashboard
+                </a>
+            </div>
+
+            <!-- Best Practices -->
+            <div style="margin: 32px 0;">
+                <h4 style="color: #1e293b; margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Tips for Success:</h4>
+                <ul style="color: #475569; margin: 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Target people looking to sell their vehicles quickly for cash</li>
+                    <li>Highlight our competitive offers and fast process</li>
+                    <li>Share on social media, with friends, family, and professional networks</li>
+                    <li>Focus on vehicles with clear titles for higher acceptance rates</li>
+                    <li>Be transparent that you'll earn a commission for successful referrals</li>
+                </ul>
+            </div>
+
+            <!-- Support -->
+            <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+                <h4 style="color: #1e293b; margin: 0 0 12px 0;">Need Help?</h4>
+                <p style="color: #64748b; margin: 0 0 16px 0; font-size: 14px;">
+                    Questions about the program? Need marketing materials? We're here to help you succeed.
+                </p>
+                <p style="color: #475569; margin: 0; font-weight: 600;">
+                    Contact: samvtitus@gmail.com
+                </p>
+            </div>
+
+            <p style="color: #475569; line-height: 1.6; margin: 32px 0 0 0; font-size: 16px;">
+                Thank you for joining our affiliate program! We're excited to work with you and help you earn great commissions.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #64748b; margin: 0; font-size: 14px;">
+                Best regards,<br>
+                <strong style="color: #1e293b;">Car Cash Offer Team</strong>
+            </p>
+            <p style="color: #94a3b8; margin: 16px 0 0 0; font-size: 12px;">
+                This email was sent to ${affiliate.email}. If you have any questions, please contact our support team.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `.trim();
+
+    await this.sendEmail({
+      to: affiliate.email,
+      name: affiliate.name,
+      subject,
+      body,
+    });
+  }
 }
 
 export const notificationService = new NotificationService();

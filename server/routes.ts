@@ -177,6 +177,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAffiliateSchema.parse(req.body);
       const affiliate = await storage.createAffiliate(validatedData);
+      
+      // Send email notifications
+      try {
+        await notificationService.sendAdminAffiliateCreationNotification(affiliate);
+      } catch (error) {
+        console.error('Failed to send admin affiliate notification:', error);
+      }
+
+      try {
+        await notificationService.sendAffiliateWelcomeEmail(affiliate);
+      } catch (error) {
+        console.error('Failed to send affiliate welcome email:', error);
+      }
+
       res.json({ affiliate, message: "Affiliate created successfully" });
     } catch (error) {
       console.error("Error creating affiliate:", error);
@@ -326,6 +340,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing affiliate link:", error);
       res.redirect("/");
+    }
+  });
+
+  // Affiliate dashboard - get affiliate info and submissions
+  app.get("/api/affiliate/:affiliateCode", async (req, res) => {
+    try {
+      const { affiliateCode } = req.params;
+      
+      // Get affiliate by code
+      const affiliate = await storage.getAffiliateByCode(affiliateCode.toUpperCase());
+      
+      if (!affiliate || affiliate.isActive !== "true") {
+        return res.status(404).json({ error: "Affiliate not found or inactive" });
+      }
+
+      // Get affiliate submissions
+      const submissions = await storage.getAffiliateSubmissions(affiliate.id);
+
+      res.json({
+        affiliate: {
+          name: affiliate.name,
+          email: affiliate.email,
+          uniqueCode: affiliate.uniqueCode,
+          commissionRate: affiliate.commissionRate,
+          totalEarnings: affiliate.totalEarnings
+        },
+        submissions
+      });
+    } catch (error) {
+      console.error("Error fetching affiliate dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch affiliate data" });
     }
   });
 
