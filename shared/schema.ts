@@ -59,6 +59,16 @@ export const affiliateSubmissions = mysqlTable("affiliate_submissions", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
+export const adminUsers = mysqlTable("admin_users", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  email: varchar("email", { length: 150 }),
+  isActive: varchar("is_active", { length: 5 }).default("true"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
 // Schema definitions
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
@@ -85,6 +95,11 @@ export const insertAffiliateSchema = createInsertSchema(affiliates).omit({
   updatedAt: true,
 });
 
+export const adminLoginSchema = createInsertSchema(adminUsers).pick({
+  username: true,
+  password: true,
+});
+
 // Type exports
 export type Submission = typeof submissions.$inferSelect;
 export type NewSubmission = typeof submissions.$inferInsert;
@@ -96,31 +111,23 @@ export type Affiliate = typeof affiliates.$inferSelect;
 export type NewAffiliate = typeof affiliates.$inferInsert;
 export type AffiliateSubmission = typeof affiliateSubmissions.$inferSelect;
 export type NewAffiliateSubmission = typeof affiliateSubmissions.$inferInsert;
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type NewAdminUser = typeof adminUsers.$inferInsert;
+
+// Additional type aliases for compatibility
+export type InsertSubmission = typeof submissions.$inferInsert;
+export type InsertPicture = typeof pictures.$inferInsert;
+export type InsertOffer = typeof offers.$inferInsert;
+export type InsertAffiliate = typeof affiliates.$inferInsert;
+export type InsertAffiliateSubmission = typeof affiliateSubmissions.$inferInsert;
+export type AdminLogin = typeof adminLoginSchema._type;
 
 export type SubmissionWithPictures = Submission & {
   pictures: Picture[];
   offer?: Offer;
 };
 
-// Relations - defined at end to avoid circular reference issues
-export const submissionsRelations = relations(submissions, ({ many, one }) => ({
-  pictures: many(pictures),
-  offer: one(offers),
-}));
-
-export const picturesRelations = relations(pictures, ({ one }) => ({
-  submission: one(submissions, { fields: [pictures.submissionId], references: [submissions.id] }),
-}));
-
-export const offersRelations = relations(offers, ({ one }) => ({
-  submission: one(submissions, { fields: [offers.submissionId], references: [submissions.id] }),
-}));
-
-export const affiliatesRelations = relations(affiliates, ({ many }) => ({
-  affiliateSubmissions: many(affiliateSubmissions),
-}));
-
-export const affiliateSubmissionsRelations = relations(affiliateSubmissions, ({ one }) => ({
-  affiliate: one(affiliates, { fields: [affiliateSubmissions.affiliateId], references: [affiliates.id] }),
-  submission: one(submissions, { fields: [affiliateSubmissions.submissionId], references: [submissions.id] }),
-}));
+export type SubmissionWithRelations = Submission & {
+  pictures: Picture[];
+  offer?: Offer;
+};
