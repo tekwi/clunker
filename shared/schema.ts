@@ -79,9 +79,8 @@ export const affiliateSubmissions = mysqlTable("affiliate_submissions", {
   affiliateId: varchar("affiliate_id", { length: 36 }).notNull(),
   submissionId: varchar("submission_id", { length: 36 }).notNull(),
   commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }),
-  status: mysqlEnum("status", ["pending", "earned", "paid"]).default("pending"),
+  status: varchar("status", { length: 20 }).default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
 export const adminUsers = mysqlTable("admin_users", {
