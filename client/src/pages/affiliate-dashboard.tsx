@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "wouter";
+import { useSearch } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -31,7 +31,8 @@ interface AffiliateData {
 }
 
 export default function AffiliateDashboard() {
-  const [searchParams] = useSearchParams();
+  const search = useSearch();
+  const searchParams = new URLSearchParams(search);
   const affiliateCode = searchParams.get("code");
 
   const { data, isLoading, error } = useQuery<AffiliateData>({
