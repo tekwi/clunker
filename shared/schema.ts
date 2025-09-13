@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { mysqlTable, varchar, text, timestamp, decimal, boolean, mysqlEnum } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
+import crypto from 'crypto';
 
 // Define all tables first
 export const submissions = mysqlTable("submissions", {

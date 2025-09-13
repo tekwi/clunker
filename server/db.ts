@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import * as schema from "@shared/schema";
+import * as relations from "@shared/relations";
 
 // Database configuration - AWS RDS setup
 const dbConfig = {
@@ -21,7 +22,7 @@ export const pool = mysql.createPool({
 });
 
 // Initialize Drizzle ORM
-export const db = drizzle(pool, { schema, mode: 'default' });
+export const db = drizzle(pool, { schema: { ...schema, ...relations }, mode: 'default' });
 
 // Database connection test
 async function testConnection() {
