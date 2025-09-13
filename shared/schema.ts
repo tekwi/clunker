@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { mysqlTable, varchar, text, timestamp, decimal, boolean, mysqlEnum } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import crypto from 'crypto';
@@ -24,9 +23,8 @@ export const submissions = mysqlTable("submissions", {
 export const pictures = mysqlTable("pictures", {
   id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   submissionId: varchar("submission_id", { length: 36 }).notNull(),
-  filename: varchar("filename", { length: 255 }).notNull(),
   url: varchar("url", { length: 500 }).notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const offers = mysqlTable("offers", {
@@ -81,7 +79,7 @@ export const insertSubmissionSchema = createInsertSchema(submissions).omit({
 
 export const insertPictureSchema = createInsertSchema(pictures).omit({
   id: true,
-  uploadedAt: true,
+  createdAt: true,
 });
 
 export const insertOfferSchema = createInsertSchema(offers).omit({
