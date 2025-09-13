@@ -1,76 +1,107 @@
-import { sql } from "drizzle-orm";
-import { mysqlTable, text, varchar, decimal, timestamp, char } from "drizzle-orm/mysql-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 import { relations } from "drizzle-orm";
+import { mysqlTable, varchar, text, timestamp, decimal, boolean, mysqlEnum } from "drizzle-orm/mysql-core";
+import { createInsertSchema } from "drizzle-zod";
 
+// Define all tables first
 export const submissions = mysqlTable("submissions", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   vin: varchar("vin", { length: 17 }).notNull(),
-  ownerName: varchar("owner_name", { length: 100 }).notNull(),
-  email: varchar("email", { length: 150 }).notNull(),
-  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
-  titleCondition: varchar("title_condition", { length: 50 }).notNull(),
-  vehicleCondition: varchar("vehicle_condition", { length: 50 }),
-  odometerReading: varchar("odometer_reading", { length: 20 }),
-  latitude: decimal("latitude", { precision: 10, scale: 8 }),
-  longitude: decimal("longitude", { precision: 11, scale: 8 }),
-  address: varchar("address", { length: 255 }),
-  affiliateCode: varchar("affiliate_code", { length: 20 }),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  ownerName: varchar("owner_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  odometer: varchar("odometer", { length: 20 }),
+  condition: varchar("condition", { length: 50 }),
+  notes: text("notes"),
+  affiliateCode: varchar("affiliate_code", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
 export const pictures = mysqlTable("pictures", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  submissionId: char("submission_id", { length: 36 }).references(() => submissions.id).notNull(),
-  url: text("url").notNull(),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  submissionId: varchar("submission_id", { length: 36 }).notNull(),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  url: varchar("url", { length: 500 }).notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
 });
 
 export const offers = mysqlTable("offers", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  submissionId: char("submission_id", { length: 36 }).references(() => submissions.id).notNull(),
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  submissionId: varchar("submission_id", { length: 36 }).notNull(),
   offerPrice: decimal("offer_price", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
-  status: varchar("status", { length: 20 }).default("pending"),
+  status: mysqlEnum("status", ["pending", "accepted", "rejected"]).default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
   acceptedAt: timestamp("accepted_at"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const affiliates = mysqlTable("affiliates", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  name: varchar("name", { length: 100 }).notNull(),
-  email: varchar("email", { length: 150 }).notNull(),
-  phone: varchar("phone", { length: 20 }),
-  uniqueCode: varchar("unique_code", { length: 20 }).notNull().unique(),
-  commissionRate: decimal("commission_rate", { precision: 5, scale: 4 }).default("0.05"), // 5% default
-  isActive: varchar("is_active", { length: 5 }).default("true"),
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 255 }),
+  uniqueCode: varchar("unique_code", { length: 50 }).notNull(),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 4 }).notNull().default("0.0500"),
   totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 }).default("0.00"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
 export const affiliateSubmissions = mysqlTable("affiliate_submissions", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  affiliateId: char("affiliate_id", { length: 36 }).references(() => affiliates.id).notNull(),
-  submissionId: char("submission_id", { length: 36 }).references(() => submissions.id).notNull(),
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  affiliateId: varchar("affiliate_id", { length: 36 }).notNull(),
+  submissionId: varchar("submission_id", { length: 36 }).notNull(),
   commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }),
-  status: varchar("status", { length: 20 }).default("pending"), // pending, earned, paid
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  status: mysqlEnum("status", ["pending", "earned", "paid"]).default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
-export const adminUsers = mysqlTable("admin_users", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
-  email: varchar("email", { length: 150 }),
-  isActive: varchar("is_active", { length: 5 }).default("true"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+// Schema definitions
+export const insertSubmissionSchema = createInsertSchema(submissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
+export const insertPictureSchema = createInsertSchema(pictures).omit({
+  id: true,
+  uploadedAt: true,
+});
 
+export const insertOfferSchema = createInsertSchema(offers).omit({
+  id: true,
+  createdAt: true,
+  acceptedAt: true,
+});
+
+export const insertAffiliateSchema = createInsertSchema(affiliates).omit({
+  id: true,
+  uniqueCode: true,
+  totalEarnings: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Type exports
+export type Submission = typeof submissions.$inferSelect;
+export type NewSubmission = typeof submissions.$inferInsert;
+export type Picture = typeof pictures.$inferSelect;
+export type NewPicture = typeof pictures.$inferInsert;
+export type Offer = typeof offers.$inferSelect;
+export type NewOffer = typeof offers.$inferInsert;
+export type Affiliate = typeof affiliates.$inferSelect;
+export type NewAffiliate = typeof affiliates.$inferInsert;
+export type AffiliateSubmission = typeof affiliateSubmissions.$inferSelect;
+export type NewAffiliateSubmission = typeof affiliateSubmissions.$inferInsert;
+
+export type SubmissionWithPictures = Submission & {
+  pictures: Picture[];
+  offer?: Offer;
+};
+
+// Relations - defined at end to avoid circular reference issues
 export const submissionsRelations = relations(submissions, ({ many, one }) => ({
   pictures: many(pictures),
   offer: one(offers),
@@ -92,64 +123,3 @@ export const affiliateSubmissionsRelations = relations(affiliateSubmissions, ({ 
   affiliate: one(affiliates, { fields: [affiliateSubmissions.affiliateId], references: [affiliates.id] }),
   submission: one(submissions, { fields: [affiliateSubmissions.submissionId], references: [submissions.id] }),
 }));
-
-
-export const insertSubmissionSchema = createInsertSchema(submissions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertPictureSchema = createInsertSchema(pictures).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertOfferSchema = createInsertSchema(offers).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertAffiliateSchema = createInsertSchema(affiliates).omit({
-  id: true,
-  uniqueCode: true,
-  totalEarnings: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertAffiliateSubmissionSchema = createInsertSchema(affiliateSubmissions).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const adminLoginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
-export type InsertPicture = z.infer<typeof insertPictureSchema>;
-export type InsertOffer = z.infer<typeof insertOfferSchema>;
-export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
-export type InsertAffiliate = z.infer<typeof insertAffiliateSchema>;
-export type InsertAffiliateSubmission = z.infer<typeof insertAffiliateSubmissionSchema>;
-export type AdminLogin = z.infer<typeof adminLoginSchema>;
-
-export type Submission = typeof submissions.$inferSelect;
-export type Picture = typeof pictures.$inferSelect;
-export type Offer = typeof offers.$inferSelect;
-export type AdminUser = typeof adminUsers.$inferSelect;
-export type Affiliate = typeof affiliates.$inferSelect;
-export type AffiliateSubmission = typeof affiliateSubmissions.$inferSelect;
-
-export type SubmissionWithRelations = Submission & {
-  pictures: Picture[];
-  offer?: Offer;
-};
