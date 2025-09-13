@@ -1,6 +1,5 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -236,13 +235,13 @@ export default function AffiliateDashboard() {
                       </code>
                     </TableCell>
                     <TableCell>
-                      {submission.commissionAmount 
+                      {submission.commissionAmount
                         ? `$${parseFloat(submission.commissionAmount).toFixed(2)}`
                         : "TBD"
                       }
                     </TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={
                           submission.status === "earned" ? "default" :
                           submission.status === "paid" ? "secondary" :
