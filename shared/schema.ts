@@ -38,38 +38,6 @@ export const offers = mysqlTable("offers", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const submissionsRelations = relations(submissions, ({ many, one }) => ({
-  pictures: many(pictures),
-  offer: one(offers),
-}));
-
-export const picturesRelations = relations(pictures, ({ one }) => ({
-  submission: one(submissions, { fields: [pictures.submissionId], references: [submissions.id] }),
-}));
-
-export const offersRelations = relations(offers, ({ one }) => ({
-  submission: one(submissions, { fields: [offers.submissionId], references: [submissions.id] }),
-}));
-
-export const affiliatesRelations = relations(affiliates, ({ many }) => ({
-  submissions: many(affiliateSubmissions),
-}));
-
-export const affiliateSubmissionsRelations = relations(affiliateSubmissions, ({ one }) => ({
-  affiliate: one(affiliates, { fields: [affiliateSubmissions.affiliateId], references: [affiliates.id] }),
-  submission: one(submissions, { fields: [affiliateSubmissions.submissionId], references: [submissions.id] }),
-}));
-
-export const adminUsers = mysqlTable("admin_users", {
-  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
-  email: varchar("email", { length: 150 }),
-  isActive: varchar("is_active", { length: 5 }).default("true"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
-});
-
 export const affiliates = mysqlTable("affiliates", {
   id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
   name: varchar("name", { length: 100 }).notNull(),
@@ -91,6 +59,40 @@ export const affiliateSubmissions = mysqlTable("affiliate_submissions", {
   status: varchar("status", { length: 20 }).default("pending"), // pending, earned, paid
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const adminUsers = mysqlTable("admin_users", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  email: varchar("email", { length: 150 }),
+  isActive: varchar("is_active", { length: 5 }).default("true"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
+
+export const submissionsRelations = relations(submissions, ({ many, one }) => ({
+  pictures: many(pictures),
+  offer: one(offers),
+}));
+
+export const picturesRelations = relations(pictures, ({ one }) => ({
+  submission: one(submissions, { fields: [pictures.submissionId], references: [submissions.id] }),
+}));
+
+export const offersRelations = relations(offers, ({ one }) => ({
+  submission: one(submissions, { fields: [offers.submissionId], references: [submissions.id] }),
+}));
+
+export const affiliatesRelations = relations(affiliates, ({ many }) => ({
+  affiliateSubmissions: many(affiliateSubmissions),
+}));
+
+export const affiliateSubmissionsRelations = relations(affiliateSubmissions, ({ one }) => ({
+  affiliate: one(affiliates, { fields: [affiliateSubmissions.affiliateId], references: [affiliates.id] }),
+  submission: one(submissions, { fields: [affiliateSubmissions.submissionId], references: [submissions.id] }),
+}));
+
 
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
