@@ -131,8 +131,15 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
 
     console.log('Raw matches from VIN prefix search:', rawMatches);
 
-    let matches = (rawMatches as any[]).map((row: any) => {
+    // MySQL returns [rows, metadata] - we only want the rows
+    const rows = Array.isArray(rawMatches) && Array.isArray(rawMatches[0]) ? rawMatches[0] : rawMatches;
+    
+    let matches = (rows as any[]).map((row: any) => {
       console.log('Processing VIN prefix row:', row);
+      // Skip if this is metadata (array of column definitions)
+      if (Array.isArray(row) || typeof row === 'string') {
+        return null;
+      }
       return {
         sale_price: row.sale_price ? Number(row.sale_price) : 0,
         vin: row.vin ? String(row.vin) : '',
@@ -140,7 +147,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         lot_make: row.lot_make ? String(row.lot_make) : '',
         lot_model: row.lot_model ? String(row.lot_model) : ''
       };
-    });
+    }).filter(match => match !== null);
 
     // If no exact VIN prefix matches and we have a decoded make, search by make + year
     if (matches.length === 0 && decodedMake) {
@@ -157,8 +164,12 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         LIMIT 50
       `);
 
-      matches = (rawMatches as any[]).map((row: any) => {
+      const makeRows = Array.isArray(rawMatches) && Array.isArray(rawMatches[0]) ? rawMatches[0] : rawMatches;
+      matches = (makeRows as any[]).map((row: any) => {
         console.log('Make-based search raw row:', row);
+        if (Array.isArray(row) || typeof row === 'string') {
+          return null;
+        }
         return {
           sale_price: row.sale_price ? Number(row.sale_price) : 0,
           vin: row.vin ? String(row.vin) : '',
@@ -166,7 +177,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
           lot_make: row.lot_make ? String(row.lot_make) : '',
           lot_model: row.lot_model ? String(row.lot_model) : ''
         };
-      });
+      }).filter(match => match !== null);
     }
 
     // If still no matches, broaden search to similar VIN prefix (first 6 characters)
@@ -185,8 +196,12 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         LIMIT 20
       `);
 
-      matches = (rawMatches as any[]).map((row: any) => {
+      const prefixRows = Array.isArray(rawMatches) && Array.isArray(rawMatches[0]) ? rawMatches[0] : rawMatches;
+      matches = (prefixRows as any[]).map((row: any) => {
         console.log('Shorter prefix search raw row:', row);
+        if (Array.isArray(row) || typeof row === 'string') {
+          return null;
+        }
         return {
           sale_price: row.sale_price ? Number(row.sale_price) : 0,
           vin: row.vin ? String(row.vin) : '',
@@ -194,7 +209,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
           lot_make: row.lot_make ? String(row.lot_make) : '',
           lot_model: row.lot_model ? String(row.lot_model) : ''
         };
-      });
+      }).filter(match => match !== null);
     }
 
     if (matches.length === 0) {
