@@ -7,20 +7,32 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
+export async function apiRequest(method: string, url: string, data?: any) {
+  const response = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
-  await throwIfResNotOk(res);
-  return res;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  }
+
+  return response;
+}
+
+export async function getPricingForVin(vin: string, year: number): Promise<number | null> {
+  try {
+    const response = await apiRequest("POST", "/api/pricing/lookup", { vin, year });
+    const result = await response.json();
+    return result.price;
+  } catch (error) {
+    console.error("Error getting pricing:", error);
+    return null;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

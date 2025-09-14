@@ -14,6 +14,7 @@ import { VinScanner } from "@/components/VinScanner";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getPricingForVin } from "@/lib/queryClient";
 
 const submissionSchema = z.object({
   vin: z.string().min(17, "VIN must be 17 characters"),
@@ -42,6 +43,33 @@ interface Step {
   subtitle?: string;
   fields?: (keyof SubmissionForm)[];
 }
+
+// VIN year character mapping
+const VIN_YEAR_MAP: { [key: string]: number[] } = {
+  'A': [1980, 2010], 'B': [1981, 2011], 'C': [1982, 2012], 'D': [1983, 2013],
+  'E': [1984, 2014], 'F': [1985, 2015], 'G': [1986, 2016], 'H': [1987, 2017],
+  'J': [1988, 2018], 'K': [1989, 2019], 'L': [1990, 2020], 'M': [1991, 2021],
+  'N': [1992, 2022], 'P': [1993, 2023], 'R': [1994, 2024], 'S': [1995, 2025],
+  'T': [1996, 2026], 'V': [1997, 2027], 'W': [1998, 2028], 'X': [1999, 2029],
+  'Y': [2000, 2030], '1': [2001, 2031], '2': [2002, 2032], '3': [2003, 2033],
+  '4': [2004, 2034], '5': [2005, 2035], '6': [2006, 2036], '7': [2007, 2037],
+  '8': [2008, 2038], '9': [2009, 2039]
+};
+
+const getYearFromVin = (vin: string): number => {
+  if (vin.length < 10) return new Date().getFullYear();
+  
+  const vinYearChar = vin.charAt(9).toUpperCase();
+  const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];
+  
+  if (possibleYears.length === 0) return new Date().getFullYear();
+  
+  // Choose the year closest to current year
+  const currentYear = new Date().getFullYear();
+  return possibleYears.reduce((prev, curr) => 
+    Math.abs(curr - currentYear) < Math.abs(prev - currentYear) ? curr : prev
+  );
+};
 
 const STEPS: Step[] = [
   {
@@ -118,6 +146,11 @@ const STEPS: Step[] = [
     title: "Ready to get your offer?",
     subtitle: "Review your information and submit",
   },
+  {
+    id: "success",
+    title: "Submission Complete!",
+    subtitle: "Your vehicle has been successfully submitted",
+  },
 ];
 
 export function MultiStepForm() {
@@ -129,6 +162,9 @@ export function MultiStepForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
 
   // Simple form with direct state management
   const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
@@ -261,13 +297,31 @@ export function MultiStepForm() {
 
       return result;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
+      setSubmissionId(data.submissionId);
+      
+      // Get pricing estimate
+      setIsLoadingPrice(true);
+      const vin = getFieldValue("vin");
+      const year = getYearFromVin(vin);
+      
+      try {
+        const price = await getPricingForVin(vin, year);
+        setEstimatedPrice(price);
+      } catch (error) {
+        console.error("Failed to get pricing:", error);
+      } finally {
+        setIsLoadingPrice(false);
+      }
+      
+      // Move to success step
+      setCurrentStep(STEPS.length - 1);
+      
       toast({
         title: "Submission successful!",
         description: "Your vehicle information has been submitted.",
       });
-      setLocation(`/view/${data.submissionId}`);
     },
     onError: (error: any) => {
       toast({
@@ -638,6 +692,80 @@ export function MultiStepForm() {
           </div>
         );
 
+      case "success":
+        return (
+          <div className="text-center py-8 space-y-6">
+            <div className="text-6xl mb-6">✅</div>
+            
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-gray-900">Thank you!</h2>
+              <p className="text-gray-600">
+                Your vehicle submission has been received and is being reviewed by our team.
+              </p>
+              
+              {submissionId && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-2">Submission ID:</p>
+                  <p className="font-mono text-lg">{submissionId}</p>
+                </div>
+              )}
+              
+              {/* Pricing Estimate */}
+              <div className="bg-blue-50 rounded-lg p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-blue-900">Estimated Market Value</h3>
+                
+                {isLoadingPrice ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-700">Calculating estimate...</span>
+                  </div>
+                ) : estimatedPrice ? (
+                  <div className="space-y-2">
+                    <div className="text-3xl font-bold text-blue-900">
+                      ${estimatedPrice.toLocaleString()}
+                    </div>
+                    <p className="text-sm text-blue-700">
+                      This estimate is based on recent auction data for similar vehicles
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      * Final offer may vary based on actual vehicle condition and inspection
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-blue-700">
+                    <p>No comparable pricing data found for this vehicle.</p>
+                    <p className="text-sm mt-1">Our team will provide a custom evaluation.</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-green-50 rounded-lg p-4">
+                <p className="text-green-800 text-sm">
+                  📧 You'll receive our official offer via email within 24 hours
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <Button
+                onClick={() => submissionId && setLocation(`/view/${submissionId}`)}
+                className="w-full h-12"
+                disabled={!submissionId}
+              >
+                View Submission Details
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/")}
+                className="w-full h-12"
+              >
+                Submit Another Vehicle
+              </Button>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -688,7 +816,7 @@ export function MultiStepForm() {
             </div>
 
             {/* Navigation */}
-            {currentStep > 0 && (
+            {currentStep > 0 && currentStep < STEPS.length - 1 && (
               <div className="flex justify-between items-center pt-6 border-t">
                 <Button
                   type="button"
@@ -700,7 +828,7 @@ export function MultiStepForm() {
                   Back
                 </Button>
 
-                {currentStep < STEPS.length - 1 && (
+                {currentStep < STEPS.length - 2 && (
                   <Button
                     type="button"
                     onClick={nextStep}
