@@ -86,6 +86,14 @@ interface PricingMatch {
   lot_model: string;
 }
 
+interface RawPricingMatch {
+  sale_price: any;
+  vin: any;
+  lot_year: any;
+  lot_make: any;
+  lot_model: any;
+}
+
 export async function getVehiclePricing(submittedVin: string, submittedYear: number): Promise<number | null> {
   try {
     // Extract first 8 characters for exact VIN prefix matching
@@ -111,7 +119,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, Target Year: ${targetYear}`);
     
     // Primary search: Exact VIN prefix match (first 8 characters) + year
-    let matches = await db.execute(sql`
+    let rawMatches = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
       FROM vehicle_pricing 
       WHERE LEFT(vin, 8) = ${vinPrefix}
@@ -120,12 +128,20 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       AND vin IS NOT NULL
       AND LENGTH(vin) >= 8
       ORDER BY ABS(lot_year - ${targetYear}), sale_price
-    `) as PricingMatch[];
+    `);
+    
+    let matches = (rawMatches as any[]).map((row: any) => ({
+      sale_price: parseFloat(row.sale_price) || 0,
+      vin: row.vin || '',
+      lot_year: parseInt(row.lot_year) || 0,
+      lot_make: row.lot_make || '',
+      lot_model: row.lot_model || ''
+    }));
     
     // If no exact VIN prefix matches and we have a decoded make, search by make + year
     if (matches.length === 0 && decodedMake) {
       console.log(`No exact VIN prefix matches, searching by make: ${decodedMake}`);
-      matches = await db.execute(sql`
+      rawMatches = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing 
         WHERE lot_make = ${decodedMake}
@@ -135,14 +151,22 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         AND LENGTH(vin) >= 8
         ORDER BY ABS(lot_year - ${targetYear}), sale_price
         LIMIT 50
-      `) as PricingMatch[];
+      `);
+      
+      matches = (rawMatches as any[]).map((row: any) => ({
+        sale_price: parseFloat(row.sale_price) || 0,
+        vin: row.vin || '',
+        lot_year: parseInt(row.lot_year) || 0,
+        lot_make: row.lot_make || '',
+        lot_model: row.lot_model || ''
+      }));
     }
     
     // If still no matches, broaden search to similar VIN prefix (first 6 characters)
     if (matches.length === 0) {
       const shorterPrefix = vinPrefix.substring(0, 6);
       console.log(`No make matches, searching by shorter VIN prefix: ${shorterPrefix}`);
-      matches = await db.execute(sql`
+      rawMatches = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing 
         WHERE LEFT(vin, 6) = ${shorterPrefix}
@@ -152,7 +176,15 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         AND LENGTH(vin) >= 6
         ORDER BY ABS(lot_year - ${targetYear}), sale_price
         LIMIT 20
-      `) as PricingMatch[];
+      `);
+      
+      matches = (rawMatches as any[]).map((row: any) => ({
+        sale_price: parseFloat(row.sale_price) || 0,
+        vin: row.vin || '',
+        lot_year: parseInt(row.lot_year) || 0,
+        lot_make: row.lot_make || '',
+        lot_model: row.lot_model || ''
+      }));
     }
     
     if (matches.length === 0) {
@@ -174,7 +206,13 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     }
     
     // Multiple matches - calculate average with standard deviation filtering
-    const prices = matches.map(m => m.sale_price);
+    const prices = matches.map(m => m.sale_price).filter(price => price > 0 && !isNaN(price));
+    
+    if (prices.length === 0) {
+      console.log('No valid prices found in matches');
+      return null;
+    }
+    
     const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
     const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
     const stdDev = Math.sqrt(variance);
