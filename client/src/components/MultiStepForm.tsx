@@ -209,12 +209,30 @@ export function MultiStepForm() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAcceptOffer = () => {
-    setOfferAccepted(true);
-    toast({
-      title: "Offer Accepted!",
-      description: "We'll arrange pickup within 24 hours.",
-    });
+  const handleAcceptOffer = async () => {
+    if (!submissionId) return;
+    
+    try {
+      // Find the offer for this submission and update its status
+      const response = await apiRequest("PUT", `/api/submissions/${submissionId}/offer/accept`, {});
+      
+      if (response.ok) {
+        setOfferAccepted(true);
+        toast({
+          title: "Offer Accepted!",
+          description: "We'll arrange pickup within 24 hours.",
+        });
+      } else {
+        throw new Error("Failed to accept offer");
+      }
+    } catch (error) {
+      console.error("Error accepting offer:", error);
+      toast({
+        title: "Error",
+        description: "Failed to accept offer. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const updateField = (field: keyof SubmissionForm, value: string) => {
@@ -796,7 +814,7 @@ export function MultiStepForm() {
                 
                 <Button
                   variant="outline"
-                  onClick={() => setLocation("/")}
+                  onClick={() => window.location.href = "/"}
                   className="w-full h-12"
                 >
                   Submit Another Vehicle
@@ -855,7 +873,7 @@ export function MultiStepForm() {
                     
                     <Button
                       variant="outline"
-                      onClick={() => setLocation("/")}
+                      onClick={() => window.location.href = "/"}
                       className="w-full h-12"
                     >
                       Decline Offer
@@ -868,7 +886,7 @@ export function MultiStepForm() {
                   <p className="text-gray-500 text-sm mt-2">Please submit a new request for a fresh quote</p>
                   <Button
                     variant="outline"
-                    onClick={() => setLocation("/")}
+                    onClick={() => window.location.href = "/"}
                     className="w-full h-12 mt-4"
                   >
                     Get New Quote
