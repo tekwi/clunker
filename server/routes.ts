@@ -569,6 +569,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const adminRoutes = (await import("./routes/admin.js")).default;
+  const affiliateRoutes = (await import("./routes/affiliate.js")).default;
+  const pricingRoutes = (await import("./routes/pricing.js")).default;
+
   app.use("/api/admin", adminRoutes);
   app.use("/api/affiliate", affiliateRoutes);
   app.use("/api/pricing", pricingRoutes);
