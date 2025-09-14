@@ -117,6 +117,8 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       WHERE LEFT(vin, 8) = ${vinPrefix}
       AND ABS(lot_year - ${targetYear}) <= 1
       AND sale_price > 0
+      AND vin IS NOT NULL
+      AND LENGTH(vin) >= 8
       ORDER BY ABS(lot_year - ${targetYear}), sale_price
     `) as PricingMatch[];
     
@@ -129,6 +131,8 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         WHERE lot_make = ${decodedMake}
         AND ABS(lot_year - ${targetYear}) <= 2
         AND sale_price > 0
+        AND vin IS NOT NULL
+        AND LENGTH(vin) >= 8
         ORDER BY ABS(lot_year - ${targetYear}), sale_price
         LIMIT 50
       `) as PricingMatch[];
@@ -144,6 +148,8 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         WHERE LEFT(vin, 6) = ${shorterPrefix}
         AND ABS(lot_year - ${targetYear}) <= 2
         AND sale_price > 0
+        AND vin IS NOT NULL
+        AND LENGTH(vin) >= 6
         ORDER BY ABS(lot_year - ${targetYear}), sale_price
         LIMIT 20
       `) as PricingMatch[];
@@ -159,7 +165,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       model: m.lot_model,
       year: m.lot_year,
       price: m.sale_price,
-      vin_prefix: m.vin.substring(0, 8)
+      vin_prefix: m.vin ? m.vin.substring(0, 8) : 'N/A'
     })));
     
     if (matches.length === 1) {
