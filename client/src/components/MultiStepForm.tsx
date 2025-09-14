@@ -23,6 +23,8 @@ const submissionSchema = z.object({
   titleCondition: z.string().min(1, "Title condition is required"),
   vehicleCondition: z.string().min(1, "Vehicle condition is required"),
   odometerReading: z.string().min(1, "Odometer reading is required"),
+  hasDamage: z.string().min(1, "Please specify if the vehicle has damage"),
+  airbagDeployed: z.string().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
   address: z.string().optional(),
@@ -70,6 +72,18 @@ const STEPS: Step[] = [
     title: "What's your vehicle's condition?",
     subtitle: "Be honest - this helps us give you the best offer",
     fields: ["vehicleCondition"],
+  },
+  {
+    id: "damage",
+    title: "Does your vehicle have any damage?",
+    subtitle: "This includes accidents, dents, scratches, or mechanical issues",
+    fields: ["hasDamage"],
+  },
+  {
+    id: "airbag",
+    title: "Are any airbags deployed?",
+    subtitle: "This is important for safety and valuation purposes",
+    fields: ["airbagDeployed"],
   },
   {
     id: "owner-info",
@@ -129,6 +143,8 @@ export function MultiStepForm() {
       titleCondition: "",
       vehicleCondition: "",
       odometerReading: "",
+      hasDamage: "",
+      airbagDeployed: "",
       latitude: "",
       longitude: "",
       address: "",
@@ -281,7 +297,7 @@ export function MultiStepForm() {
       return;
     }
 
-    if (currentStep === 9) { // Photos step
+    if (currentStep === 11) { // Photos step (updated index)
       if (uploadedPhotos.length === 0) {
         toast({
           title: "Photos required",
@@ -298,6 +314,12 @@ export function MultiStepForm() {
         description: "Complete the current step before continuing.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Skip airbag step if no damage reported
+    if (currentStep === 5 && getFieldValue("hasDamage") === "no") { // damage step
+      setCurrentStep(currentStep + 2); // Skip airbag step
       return;
     }
 
@@ -330,6 +352,8 @@ export function MultiStepForm() {
       titleCondition: getFieldValue("titleCondition"),
       vehicleCondition: getFieldValue("vehicleCondition"),
       odometerReading: getFieldValue("odometerReading"),
+      hasDamage: getFieldValue("hasDamage"),
+      airbagDeployed: getFieldValue("airbagDeployed"),
       latitude: getFieldValue("latitude"),
       longitude: getFieldValue("longitude"),
       address: getFieldValue("address"),
@@ -436,6 +460,44 @@ export function MultiStepForm() {
                 <SelectItem value="fair">Fair</SelectItem>
                 <SelectItem value="poor">Poor</SelectItem>
                 <SelectItem value="junk">Junk/Non-running</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "damage":
+        return (
+          <div className="space-y-4">
+            <Select
+              value={getFieldValue("hasDamage")}
+              onValueChange={(value) => updateField("hasDamage", value)}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue placeholder="Select damage status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="no">No damage</SelectItem>
+                <SelectItem value="minor">Minor damage (small dents, scratches)</SelectItem>
+                <SelectItem value="moderate">Moderate damage (larger dents, body damage)</SelectItem>
+                <SelectItem value="major">Major damage (accident damage, structural issues)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "airbag":
+        return (
+          <div className="space-y-4">
+            <Select
+              value={getFieldValue("airbagDeployed")}
+              onValueChange={(value) => updateField("airbagDeployed", value)}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue placeholder="Select airbag status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="no">No airbags deployed</SelectItem>
+                <SelectItem value="yes">Yes, airbags deployed</SelectItem>
               </SelectContent>
             </Select>
           </div>

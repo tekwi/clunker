@@ -22,6 +22,8 @@ export const submissions = mysqlTable("submissions", {
   titleCondition: varchar("title_condition", { length: 50 }),
   vehicleCondition: varchar("vehicle_condition", { length: 50 }),
   odometerReading: varchar("odometer_reading", { length: 20 }),
+  hasDamage: varchar("has_damage", { length: 20 }),
+  airbagDeployed: varchar("airbag_deployed", { length: 10 }),
   latitude: varchar("latitude", { length: 20 }),
   longitude: varchar("longitude", { length: 20 }),
   address: varchar("address", { length: 255 }),
