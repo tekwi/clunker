@@ -230,7 +230,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       return matches[0].sale_price;
     }
 
-    // Multiple matches - calculate average with standard deviation filtering
+    // Multiple matches - calculate average with improved outlier filtering
     const prices = matches.map(m => m.sale_price).filter(price => price > 0 && !isNaN(price));
 
     if (prices.length === 0) {
@@ -238,26 +238,46 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       return null;
     }
 
-    const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-    const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
-    const stdDev = Math.sqrt(variance);
+    // Sort prices for quartile-based outlier detection
+    const sortedPrices = prices.sort((a, b) => a - b);
+    console.log(`All prices: $${sortedPrices.join(', $')}`);
 
-    // Filter out prices that are more than 2 standard deviations from mean
-    const filteredPrices = prices.filter(price => 
-      Math.abs(price - mean) <= 2 * stdDev
+    // Use Interquartile Range (IQR) method for outlier detection
+    const q1Index = Math.floor(sortedPrices.length * 0.25);
+    const q3Index = Math.floor(sortedPrices.length * 0.75);
+    const q1 = sortedPrices[q1Index];
+    const q3 = sortedPrices[q3Index];
+    const iqr = q3 - q1;
+
+    // Define outlier bounds - more aggressive for low prices
+    const lowerBound = Math.max(q1 - 1.5 * iqr, sortedPrices[0] * 0.1); // Minimum 10% of lowest price
+    const upperBound = q3 + 1.5 * iqr;
+
+    // Additional filter: remove prices that are suspiciously low (under $500 for most vehicles)
+    const minimumReasonablePrice = 500;
+
+    let filteredPrices = sortedPrices.filter(price => 
+      price >= Math.max(lowerBound, minimumReasonablePrice) && price <= upperBound
     );
 
+    // If we filtered out too many prices, be more lenient but keep minimum price filter
+    if (filteredPrices.length < Math.max(2, prices.length * 0.4)) {
+      console.log('IQR filtering was too aggressive, using minimum price filter only');
+      filteredPrices = sortedPrices.filter(price => price >= minimumReasonablePrice);
+    }
+
     if (filteredPrices.length === 0) {
-      // If all prices were outliers, use the original mean
-      console.log(`All prices were outliers, using original mean: $${mean}`);
-      return Math.round(mean);
+      // If all prices were filtered out, use original prices but log warning
+      console.log('All prices were outliers, using original prices');
+      filteredPrices = sortedPrices;
     }
 
     const filteredAverage = filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length;
 
-    console.log(`Multiple matches (${matches.length}), filtered average: $${filteredAverage}`);
-    console.log(`Removed ${prices.length - filteredPrices.length} outliers`);
-    console.log(`Price range: $${Math.min(...filteredPrices)} - $${Math.max(...filteredPrices)}`);
+    console.log(`Multiple matches (${matches.length}), filtered average: $${Math.round(filteredAverage)}`);
+    console.log(`Removed ${prices.length - filteredPrices.length} outliers (Q1: $${q1}, Q3: $${q3}, IQR: $${iqr})`);
+    console.log(`Filtered price range: $${Math.min(...filteredPrices)} - $${Math.max(...filteredPrices)}`);
+    console.log(`Outlier bounds: $${Math.round(Math.max(lowerBound, minimumReasonablePrice))} - $${Math.round(upperBound)}`);
 
     return Math.round(filteredAverage);
 
