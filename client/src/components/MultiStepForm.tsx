@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -165,6 +165,8 @@ export function MultiStepForm() {
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [offerAccepted, setOfferAccepted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
 
   // Simple form with direct state management
   const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
@@ -190,6 +192,31 @@ export function MultiStepForm() {
       zip: "",
     },
   });
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (currentStep === STEPS.length - 1 && estimatedPrice && !offerAccepted && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [currentStep, estimatedPrice, offerAccepted, timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleAcceptOffer = () => {
+    setOfferAccepted(true);
+    toast({
+      title: "Offer Accepted!",
+      description: "We'll arrange pickup within 24 hours.",
+    });
+  };
 
   const updateField = (field: keyof SubmissionForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -693,15 +720,99 @@ export function MultiStepForm() {
         );
 
       case "success":
+        if (offerAccepted) {
+          return (
+            <div className="text-center py-8 space-y-6">
+              <div className="text-6xl mb-6">🚚</div>
+              
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-green-600">Offer Accepted!</h2>
+                <p className="text-gray-600">
+                  Great! We'll arrange pickup and payment for your vehicle.
+                </p>
+                
+                <div className="bg-green-50 rounded-lg p-6 space-y-4">
+                  <h3 className="text-lg font-semibold text-green-900">Next Steps</h3>
+                  
+                  <div className="text-left space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
+                      <div>
+                        <p className="font-medium text-green-900">Driver Pickup Scheduled</p>
+                        <p className="text-sm text-green-700">Within 24-48 hours at your location</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
+                      <div>
+                        <p className="font-medium text-green-900">Vehicle Inspection</p>
+                        <p className="text-sm text-green-700">Quick on-site inspection to confirm condition</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                      <div>
+                        <p className="font-medium text-green-900">Instant Payment</p>
+                        <p className="text-sm text-green-700">Cash payment on the spot</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
+                      <div>
+                        <p className="font-medium text-green-900">Title Transfer</p>
+                        <p className="text-sm text-green-700">We handle all paperwork for you</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">What to Have Ready:</h4>
+                  <ul className="text-sm text-blue-700 text-left space-y-1">
+                    <li>• Vehicle title (signed and ready)</li>
+                    <li>• Valid ID matching title</li>
+                    <li>• Keys and any remotes</li>
+                    <li>• Registration (if available)</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <p className="text-yellow-800 text-sm">
+                    📞 You'll receive a call within 2 hours to schedule pickup
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <Button
+                  onClick={() => submissionId && setLocation(`/view/${submissionId}`)}
+                  className="w-full h-12"
+                  disabled={!submissionId}
+                >
+                  View Submission Details
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation("/")}
+                  className="w-full h-12"
+                >
+                  Submit Another Vehicle
+                </Button>
+              </div>
+            </div>
+          );
+        }
+        
         return (
           <div className="text-center py-8 space-y-6">
-            <div className="text-6xl mb-6">✅</div>
+            <div className="text-6xl mb-6">💰</div>
             
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900">Thank you!</h2>
-              <p className="text-gray-600">
-                Your vehicle submission has been received and is being reviewed by our team.
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900">Your Cash Offer</h2>
               
               {submissionId && (
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -710,59 +821,84 @@ export function MultiStepForm() {
                 </div>
               )}
               
-              {/* Pricing Estimate */}
-              <div className="bg-blue-50 rounded-lg p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-blue-900">Estimated Market Value</h3>
-                
-                {isLoadingPrice ? (
+              {/* Cash Offer */}
+              {isLoadingPrice ? (
+                <div className="bg-blue-50 rounded-lg p-8">
                   <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Calculating estimate...</span>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-700 text-lg">Calculating your offer...</span>
                   </div>
-                ) : estimatedPrice ? (
+                </div>
+              ) : estimatedPrice && timeLeft > 0 ? (
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-8 space-y-4">
                   <div className="space-y-2">
-                    <div className="text-3xl font-bold text-blue-900">
+                    <p className="text-lg text-gray-700">We'll pay you</p>
+                    <div className="text-5xl font-bold text-green-600">
                       ${estimatedPrice.toLocaleString()}
                     </div>
-                    <p className="text-sm text-blue-700">
-                      This estimate is based on recent auction data for similar vehicles
-                    </p>
-                    <p className="text-xs text-blue-600">
-                      * Final offer may vary based on actual vehicle condition and inspection
-                    </p>
+                    <p className="text-sm text-gray-600">Cash on pickup</p>
                   </div>
-                ) : (
-                  <div className="text-blue-700">
-                    <p>No comparable pricing data found for this vehicle.</p>
-                    <p className="text-sm mt-1">Our team will provide a custom evaluation.</p>
+                  
+                  <div className="bg-red-100 border border-red-300 rounded-lg p-4">
+                    <p className="text-red-800 font-medium">⏰ Limited Time Offer</p>
+                    <p className="text-red-700 text-lg font-mono">{formatTime(timeLeft)}</p>
+                    <p className="text-red-600 text-sm">Accept now to lock in this price</p>
                   </div>
-                )}
-              </div>
-              
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-green-800 text-sm">
-                  📧 You'll receive our official offer via email within 24 hours
-                </p>
-              </div>
+                  
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleAcceptOffer}
+                      className="w-full h-14 text-lg bg-green-600 hover:bg-green-700"
+                      size="lg"
+                    >
+                      Accept Offer - ${estimatedPrice.toLocaleString()}
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => setLocation("/")}
+                      className="w-full h-12"
+                    >
+                      Decline Offer
+                    </Button>
+                  </div>
+                </div>
+              ) : estimatedPrice && timeLeft <= 0 ? (
+                <div className="bg-gray-100 rounded-lg p-8">
+                  <p className="text-gray-600 text-lg">Offer expired</p>
+                  <p className="text-gray-500 text-sm mt-2">Please submit a new request for a fresh quote</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setLocation("/")}
+                    className="w-full h-12 mt-4"
+                  >
+                    Get New Quote
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-gray-100 rounded-lg p-8">
+                  <p className="text-gray-600">
+                    We're reviewing your vehicle and will contact you with an offer.
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Check your email within 24 hours for our response.
+                  </p>
+                </div>
+              )}
             </div>
             
-            <div className="space-y-3">
-              <Button
-                onClick={() => submissionId && setLocation(`/view/${submissionId}`)}
-                className="w-full h-12"
-                disabled={!submissionId}
-              >
-                View Submission Details
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/")}
-                className="w-full h-12"
-              >
-                Submit Another Vehicle
-              </Button>
-            </div>
+            {!offerAccepted && (
+              <div className="space-y-3">
+                <Button
+                  onClick={() => submissionId && setLocation(`/view/${submissionId}`)}
+                  className="w-full h-12"
+                  disabled={!submissionId}
+                  variant="outline"
+                >
+                  View Submission Details
+                </Button>
+              </div>
+            )}
           </div>
         );
 
