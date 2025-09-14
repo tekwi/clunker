@@ -1,4 +1,3 @@
-
 import { db } from './db';
 import { sql } from 'drizzle-orm';
 
@@ -98,14 +97,14 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
   try {
     // Extract first 8 characters for exact VIN prefix matching
     const vinPrefix = submittedVin.substring(0, 8).toUpperCase();
-    
+
     // Decode make from VIN
     const decodedMake = getMakeFromVin(submittedVin);
-    
+
     // Extract 10th character for year validation
     const vinYearChar = submittedVin.charAt(9).toUpperCase();
     const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];
-    
+
     // Determine which year to use based on context
     let targetYear = submittedYear;
     if (possibleYears.length > 0) {
@@ -114,10 +113,10 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         Math.abs(curr - submittedYear) < Math.abs(prev - submittedYear) ? curr : prev
       );
     }
-    
+
     console.log(`Searching for VIN: ${submittedVin}`);
     console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, Target Year: ${targetYear}`);
-    
+
     // Primary search: Exact VIN prefix match (first 8 characters) + year
     let rawMatches = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
@@ -129,15 +128,15 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       AND LENGTH(vin) >= 8
       ORDER BY ABS(lot_year - ${targetYear}), sale_price
     `);
-    
+
     let matches = (rawMatches as any[]).map((row: any) => ({
-      sale_price: parseFloat(row.sale_price) || 0,
-      vin: row.vin || '',
-      lot_year: parseInt(row.lot_year) || 0,
-      lot_make: row.lot_make || '',
-      lot_model: row.lot_model || ''
-    }));
-    
+        sale_price: parseFloat(row.sale_price || row['sale_price']) || 0,
+        vin: row.vin || row['vin'] || '',
+        lot_year: parseInt(row.lot_year || row['lot_year']) || 0,
+        lot_make: row.lot_make || row['lot_make'] || '',
+        lot_model: row.lot_model || row['lot_model'] || ''
+      }));
+
     // If no exact VIN prefix matches and we have a decoded make, search by make + year
     if (matches.length === 0 && decodedMake) {
       console.log(`No exact VIN prefix matches, searching by make: ${decodedMake}`);
@@ -152,16 +151,16 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         ORDER BY ABS(lot_year - ${targetYear}), sale_price
         LIMIT 50
       `);
-      
+
       matches = (rawMatches as any[]).map((row: any) => ({
-        sale_price: parseFloat(row.sale_price) || 0,
-        vin: row.vin || '',
-        lot_year: parseInt(row.lot_year) || 0,
-        lot_make: row.lot_make || '',
-        lot_model: row.lot_model || ''
+        sale_price: parseFloat(row.sale_price || row['sale_price']) || 0,
+        vin: row.vin || row['vin'] || '',
+        lot_year: parseInt(row.lot_year || row['lot_year']) || 0,
+        lot_make: row.lot_make || row['lot_make'] || '',
+        lot_model: row.lot_model || row['lot_model'] || ''
       }));
     }
-    
+
     // If still no matches, broaden search to similar VIN prefix (first 6 characters)
     if (matches.length === 0) {
       const shorterPrefix = vinPrefix.substring(0, 6);
@@ -177,21 +176,21 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         ORDER BY ABS(lot_year - ${targetYear}), sale_price
         LIMIT 20
       `);
-      
+
       matches = (rawMatches as any[]).map((row: any) => ({
-        sale_price: parseFloat(row.sale_price) || 0,
-        vin: row.vin || '',
-        lot_year: parseInt(row.lot_year) || 0,
-        lot_make: row.lot_make || '',
-        lot_model: row.lot_model || ''
+        sale_price: parseFloat(row.sale_price || row['sale_price']) || 0,
+        vin: row.vin || row['vin'] || '',
+        lot_year: parseInt(row.lot_year || row['lot_year']) || 0,
+        lot_make: row.lot_make || row['lot_make'] || '',
+        lot_model: row.lot_model || row['lot_model'] || ''
       }));
     }
-    
+
     if (matches.length === 0) {
       console.log(`No pricing matches found for VIN: ${submittedVin}, Make: ${decodedMake}, Year: ${targetYear}`);
       return null;
     }
-    
+
     console.log(`Found ${matches.length} matches:`, matches.map(m => ({
       make: m.lot_make,
       model: m.lot_model,
@@ -199,43 +198,43 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       price: m.sale_price,
       vin_prefix: m.vin ? m.vin.substring(0, 8) : 'N/A'
     })));
-    
+
     if (matches.length === 1) {
       console.log(`Single match found: $${matches[0].sale_price} (${matches[0].lot_make} ${matches[0].lot_model})`);
       return matches[0].sale_price;
     }
-    
+
     // Multiple matches - calculate average with standard deviation filtering
     const prices = matches.map(m => m.sale_price).filter(price => price > 0 && !isNaN(price));
-    
+
     if (prices.length === 0) {
       console.log('No valid prices found in matches');
       return null;
     }
-    
+
     const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
     const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
     const stdDev = Math.sqrt(variance);
-    
+
     // Filter out prices that are more than 2 standard deviations from mean
     const filteredPrices = prices.filter(price => 
       Math.abs(price - mean) <= 2 * stdDev
     );
-    
+
     if (filteredPrices.length === 0) {
       // If all prices were outliers, use the original mean
       console.log(`All prices were outliers, using original mean: $${mean}`);
       return Math.round(mean);
     }
-    
+
     const filteredAverage = filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length;
-    
+
     console.log(`Multiple matches (${matches.length}), filtered average: $${filteredAverage}`);
     console.log(`Removed ${prices.length - filteredPrices.length} outliers`);
     console.log(`Price range: $${Math.min(...filteredPrices)} - $${Math.max(...filteredPrices)}`);
-    
+
     return Math.round(filteredAverage);
-    
+
   } catch (error) {
     console.error('Error getting vehicle pricing:', error);
     return null;
@@ -245,13 +244,13 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
 export async function importPricingData(csvData: any[]): Promise<number> {
   try {
     let imported = 0;
-    
+
     for (const row of csvData) {
       // Skip rows with invalid VINs or prices
       if (!row.VIN || row.VIN.length !== 17 || !row['Sale Price'] || row['Sale Price'] <= 0) {
         continue;
       }
-      
+
       await db.execute(sql`
         INSERT INTO vehicle_pricing (
           automobile, lot_year, lot_make, lot_model, drivetrain,
@@ -278,13 +277,13 @@ export async function importPricingData(csvData: any[]): Promise<number> {
           ${parseInt(row.airbag_depl_flg) || null}, ${row.business_unit}
         )
       `);
-      
+
       imported++;
     }
-    
+
     console.log(`Successfully imported ${imported} pricing records`);
     return imported;
-    
+
   } catch (error) {
     console.error('Error importing pricing data:', error);
     throw error;
