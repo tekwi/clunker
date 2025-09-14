@@ -24,16 +24,24 @@ export async function apiRequest(method: string, url: string, data?: any) {
   return response;
 }
 
-export async function getPricingForVin(vin: string, year: number): Promise<number | null> {
-  try {
-    const response = await apiRequest("POST", "/api/pricing/lookup", { vin, year });
-    const result = await response.json();
-    return result.price;
-  } catch (error) {
-    console.error("Error getting pricing:", error);
-    return null;
+export const getPricingForVin = async (vin: string, year: number): Promise<number | null> => {
+  console.log(`🔍 Requesting pricing for VIN: ${vin}, Year: ${year}`);
+
+  const response = await apiRequest("POST", "/api/pricing/lookup", { vin, year });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      console.log(`❌ No pricing data found for VIN: ${vin}`);
+      return null; // No pricing data found
+    }
+    console.error(`❌ Failed to get pricing data: ${response.status} ${response.statusText}`);
+    throw new Error("Failed to get pricing data");
   }
-}
+
+  const data = await response.json();
+  console.log(`💰 Pricing result: $${data.price} for VIN: ${vin}`);
+  return data.price;
+};
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {

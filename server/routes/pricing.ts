@@ -24,9 +24,11 @@ router.post('/lookup', async (req, res) => {
     const pricing = await getVehiclePricing(vin, parseInt(year));
     
     if (pricing === null) {
+      console.log(`❌ API Response: 404 - No pricing data found for VIN: ${vin}, Year: ${year}`);
       return res.status(404).json({ error: 'No pricing data found for this vehicle' });
     }
     
+    console.log(`✅ API Response: $${pricing} for VIN: ${vin}, Year: ${year}`);
     res.json({ price: pricing });
     
   } catch (error) {

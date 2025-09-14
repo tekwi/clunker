@@ -274,10 +274,17 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
 
     const filteredAverage = filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length;
 
+    // Calculate outliers for logging
+    const removedOutliers = prices.filter(price => 
+      price < Math.max(lowerBound, minimumReasonablePrice) || price > upperBound
+    );
+
     console.log(`Multiple matches (${matches.length}), filtered average: $${Math.round(filteredAverage)}`);
     console.log(`Removed ${prices.length - filteredPrices.length} outliers (Q1: $${q1}, Q3: $${q3}, IQR: $${iqr})`);
+    console.log(`Original price range: $${Math.min(...prices)} - $${Math.max(...prices)}`);
     console.log(`Filtered price range: $${Math.min(...filteredPrices)} - $${Math.max(...filteredPrices)}`);
     console.log(`Outlier bounds: $${Math.round(Math.max(lowerBound, minimumReasonablePrice))} - $${Math.round(upperBound)}`);
+    console.log(`Outliers removed: [${removedOutliers.map(p => `$${p}`).join(', ')}]`);
 
     return Math.round(filteredAverage);
 
