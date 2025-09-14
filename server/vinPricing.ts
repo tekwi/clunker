@@ -54,8 +54,7 @@ const WMI_TO_MAKE: { [key: string]: string } = {
   '5YJ': 'TESL', '7SA': 'TESL',
   // MINI
   'WMW': 'MINI',
-  // Lexus
-  'JTH': 'LEXU', 'JT6': 'LEXU',
+  // Lexus (removing duplicates - JTH and JT6 already assigned to Toyota above)
   // Genesis
   'KMU': 'GENE',
   // Alfa Romeo

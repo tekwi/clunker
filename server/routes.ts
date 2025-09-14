@@ -7,9 +7,7 @@ import { ObjectPermission } from "./objectAcl";
 import { s3Storage } from "./s3Storage";
 import { notificationService } from "./notifications";
 import { z } from "zod";
-import adminRoutes from "./routes/admin";
-import affiliateRoutes from "./routes/affiliate";
-import pricingRoutes from "./routes/pricing";
+// Route imports will be done dynamically below
 import { setupObjectStorage } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -569,9 +567,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const adminRoutes = (await import("./routes/admin.js")).default;
-  const affiliateRoutes = (await import("./routes/affiliate.js")).default;
-  const pricingRoutes = (await import("./routes/pricing.js")).default;
+  // Import route modules dynamically
+  const { default: adminRoutes } = await import("./routes/admin.js");
+  const { default: affiliateRoutes } = await import("./routes/affiliate.js");
+  const { default: pricingRoutes } = await import("./routes/pricing.js");
 
   app.use("/api/admin", adminRoutes);
   app.use("/api/affiliate", affiliateRoutes);
