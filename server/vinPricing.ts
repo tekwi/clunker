@@ -108,10 +108,10 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     // Determine which year to use based on context
     let targetYear = submittedYear;
     if (possibleYears.length > 0) {
-      // Choose the year closest to submitted year
-      targetYear = possibleYears.reduce((prev, curr) => 
-        Math.abs(curr - submittedYear) < Math.abs(prev - submittedYear) ? curr : prev
-      );
+      // For VIN year characters that map to two possible years,
+      // choose the earlier year (1980-2009 range) as it's more likely
+      // for existing vehicles than future years (2010-2039 range)
+      targetYear = Math.min(...possibleYears);
     }
 
     console.log(`Searching for VIN: ${submittedVin}`);
