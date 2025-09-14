@@ -14,6 +14,71 @@ const VIN_YEAR_MAP: { [key: string]: number[] } = {
   '8': [2008, 2038], '9': [2009, 2039]
 };
 
+// World Manufacturer Identifier (WMI) to Make mapping - first 3 characters
+const WMI_TO_MAKE: { [key: string]: string } = {
+  // BMW
+  'WBA': 'BMW', 'WBS': 'BMW', 'WBY': 'BMW',
+  // Mercedes-Benz
+  'WDD': 'MERZ', 'WDF': 'MERZ', 'WDC': 'MERZ',
+  // Audi
+  'WAU': 'AUDI', 'WA1': 'AUDI',
+  // Volkswagen
+  'WVW': 'VOLK', 'WV1': 'VOLK', 'WV2': 'VOLK',
+  // Porsche
+  'WP0': 'PORS', 'WP1': 'PORS',
+  // Ford
+  '1FA': 'FORD', '1FB': 'FORD', '1FC': 'FORD', '1FD': 'FORD', '1FE': 'FORD', '1FF': 'FORD', '1FG': 'FORD', '1FH': 'FORD', '1FJ': 'FORD', '1FK': 'FORD', '1FL': 'FORD', '1FM': 'FORD', '1FN': 'FORD', '1FP': 'FORD', '1FR': 'FORD', '1FS': 'FORD', '1FT': 'FORD', '1FU': 'FORD', '1FV': 'FORD', '1FW': 'FORD', '1FX': 'FORD', '1FY': 'FORD', '1FZ': 'FORD',
+  // GM (Chevrolet, GMC, Cadillac, Buick)
+  '1G1': 'CHEV', '1G2': 'PONT', '1G3': 'OLDSM', '1G4': 'BUIC', '1G6': 'CADI', '1GC': 'CHEV', '1GD': 'CHEV', '1GE': 'CHEV', '1GH': 'CHEV', '1GK': 'CHEV', '1GM': 'CHEV', '1GN': 'CHEV', '1GP': 'PONT', '1GR': 'PONT', '1GS': 'PONT', '1GT': 'GMC', '1GU': 'GMC', '1GW': 'CHEV', '1GX': 'CHEV', '1GY': 'CADI', '1GZ': 'CHEV',
+  // Chrysler/Dodge/Jeep
+  '1C3': 'DODS', '1C4': 'JEEP', '1C6': 'DODS', '1C7': 'JEEP', '1C8': 'CHRYS', '2C3': 'DODS', '2C4': 'CHRYS', '2C7': 'DODS', '2C8': 'CHRYS',
+  // Toyota
+  '4T1': 'TOYT', '4T3': 'TOYT', '4T4': 'TOYT', '5TD': 'TOYT', '5TF': 'TOYT', '5TJ': 'TOYT', 'JT2': 'TOYT', 'JT3': 'TOYT', 'JT4': 'TOYT', 'JT6': 'TOYT', 'JT7': 'TOYT', 'JT8': 'TOYT', 'JTA': 'TOYT', 'JTB': 'TOYT', 'JTC': 'TOYT', 'JTD': 'TOYT', 'JTE': 'TOYT', 'JTF': 'TOYT', 'JTG': 'TOYT', 'JTH': 'TOYT', 'JTJ': 'TOYT', 'JTK': 'TOYT', 'JTL': 'TOYT', 'JTM': 'TOYT', 'JTN': 'TOYT',
+  // Honda/Acura
+  '1HG': 'HOND', '1HF': 'HOND', '2HG': 'HOND', '2HF': 'HOND', '19U': 'ACUR', 'JH4': 'ACUR', 'JHM': 'HOND',
+  // Nissan/Infiniti
+  '1N4': 'NISS', '1N6': 'NISS', '3N1': 'NISS', '3N6': 'NISS', 'JN1': 'NISS', 'JN6': 'NISS', 'JN8': 'NISS', 'JNA': 'INFI', 'JNK': 'INFI', 'JNR': 'INFI', 'JNX': 'INFI',
+  // Mazda
+  '1YV': 'MAZD', '4F2': 'MAZD', '4F4': 'MAZD', 'JM1': 'MAZD', 'JM3': 'MAZD', 'JM7': 'MAZD',
+  // Subaru
+  '4S3': 'SUBA', '4S4': 'SUBA', '4S6': 'SUBA', 'JF1': 'SUBA', 'JF2': 'SUBA',
+  // Mitsubishi
+  '4A3': 'MITS', '4A4': 'MITS', 'JA3': 'MITS', 'JA4': 'MITS',
+  // Hyundai/Kia
+  'KMH': 'HYUN', 'KMJ': 'HYUN', 'KMF': 'HYUN', 'KNA': 'KIA', 'KND': 'KIA', 'KNE': 'KIA', 'KNM': 'KIA',
+  // Land Rover/Jaguar
+  'SAL': 'LAND', 'SAJ': 'JAGU', 'SAT': 'LAND',
+  // Volvo
+  'YV1': 'VOLV', 'YV4': 'VOLV',
+  // Tesla
+  '5YJ': 'TESL', '7SA': 'TESL',
+  // MINI
+  'WMW': 'MINI',
+  // Lexus
+  'JTH': 'LEXU', 'JT6': 'LEXU',
+  // Genesis
+  'KMU': 'GENE',
+  // Alfa Romeo
+  'ZAR': 'ALFA',
+  // Maserati
+  'ZAM': 'MASE',
+  // Ferrari
+  'ZFF': 'FERR',
+  // Lamborghini
+  'ZHW': 'LAMB',
+  // Bentley
+  'SCC': 'BENT',
+  // Rolls-Royce
+  'SCA': 'ROLL',
+};
+
+// Function to decode make from VIN
+function getMakeFromVin(vin: string): string | null {
+  if (vin.length < 3) return null;
+  const wmi = vin.substring(0, 3).toUpperCase();
+  return WMI_TO_MAKE[wmi] || null;
+}
+
 interface PricingMatch {
   sale_price: number;
   vin: string;
@@ -24,8 +89,11 @@ interface PricingMatch {
 
 export async function getVehiclePricing(submittedVin: string, submittedYear: number): Promise<number | null> {
   try {
-    // Extract first 8 characters for make/model matching
-    const vinPrefix = submittedVin.substring(0, 8);
+    // Extract first 8 characters for exact VIN prefix matching
+    const vinPrefix = submittedVin.substring(0, 8).toUpperCase();
+    
+    // Decode make from VIN
+    const decodedMake = getMakeFromVin(submittedVin);
     
     // Extract 10th character for year validation
     const vinYearChar = submittedVin.charAt(9).toUpperCase();
@@ -40,23 +108,63 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       );
     }
     
-    // Query for matches based on VIN prefix and year
-    const matches = await db.execute(sql`
+    console.log(`Searching for VIN: ${submittedVin}`);
+    console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, Target Year: ${targetYear}`);
+    
+    // Primary search: Exact VIN prefix match (first 8 characters) + year
+    let matches = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
       FROM vehicle_pricing 
       WHERE LEFT(vin, 8) = ${vinPrefix}
       AND ABS(lot_year - ${targetYear}) <= 1
       AND sale_price > 0
-      ORDER BY ABS(lot_year - ${targetYear})
+      ORDER BY ABS(lot_year - ${targetYear}), sale_price
     `) as PricingMatch[];
     
+    // If no exact VIN prefix matches and we have a decoded make, search by make + year
+    if (matches.length === 0 && decodedMake) {
+      console.log(`No exact VIN prefix matches, searching by make: ${decodedMake}`);
+      matches = await db.execute(sql`
+        SELECT sale_price, vin, lot_year, lot_make, lot_model
+        FROM vehicle_pricing 
+        WHERE lot_make = ${decodedMake}
+        AND ABS(lot_year - ${targetYear}) <= 2
+        AND sale_price > 0
+        ORDER BY ABS(lot_year - ${targetYear}), sale_price
+        LIMIT 50
+      `) as PricingMatch[];
+    }
+    
+    // If still no matches, broaden search to similar VIN prefix (first 6 characters)
     if (matches.length === 0) {
-      console.log(`No pricing matches found for VIN prefix: ${vinPrefix}, Year: ${targetYear}`);
+      const shorterPrefix = vinPrefix.substring(0, 6);
+      console.log(`No make matches, searching by shorter VIN prefix: ${shorterPrefix}`);
+      matches = await db.execute(sql`
+        SELECT sale_price, vin, lot_year, lot_make, lot_model
+        FROM vehicle_pricing 
+        WHERE LEFT(vin, 6) = ${shorterPrefix}
+        AND ABS(lot_year - ${targetYear}) <= 2
+        AND sale_price > 0
+        ORDER BY ABS(lot_year - ${targetYear}), sale_price
+        LIMIT 20
+      `) as PricingMatch[];
+    }
+    
+    if (matches.length === 0) {
+      console.log(`No pricing matches found for VIN: ${submittedVin}, Make: ${decodedMake}, Year: ${targetYear}`);
       return null;
     }
     
+    console.log(`Found ${matches.length} matches:`, matches.map(m => ({
+      make: m.lot_make,
+      model: m.lot_model,
+      year: m.lot_year,
+      price: m.sale_price,
+      vin_prefix: m.vin.substring(0, 8)
+    })));
+    
     if (matches.length === 1) {
-      console.log(`Single match found: $${matches[0].sale_price}`);
+      console.log(`Single match found: $${matches[0].sale_price} (${matches[0].lot_make} ${matches[0].lot_model})`);
       return matches[0].sale_price;
     }
     
@@ -81,6 +189,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     
     console.log(`Multiple matches (${matches.length}), filtered average: $${filteredAverage}`);
     console.log(`Removed ${prices.length - filteredPrices.length} outliers`);
+    console.log(`Price range: $${Math.min(...filteredPrices)} - $${Math.max(...filteredPrices)}`);
     
     return Math.round(filteredAverage);
     
