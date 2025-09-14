@@ -1,0 +1,43 @@
+
+-- Create vehicle_pricing table for CSV data
+CREATE TABLE vehicle_pricing (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    automobile VARCHAR(20),
+    lot_year DECIMAL(10, 6),
+    lot_make VARCHAR(10),
+    lot_model VARCHAR(50),
+    drivetrain VARCHAR(50),
+    vehicle_body_style VARCHAR(50),
+    vehicle_engine VARCHAR(50),
+    vin VARCHAR(17) NOT NULL,
+    invoice_date DATE,
+    sale_price DECIMAL(12, 6),
+    lot_run_condition VARCHAR(50),
+    sale_title_type VARCHAR(50),
+    damage_type_description VARCHAR(100),
+    secondary_damage_type_description VARCHAR(100),
+    yard_zip VARCHAR(10),
+    odometer_reading VARCHAR(20),
+    yard_number DECIMAL(10, 6),
+    yard_name VARCHAR(100),
+    yard_city VARCHAR(50),
+    yard_state VARCHAR(10),
+    title_type VARCHAR(10),
+    title_state VARCHAR(10),
+    lot_color VARCHAR(20),
+    transmission_type VARCHAR(20),
+    lot_link TEXT,
+    lot_fuel_type VARCHAR(20),
+    lot_sold_run INT,
+    rerun_count INT,
+    airbag_depl_flg INT,
+    business_unit VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Indexes for efficient VIN lookups
+    INDEX idx_vin_prefix (vin(8)),
+    INDEX idx_vin_year_char (vin(10)),
+    INDEX idx_full_vin (vin),
+    INDEX idx_sale_price (sale_price),
+    INDEX idx_lot_year (lot_year)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -7,6 +7,10 @@ import { ObjectPermission } from "./objectAcl";
 import { s3Storage } from "./s3Storage";
 import { notificationService } from "./notifications";
 import { z } from "zod";
+import adminRoutes from "./routes/admin";
+import affiliateRoutes from "./routes/affiliate";
+import pricingRoutes from "./routes/pricing";
+import { setupObjectStorage } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const objectStorageService = new ObjectStorageService();
@@ -18,11 +22,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const requireAuth = (req: any, res: any, next: any) => {
     const sessionId = req.headers.authorization?.replace('Bearer ', '');
     const session = sessionId ? sessions.get(sessionId) : null;
-    
+
     if (!session || session.expiresAt < Date.now()) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    
+
     req.admin = { id: session.adminId, username: session.username };
     next();
   };
@@ -177,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAffiliateSchema.parse(req.body);
       const affiliate = await storage.createAffiliate(validatedData);
-      
+
       // Send email notifications
       try {
         await notificationService.sendAdminAffiliateCreationNotification(affiliate);
@@ -327,10 +331,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/ref/:affiliateCode", async (req, res) => {
     try {
       const { affiliateCode } = req.params;
-      
+
       // Verify affiliate exists and is active
       const affiliate = await storage.getAffiliateByCode(affiliateCode.toUpperCase());
-      
+
       if (!affiliate || affiliate.isActive !== "true") {
         return res.redirect("/");
       }
@@ -347,10 +351,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/affiliate/:affiliateCode", async (req, res) => {
     try {
       const { affiliateCode } = req.params;
-      
+
       // Get affiliate by code
       const affiliate = await storage.getAffiliateByCode(affiliateCode.toUpperCase());
-      
+
       if (!affiliate || affiliate.isActive !== "true") {
         return res.status(404).json({ error: "Affiliate not found or inactive" });
       }
@@ -378,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/offers/:offerId/accept", async (req, res) => {
     try {
       const { offerId } = req.params;
-      
+
       const updatedOffer = await storage.updateOffer(offerId, {
         status: "accepted",
         acceptedAt: new Date()
@@ -426,7 +430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/offers/:offerId/reject", async (req, res) => {
     try {
       const { offerId } = req.params;
-      
+
       const updatedOffer = await storage.updateOffer(offerId, {
         status: "rejected"
       });
@@ -564,6 +568,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to add photos" });
     }
   });
+
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/affiliate", affiliateRoutes);
+  app.use("/api/pricing", pricingRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
