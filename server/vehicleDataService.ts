@@ -78,11 +78,31 @@ async function fetchAndStoreModelsForMakeAndYear(makeId: string, make: string, y
     const response = await fetch(`https://www.picknpull.com/cash-for-junk-cars/api/models?year=${year}&make=${make}`);
     
     if (!response.ok) {
-      console.log(`No models found for ${make} ${year}`);
+      console.log(`No models found for ${make} ${year} (Status: ${response.status})`);
       return;
     }
     
-    const data = await response.json();
+    // Check if response has content
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log(`Invalid content type for ${make} ${year}: ${contentType}`);
+      return;
+    }
+    
+    // Get the response text first to check if it's empty
+    const responseText = await response.text();
+    if (!responseText.trim()) {
+      console.log(`Empty response for ${make} ${year}`);
+      return;
+    }
+    
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      console.log(`Invalid JSON response for ${make} ${year}: ${responseText.substring(0, 100)}...`);
+      return;
+    }
     
     if (Array.isArray(data) && data.length > 0) {
       for (const item of data) {
@@ -114,6 +134,8 @@ async function fetchAndStoreModelsForMakeAndYear(makeId: string, make: string, y
         }
       }
       console.log(`Stored models for ${make} ${year}: ${data.length} models`);
+    } else {
+      console.log(`No valid models in response for ${make} ${year}`);
     }
   } catch (error) {
     console.error(`Error fetching models for ${make} ${year}:`, error);
