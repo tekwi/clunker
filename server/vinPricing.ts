@@ -1,3 +1,4 @@
+
 import { db } from './db';
 import { sql } from 'drizzle-orm';
 
@@ -76,68 +77,46 @@ function getMakeFromVin(vin: string): string | null {
   return WMI_TO_MAKE[wmi] || null;
 }
 
-// Simple function to extract rows from MySQL result
-function extractRows(result: any): any[] {
-  // MySQL2 returns [rows[], metadata[]] format
-  if (Array.isArray(result) && result.length >= 1) {
-    return Array.isArray(result[0]) ? result[0] : [result];
-  }
-  return [];
-}
-
 export async function getVehiclePricing(submittedVin: string, submittedYear: number): Promise<number | null> {
   try {
-    // Extract first 8 characters for exact VIN prefix matching
     const vinPrefix = submittedVin.substring(0, 8).toUpperCase();
     const decodedMake = getMakeFromVin(submittedVin);
 
-    // Extract 10th character for year validation
-    const vinYearChar = submittedVin.charAt(9).toUpperCase();
-    const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];
-
-    let targetYear = submittedYear;
-    if (possibleYears.length > 0) {
-      targetYear = Math.min(...possibleYears);
-    }
-
     console.log(`Searching for VIN: ${submittedVin}`);
-    console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, Target Year: ${targetYear}`);
+    console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, Target Year: ${submittedYear}`);
 
-    // Primary search: Exact VIN prefix match (first 8 characters) + year
+    // Search 1: Exact VIN prefix match (first 8 characters)
     let result = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
       FROM vehicle_pricing 
       WHERE LEFT(vin, 8) = ${vinPrefix}
-      AND ABS(lot_year - ${targetYear}) <= 1
       AND sale_price > 0
       AND vin IS NOT NULL
-      AND LENGTH(vin) >= 8
-      ORDER BY ABS(lot_year - ${targetYear}), sale_price
+      ORDER BY lot_year DESC
+      LIMIT 50
     `);
 
-    let rows = extractRows(result);
+    let rows = Array.isArray(result[0]) ? result[0] : [];
     console.log(`VIN prefix search found ${rows.length} rows`);
 
-    // If no exact VIN prefix matches and we have a decoded make, search by make + year
+    // Search 2: If no exact VIN prefix matches, search by make with broader year range
     if (rows.length === 0 && decodedMake) {
-      console.log(`No exact VIN prefix matches, searching by make: ${decodedMake}`);
+      console.log(`No VIN prefix matches, searching by make: ${decodedMake}`);
       result = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing 
         WHERE lot_make = ${decodedMake}
-        AND ABS(lot_year - ${targetYear}) <= 2
         AND sale_price > 0
         AND vin IS NOT NULL
-        AND LENGTH(vin) >= 8
-        ORDER BY ABS(lot_year - ${targetYear}), sale_price
-        LIMIT 50
+        ORDER BY lot_year DESC
+        LIMIT 100
       `);
 
-      rows = extractRows(result);
+      rows = Array.isArray(result[0]) ? result[0] : [];
       console.log(`Make-based search found ${rows.length} rows for make: ${decodedMake}`);
     }
 
-    // If still no matches, broaden search to similar VIN prefix (first 6 characters)
+    // Search 3: If still no matches, try shorter VIN prefix (first 6 characters)
     if (rows.length === 0) {
       const shorterPrefix = vinPrefix.substring(0, 6);
       console.log(`No make matches, searching by shorter VIN prefix: ${shorterPrefix}`);
@@ -145,62 +124,47 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing 
         WHERE LEFT(vin, 6) = ${shorterPrefix}
-        AND ABS(lot_year - ${targetYear}) <= 2
         AND sale_price > 0
         AND vin IS NOT NULL
-        AND LENGTH(vin) >= 6
-        ORDER BY ABS(lot_year - ${targetYear}), sale_price
-        LIMIT 20
+        ORDER BY lot_year DESC
+        LIMIT 50
       `);
 
-      rows = extractRows(result);
-      console.log(`Shorter prefix search found ${rows.length} rows for prefix: ${shorterPrefix}`);
+      rows = Array.isArray(result[0]) ? result[0] : [];
+      console.log(`Shorter prefix search found ${rows.length} rows`);
     }
 
     if (rows.length === 0) {
-      console.log(`No pricing matches found for VIN: ${submittedVin}, Make: ${decodedMake}, Year: ${targetYear}`);
+      console.log(`No pricing data found for VIN: ${submittedVin}`);
       return null;
     }
 
-    // Convert to proper format and filter valid data
-    const matches = rows.filter(row => 
-      row && row.sale_price > 0 && row.vin
-    ).map(row => ({
-      sale_price: Number(row.sale_price),
-      vin: String(row.vin),
-      lot_year: Number(row.lot_year),
-      lot_make: String(row.lot_make),
-      lot_model: String(row.lot_model)
-    }));
+    // Convert to proper format and calculate pricing
+    const validPrices = rows
+      .filter(row => row && row.sale_price > 0)
+      .map(row => Number(row.sale_price))
+      .filter(price => price > 0);
 
-    console.log(`Found ${matches.length} valid matches:`, matches.map(m => ({
-      make: m.lot_make,
-      model: m.lot_model,
-      year: m.lot_year,
-      price: m.sale_price,
-      vin_prefix: m.vin.substring(0, 8)
-    })));
-
-    if (matches.length === 1) {
-      console.log(`Single match found: $${matches[0].sale_price} (${matches[0].lot_make} ${matches[0].lot_model})`);
-      return matches[0].sale_price;
-    }
-
-    // Multiple matches - calculate average
-    const prices = matches.map(m => m.sale_price).filter(price => price > 0);
-
-    if (prices.length === 0) {
-      console.log('No valid prices found in matches');
+    if (validPrices.length === 0) {
+      console.log('No valid prices found');
       return null;
     }
 
-    const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    console.log(`Found ${validPrices.length} valid prices: [${validPrices.map(p => `$${p}`).join(', ')}]`);
 
-    console.log(`Multiple matches (${matches.length}), average: $${Math.round(average)}`);
-    console.log(`Price range: $${Math.min(...prices)} - $${Math.max(...prices)}`);
-    console.log(`All prices: [${prices.map(p => `$${p}`).join(', ')}]`);
+    if (validPrices.length === 1) {
+      console.log(`Single match found: $${validPrices[0]}`);
+      return validPrices[0];
+    }
 
-    return Math.round(average);
+    // Calculate average for multiple matches
+    const average = validPrices.reduce((sum, price) => sum + price, 0) / validPrices.length;
+    const roundedAverage = Math.round(average);
+
+    console.log(`Multiple matches (${validPrices.length}), average: $${roundedAverage}`);
+    console.log(`Price range: $${Math.min(...validPrices)} - $${Math.max(...validPrices)}`);
+
+    return roundedAverage;
 
   } catch (error) {
     console.error('Error getting vehicle pricing:', error);
