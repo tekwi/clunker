@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeVehicleData } from "./vehicleDataService";
+import { initializeDatabase } from "./db";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -40,7 +41,7 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
-  
+
   // Initialize vehicle data in the background
   setTimeout(() => {
     initializeVehicleData().catch(console.error);
@@ -62,6 +63,18 @@ app.use((req, res, next) => {
 
   const port = process.env.PORT || 7000;
   const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
+  try {
+    await initializeDatabase();
+    console.log("Database initialized successfully");
+
+    // Initialize vehicle data (makes and models)
+    await initializeVehicleData();
+    console.log("Vehicle data initialized successfully");
+  } catch (error) {
+    console.error("Database initialization failed:", error);
+    process.exit(1);
+  }
 
   try {
     server.listen(port, () => {

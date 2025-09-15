@@ -8,6 +8,7 @@ const router = Router();
 router.get('/makes', async (req, res) => {
   try {
     const makes = await getVehicleMakes();
+    console.log(`Found ${makes.length} vehicle makes`);
     res.json(makes.map(make => ({ make: make.make })));
   } catch (error) {
     console.error('Error fetching makes:', error);
