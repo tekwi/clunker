@@ -135,11 +135,12 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     let rows: any[] = [];
     
     if (Array.isArray(rawMatches)) {
-      if (Array.isArray(rawMatches[0])) {
-        // Format: [rows[], metadata[]]
+      if (rawMatches.length >= 2 && Array.isArray(rawMatches[0]) && Array.isArray(rawMatches[1])) {
+        // Format: [rows[], metadata[]] - take the first array which contains data
         rows = rawMatches[0];
+        console.log(`VIN prefix search found ${rows.length} raw rows`);
       } else {
-        // Format: rows[]
+        // Format: rows[] directly
         rows = rawMatches;
       }
     } else {
@@ -147,9 +148,10 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     }
     
     let matches = rows.filter((row: any) => {
-      // Filter out metadata - keep only objects with our expected properties
+      // Filter out metadata and null/undefined rows
       return row && typeof row === 'object' && !Array.isArray(row) && 
-             typeof row.sale_price !== 'undefined' && typeof row.vin !== 'undefined';
+             row.hasOwnProperty('sale_price') && row.hasOwnProperty('vin') &&
+             row.sale_price !== null && row.vin !== null;
     }).map((row: any) => {
       console.log('Processing VIN prefix row:', row);
       return {
@@ -180,9 +182,12 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       let makeRows: any[] = [];
       
       if (Array.isArray(rawMatches)) {
-        if (Array.isArray(rawMatches[0])) {
+        if (rawMatches.length >= 2 && Array.isArray(rawMatches[0]) && Array.isArray(rawMatches[1])) {
+          // Format: [rows[], metadata[]] - take the first array which contains data
           makeRows = rawMatches[0];
+          console.log(`Make-based search found ${makeRows.length} raw rows for make: ${decodedMake}`);
         } else {
+          // Format: rows[] directly
           makeRows = rawMatches;
         }
       } else {
@@ -191,7 +196,8 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       
       matches = makeRows.filter((row: any) => {
         return row && typeof row === 'object' && !Array.isArray(row) && 
-               typeof row.sale_price !== 'undefined' && typeof row.vin !== 'undefined';
+               row.hasOwnProperty('sale_price') && row.hasOwnProperty('vin') &&
+               row.sale_price !== null && row.vin !== null;
       }).map((row: any) => {
         console.log('Make-based search raw row:', row);
         return {
@@ -224,9 +230,12 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       let prefixRows: any[] = [];
       
       if (Array.isArray(rawMatches)) {
-        if (Array.isArray(rawMatches[0])) {
+        if (rawMatches.length >= 2 && Array.isArray(rawMatches[0]) && Array.isArray(rawMatches[1])) {
+          // Format: [rows[], metadata[]] - take the first array which contains data
           prefixRows = rawMatches[0];
+          console.log(`Shorter prefix search found ${prefixRows.length} raw rows for prefix: ${shorterPrefix}`);
         } else {
+          // Format: rows[] directly
           prefixRows = rawMatches;
         }
       } else {
@@ -235,7 +244,8 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       
       matches = prefixRows.filter((row: any) => {
         return row && typeof row === 'object' && !Array.isArray(row) && 
-               typeof row.sale_price !== 'undefined' && typeof row.vin !== 'undefined';
+               row.hasOwnProperty('sale_price') && row.hasOwnProperty('vin') &&
+               row.sale_price !== null && row.vin !== null;
       }).map((row: any) => {
         console.log('Shorter prefix search raw row:', row);
         return {
