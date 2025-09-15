@@ -77,15 +77,65 @@ function getMakeFromVin(vin: string): string | null {
   return WMI_TO_MAKE[wmi] || null;
 }
 
+// Function to get year from VIN (10th character)
+function getYearFromVin(vin: string): number | null {
+  if (vin.length < 10) return null;
+  const vinYearChar = vin.charAt(9).toUpperCase();
+  const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];
+  
+  if (possibleYears.length === 0) return null;
+  
+  // For VIN year characters that map to two possible years,
+  // choose the later year (2010-2039 range) for newer vehicles
+  return Math.max(...possibleYears);
+}
+
+// Function to remove outliers and calculate median
+function calculateMedianWithoutOutliers(prices: number[]): number {
+  if (prices.length === 0) return 0;
+  if (prices.length === 1) return prices[0];
+  
+  // Sort prices
+  const sortedPrices = [...prices].sort((a, b) => a - b);
+  
+  // Remove outliers using IQR method
+  if (sortedPrices.length >= 4) {
+    const q1Index = Math.floor(sortedPrices.length * 0.25);
+    const q3Index = Math.floor(sortedPrices.length * 0.75);
+    const q1 = sortedPrices[q1Index];
+    const q3 = sortedPrices[q3Index];
+    const iqr = q3 - q1;
+    const lowerBound = q1 - (1.5 * iqr);
+    const upperBound = q3 + (1.5 * iqr);
+    
+    const filteredPrices = sortedPrices.filter(price => price >= lowerBound && price <= upperBound);
+    
+    if (filteredPrices.length > 0) {
+      // Calculate median of filtered prices
+      const mid = Math.floor(filteredPrices.length / 2);
+      return filteredPrices.length % 2 === 0 
+        ? Math.round((filteredPrices[mid - 1] + filteredPrices[mid]) / 2)
+        : filteredPrices[mid];
+    }
+  }
+  
+  // If we can't remove outliers or no prices left after filtering, use median of all prices
+  const mid = Math.floor(sortedPrices.length / 2);
+  return sortedPrices.length % 2 === 0 
+    ? Math.round((sortedPrices[mid - 1] + sortedPrices[mid]) / 2)
+    : sortedPrices[mid];
+}
+
 export async function getVehiclePricing(submittedVin: string, submittedYear: number): Promise<number | null> {
   try {
     const vinPrefix = submittedVin.substring(0, 8).toUpperCase();
     const decodedMake = getMakeFromVin(submittedVin);
+    const vinYear = getYearFromVin(submittedVin);
 
     console.log(`Searching for VIN: ${submittedVin}`);
-    console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, Target Year: ${submittedYear}`);
+    console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);
 
-    // Search 1: Exact VIN prefix match (first 8 characters)
+    // Search 1: Exact VIN prefix match (first 8 characters) with year filtering
     let result = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
       FROM vehicle_pricing 
@@ -93,15 +143,27 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       AND sale_price > 0
       AND vin IS NOT NULL
       ORDER BY lot_year DESC
-      LIMIT 50
+      LIMIT 100
     `);
 
     let rows = Array.isArray(result[0]) ? result[0] : [];
-    console.log(`VIN prefix search found ${rows.length} rows`);
+    console.log(`VIN prefix search found ${rows.length} rows before year filtering`);
 
-    // Search 2: If no exact VIN prefix matches, search by make with broader year range
+    // Filter by year if we have VIN year or submitted year
+    const targetYear = vinYear || submittedYear;
+    if (targetYear && rows.length > 0) {
+      // Allow ±2 years flexibility for better matching
+      const yearTolerance = 2;
+      rows = rows.filter(row => {
+        const rowYear = Number(row.lot_year);
+        return rowYear >= (targetYear - yearTolerance) && rowYear <= (targetYear + yearTolerance);
+      });
+      console.log(`After year filtering (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
+    }
+
+    // Search 2: If no matches with year filtering, try make-based search
     if (rows.length === 0 && decodedMake) {
-      console.log(`No VIN prefix matches, searching by make: ${decodedMake}`);
+      console.log(`No VIN prefix matches with year, searching by make: ${decodedMake}`);
       result = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing 
@@ -109,17 +171,27 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         AND sale_price > 0
         AND vin IS NOT NULL
         ORDER BY lot_year DESC
-        LIMIT 100
+        LIMIT 200
       `);
 
       rows = Array.isArray(result[0]) ? result[0] : [];
       console.log(`Make-based search found ${rows.length} rows for make: ${decodedMake}`);
+
+      // Apply year filtering to make-based results
+      if (targetYear && rows.length > 0) {
+        const yearTolerance = 3; // Slightly more tolerance for make-based search
+        rows = rows.filter(row => {
+          const rowYear = Number(row.lot_year);
+          return rowYear >= (targetYear - yearTolerance) && rowYear <= (targetYear + yearTolerance);
+        });
+        console.log(`After year filtering for make search (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
+      }
     }
 
-    // Search 3: If still no matches, try shorter VIN prefix (first 6 characters)
+    // Search 3: If still no matches, try shorter VIN prefix without strict year filtering
     if (rows.length === 0) {
       const shorterPrefix = vinPrefix.substring(0, 6);
-      console.log(`No make matches, searching by shorter VIN prefix: ${shorterPrefix}`);
+      console.log(`No matches, searching by shorter VIN prefix: ${shorterPrefix}`);
       result = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing 
@@ -127,7 +199,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
         AND sale_price > 0
         AND vin IS NOT NULL
         ORDER BY lot_year DESC
-        LIMIT 50
+        LIMIT 100
       `);
 
       rows = Array.isArray(result[0]) ? result[0] : [];
@@ -143,7 +215,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     const validPrices = rows
       .filter(row => row && row.sale_price > 0)
       .map(row => Number(row.sale_price))
-      .filter(price => price > 0);
+      .filter(price => price > 0 && price < 1000000); // Remove obviously invalid high prices
 
     if (validPrices.length === 0) {
       console.log('No valid prices found');
@@ -157,14 +229,13 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       return validPrices[0];
     }
 
-    // Calculate average for multiple matches
-    const average = validPrices.reduce((sum, price) => sum + price, 0) / validPrices.length;
-    const roundedAverage = Math.round(average);
+    // Calculate median with outlier removal for multiple matches
+    const medianPrice = calculateMedianWithoutOutliers(validPrices);
 
-    console.log(`Multiple matches (${validPrices.length}), average: $${roundedAverage}`);
+    console.log(`Multiple matches (${validPrices.length}), median: $${medianPrice}`);
     console.log(`Price range: $${Math.min(...validPrices)} - $${Math.max(...validPrices)}`);
 
-    return roundedAverage;
+    return medianPrice;
 
   } catch (error) {
     console.error('Error getting vehicle pricing:', error);
