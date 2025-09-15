@@ -61,12 +61,12 @@ const VIN_YEAR_MAP: { [key: string]: number[] } = {
 
 const getYearFromVin = (vin: string): number => {
   if (vin.length < 10) return new Date().getFullYear();
-  
+
   const vinYearChar = vin.charAt(9).toUpperCase();
   const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];
-  
+
   if (possibleYears.length === 0) return new Date().getFullYear();
-  
+
   // For VIN year characters that map to two possible years,
   // choose the later year (2010-2039 range) for newer vehicles
   // since we're past 2010 and most vehicles being processed are likely newer
@@ -234,11 +234,11 @@ export function MultiStepForm() {
 
   const handleAcceptOffer = async () => {
     if (!submissionId) return;
-    
+
     try {
       // Find the offer for this submission and update its status
       const response = await apiRequest("PUT", `/api/submissions/${submissionId}/offer/accept`, {});
-      
+
       if (response.ok) {
         setOfferAccepted(true);
         toast({
@@ -261,7 +261,7 @@ export function MultiStepForm() {
   const updateField = (field: keyof SubmissionForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     form.setValue(field, value);
-    
+
     // If make is changed, fetch models and clear current model
     if (field === 'vehicleMake' && value) {
       fetchVehicleModels(value);
@@ -297,7 +297,7 @@ export function MultiStepForm() {
     try {
       const year = getFieldValue('vehicleYear') || new Date().getFullYear().toString();
       const response = await fetch(`/api/vehicles/models?make=${encodeURIComponent(make)}&year=${year}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         const models = data.map((item: { model: string }) => item.model);
@@ -393,16 +393,16 @@ export function MultiStepForm() {
     mutationFn: async (data: SubmissionForm & { photos: string[] }) => {
       // First submit the main form data
       const { photos, ...submissionData } = data;
-      
+
       // Check for affiliate code in URL
       const urlParams = new URLSearchParams(window.location.search);
       const affiliateCode = urlParams.get('ref');
-      
+
       const finalData = {
         ...submissionData,
         affiliateCode: affiliateCode || undefined
       };
-      
+
       const response = await apiRequest("POST", "/api/submissions", finalData);
       const result = await response.json();
 
@@ -418,12 +418,12 @@ export function MultiStepForm() {
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
       setSubmissionId(data.submissionId);
-      
+
       // Get pricing estimate
       setIsLoadingPrice(true);
       const vin = getFieldValue("vin");
-      const year = getYearFromVin(vin);
-      
+      const year = getFieldValue("vehicleYear") ? parseInt(getFieldValue("vehicleYear")) : getYearFromVin(vin);
+
       try {
         const price = await getPricingForVin(vin, year);
         setEstimatedPrice(price);
@@ -432,10 +432,10 @@ export function MultiStepForm() {
       } finally {
         setIsLoadingPrice(false);
       }
-      
+
       // Move to success step
       setCurrentStep(STEPS.length - 1);
-      
+
       toast({
         title: "Submission successful!",
         description: "Your vehicle information has been submitted.",
@@ -609,7 +609,7 @@ export function MultiStepForm() {
               min="1900"
               max={new Date().getFullYear() + 1}
             />
-            
+
             <Select
               value={getFieldValue("vehicleMake")}
               onValueChange={(value) => updateField("vehicleMake", value)}
@@ -633,14 +633,14 @@ export function MultiStepForm() {
               disabled={!getFieldValue("vehicleMake") || isLoadingModels}
             >
               <SelectTrigger className="text-lg p-4 h-14">
-                <SelectValue 
+                <SelectValue
                   placeholder={
-                    !getFieldValue("vehicleMake") 
-                      ? "Select make first" 
-                      : isLoadingModels 
-                        ? "Loading models..." 
+                    !getFieldValue("vehicleMake")
+                      ? "Select make first"
+                      : isLoadingModels
+                        ? "Loading models..."
                         : "Select vehicle model"
-                  } 
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
@@ -891,16 +891,16 @@ export function MultiStepForm() {
           return (
             <div className="text-center py-8 space-y-6">
               <div className="text-6xl mb-6">🚚</div>
-              
+
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-green-600">Offer Accepted!</h2>
                 <p className="text-gray-600">
                   Great! We'll arrange pickup and payment for your vehicle.
                 </p>
-                
+
                 <div className="bg-green-50 rounded-lg p-6 space-y-4">
                   <h3 className="text-lg font-semibold text-green-900">Next Steps</h3>
-                  
+
                   <div className="text-left space-y-3">
                     <div className="flex items-start space-x-3">
                       <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
@@ -909,7 +909,7 @@ export function MultiStepForm() {
                         <p className="text-sm text-green-700">Within 24-48 hours at your location</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start space-x-3">
                       <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
                       <div>
@@ -917,7 +917,7 @@ export function MultiStepForm() {
                         <p className="text-sm text-green-700">Quick on-site inspection to confirm condition</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start space-x-3">
                       <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
                       <div>
@@ -925,7 +925,7 @@ export function MultiStepForm() {
                         <p className="text-sm text-green-700">Cash payment on the spot</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start space-x-3">
                       <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
                       <div>
@@ -935,7 +935,7 @@ export function MultiStepForm() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="bg-blue-50 rounded-lg p-4">
                   <h4 className="font-medium text-blue-900 mb-2">What to Have Ready:</h4>
                   <ul className="text-sm text-blue-700 text-left space-y-1">
@@ -945,14 +945,14 @@ export function MultiStepForm() {
                     <li>• Registration (if available)</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-yellow-50 rounded-lg p-4">
                   <p className="text-yellow-800 text-sm">
                     📞 You'll receive a call within 2 hours to schedule pickup
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <Button
                   onClick={() => submissionId && setLocation(`/view/${submissionId}`)}
@@ -961,7 +961,7 @@ export function MultiStepForm() {
                 >
                   View Submission Details
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onClick={() => window.location.href = "/"}
@@ -973,21 +973,21 @@ export function MultiStepForm() {
             </div>
           );
         }
-        
+
         return (
           <div className="text-center py-8 space-y-6">
             <div className="text-6xl mb-6">💰</div>
-            
+
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">Your Cash Offer</h2>
-              
+
               {submissionId && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-2">Submission ID:</p>
                   <p className="font-mono text-lg">{submissionId}</p>
                 </div>
               )}
-              
+
               {/* Cash Offer */}
               {isLoadingPrice ? (
                 <div className="bg-blue-50 rounded-lg p-8">
@@ -1005,13 +1005,13 @@ export function MultiStepForm() {
                     </div>
                     <p className="text-sm text-gray-600">Cash on pickup</p>
                   </div>
-                  
+
                   <div className="bg-red-100 border border-red-300 rounded-lg p-4">
                     <p className="text-red-800 font-medium">⏰ Limited Time Offer</p>
                     <p className="text-red-700 text-lg font-mono">{formatTime(timeLeft)}</p>
                     <p className="text-red-600 text-sm">Accept now to lock in this price</p>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <Button
                       onClick={handleAcceptOffer}
@@ -1020,7 +1020,7 @@ export function MultiStepForm() {
                     >
                       Accept Offer - ${estimatedPrice.toLocaleString()}
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       onClick={() => window.location.href = "/"}
@@ -1053,7 +1053,7 @@ export function MultiStepForm() {
                 </div>
               )}
             </div>
-            
+
             {!offerAccepted && (
               <div className="space-y-3">
                 <Button
