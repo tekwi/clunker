@@ -43,3 +43,22 @@ async function testConnection() {
 
 // Test connection on startup
 testConnection();
+
+// Initialize database function
+export async function initializeDatabase() {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ MySQL database connected successfully');
+    connection.release();
+    return true;
+  } catch (error) {
+    console.error('❌ MySQL connection failed:', error.message);
+    console.log('Database config:', {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      user: dbConfig.user
+    });
+    throw error;
+  }
+}
