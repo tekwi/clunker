@@ -73,6 +73,17 @@ const getYearFromVin = (vin: string): number => {
   return Math.max(...possibleYears);
 };
 
+// Vehicle makes data
+const VEHICLE_MAKES = [
+  "ACURA", "AMERICAN GENERAL", "AUDI", "BENTLEY", "BMW", "BUICK", "CADILLAC",
+  "CHEVROLET", "CHRYSLER", "DAEWOO", "DODGE", "FERRARI", "FORD", "GMC",
+  "HONDA", "HYUNDAI", "INFINITI", "ISUZU", "JAGUAR", "JEEP", "KIA",
+  "LAND ROVER", "LEXUS", "LINCOLN", "MAZDA", "MERCEDES-BENZ", "MERCURY",
+  "MITSUBISHI", "NISSAN", "NISSAN DIESEL", "OLDSMOBILE", "PLYMOUTH",
+  "PONTIAC", "PORSCHE", "ROLLS-ROYCE", "SAAB", "SATURN", "SUBARU",
+  "SUZUKI", "TOYOTA", "VOLKSWAGEN", "VOLVO"
+];
+
 const STEPS: Step[] = [
   {
     id: "welcome",
@@ -175,6 +186,8 @@ export function MultiStepForm() {
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [offerAccepted, setOfferAccepted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [vehicleModels, setVehicleModels] = useState<string[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   // Simple form with direct state management
   const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
@@ -250,6 +263,39 @@ export function MultiStepForm() {
   const updateField = (field: keyof SubmissionForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     form.setValue(field, value);
+    
+    // If make is changed, fetch models and clear current model
+    if (field === 'vehicleMake' && value) {
+      fetchVehicleModels(value);
+      updateField('vehicleModel', ''); // Clear model when make changes
+    }
+  };
+
+  const fetchVehicleModels = async (make: string) => {
+    if (!make) {
+      setVehicleModels([]);
+      return;
+    }
+
+    setIsLoadingModels(true);
+    try {
+      const year = getFieldValue('vehicleYear') || new Date().getFullYear().toString();
+      const response = await fetch(`https://www.picknpull.com/cash-for-junk-cars/api/models?year=${year}&make=${make}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const models = data.map((item: { model: string }) => item.model);
+        setVehicleModels(models);
+      } else {
+        console.error('Failed to fetch models');
+        setVehicleModels([]);
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      setVehicleModels([]);
+    } finally {
+      setIsLoadingModels(false);
+    }
   };
 
   const getFieldValue = (field: keyof SubmissionForm): string => {
@@ -531,26 +577,63 @@ export function MultiStepForm() {
         return (
           <div className="space-y-6">
             <Input
-              value={getFieldValue("vehicleMake")}
-              onChange={(e) => updateField("vehicleMake", e.target.value)}
-              placeholder="Vehicle Make (e.g., Toyota, Ford, BMW)"
-              className="text-lg p-4 h-14"
-            />
-            <Input
-              value={getFieldValue("vehicleModel")}
-              onChange={(e) => updateField("vehicleModel", e.target.value)}
-              placeholder="Vehicle Model (e.g., Camry, F-150, X3)"
-              className="text-lg p-4 h-14"
-            />
-            <Input
               value={getFieldValue("vehicleYear")}
-              onChange={(e) => updateField("vehicleYear", e.target.value)}
+              onChange={(e) => {
+                const year = e.target.value;
+                updateField("vehicleYear", year);
+                // Refetch models if make is already selected and year changes
+                const currentMake = getFieldValue("vehicleMake");
+                if (currentMake && year) {
+                  fetchVehicleModels(currentMake);
+                }
+              }}
               type="number"
               placeholder="Year (e.g., 2020)"
               className="text-lg p-4 h-14"
               min="1900"
               max={new Date().getFullYear() + 1}
             />
+            
+            <Select
+              value={getFieldValue("vehicleMake")}
+              onValueChange={(value) => updateField("vehicleMake", value)}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue placeholder="Select vehicle make" />
+              </SelectTrigger>
+              <SelectContent>
+                {VEHICLE_MAKES.map((make) => (
+                  <SelectItem key={make} value={make}>
+                    {make}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={getFieldValue("vehicleModel")}
+              onValueChange={(value) => updateField("vehicleModel", value)}
+              disabled={!getFieldValue("vehicleMake") || isLoadingModels}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue 
+                  placeholder={
+                    !getFieldValue("vehicleMake") 
+                      ? "Select make first" 
+                      : isLoadingModels 
+                        ? "Loading models..." 
+                        : "Select vehicle model"
+                  } 
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleModels.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
 
