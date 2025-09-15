@@ -61,10 +61,6 @@ app.use((req, res, next) => {
   try {
     await initializeDatabase();
     console.log("Database initialized successfully");
-
-    // Initialize vehicle data (makes and models)
-    await initializeVehicleData();
-    console.log("Vehicle data initialized successfully");
   } catch (error) {
     console.error("Database initialization failed:", error);
     process.exit(1);
