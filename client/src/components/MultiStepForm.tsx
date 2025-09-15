@@ -65,9 +65,9 @@ const getYearFromVin = (vin: string): number => {
   if (possibleYears.length === 0) return new Date().getFullYear();
   
   // For VIN year characters that map to two possible years,
-  // choose the earlier year (1980-2009 range) as it's more likely
-  // for existing vehicles than future years (2010-2039 range)
-  return Math.min(...possibleYears);
+  // choose the later year (2010-2039 range) for newer vehicles
+  // since we're past 2010 and most vehicles being processed are likely newer
+  return Math.max(...possibleYears);
 };
 
 const STEPS: Step[] = [
