@@ -38,6 +38,7 @@ export default function ViewSubmission() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -713,7 +714,11 @@ export default function ViewSubmission() {
                       </h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4" data-testid="photos-gallery">
                         {submission.pictures.map((picture, index) => (
-                          <div key={picture.id} className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                          <div 
+                            key={picture.id} 
+                            className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => setSelectedImage(picture.url)}
+                          >
                             <img 
                               src={picture.url}
                               alt={`Vehicle photo ${index + 1}`}
@@ -884,6 +889,24 @@ export default function ViewSubmission() {
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Modal */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl w-full">
+          <DialogHeader>
+            <DialogTitle>Vehicle Photo</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <div className="flex justify-center">
+              <img 
+                src={selectedImage}
+                alt="Vehicle photo enlarged"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
