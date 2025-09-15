@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,14 +35,14 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        
+
         // Wait for video to be ready and start automatic capture
         setIsInitializing(false);
-        
+
         // Auto-capture after 3 seconds to allow user to position the VIN
         captureTimeoutRef.current = setTimeout(() => {
           captureAndAnalyze();
@@ -77,6 +76,20 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
     }
   };
 
+  // Function to correct common OCR errors in VINs
+  const correctVinCharacters = (text: string): string => {
+    // Common OCR corrections for VIN characters
+    // VINs exclude I, O, Q to avoid confusion
+    return text
+      .replace(/[I1]/g, '1')  // I -> 1
+      .replace(/[O0]/g, '0')  // O -> 0
+      .replace(/[Q]/g, '0')   // Q -> 0 (though Q shouldn't appear in VINs)
+      .replace(/S/g, '5')     // S -> 5 (when 5 is misread as S)
+      .replace(/B/g, '8')     // B -> 8 (when 8 is misread as B)
+      .replace(/G/g, '6')     // G -> 6 (when 6 is misread as G)
+      .toUpperCase();
+  };
+
   const captureAndAnalyze = async () => {
     if (!videoRef.current) return;
 
@@ -89,29 +102,30 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
       const video = videoRef.current;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
+
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      
+
       ctx.drawImage(video, 0, 0);
-      
+
       // Create Tesseract worker for OCR
       const worker = await createWorker('eng');
-      
+
       // Perform OCR on the captured image
       const { data: { text } } = await worker.recognize(canvas);
-      
+
       // Clean up worker
       await worker.terminate();
-      
+
       // Extract VIN from detected text
       // VIN is 17 characters, alphanumeric, excluding I, O, Q
       const vinRegex = /[A-HJ-NPR-Z0-9]{17}/g;
       const matches = text.match(vinRegex);
-      
+
       if (matches && matches.length > 0) {
         const detectedVin = matches[0].toUpperCase();
-        onVinDetected(detectedVin);
+        const correctedVin = correctVinCharacters(detectedVin); // Apply corrections
+        onVinDetected(correctedVin);
         onClose();
       } else {
         setError('Could not detect VIN from image. Please try again or enter manually.');
@@ -127,7 +141,7 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
   useEffect(() => {
     // Auto-start camera when component mounts
     startCameraAndCapture();
-    
+
     return () => {
       stopCamera();
     };
@@ -197,7 +211,7 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
                 </div>
               )}
             </div>
-            
+
             {isInitializing ? (
               <div className="text-center text-sm text-gray-600 flex items-center justify-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -208,7 +222,7 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
                 Auto-scan will start in 3 seconds...
               </div>
             )}
-            
+
             <div className="flex gap-2">
               <Button 
                 onClick={() => setShowManualInput(true)} 
