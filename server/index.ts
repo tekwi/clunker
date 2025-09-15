@@ -42,11 +42,6 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Initialize vehicle data in the background
-  setTimeout(() => {
-    initializeVehicleData().catch(console.error);
-  }, 5000); // Wait 5 seconds after server start
-
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -61,16 +56,12 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  const port = process.env.PORT || 7000;
+  const port = parseInt(process.env.PORT || '5000');
   const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 
   try {
     await initializeDatabase();
     console.log("Database initialized successfully");
-
-    // Initialize vehicle data (makes and models)
-    await initializeVehicleData();
-    console.log("Vehicle data initialized successfully");
   } catch (error) {
     console.error("Database initialization failed:", error);
     process.exit(1);
