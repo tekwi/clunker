@@ -73,16 +73,7 @@ const getYearFromVin = (vin: string): number => {
   return Math.max(...possibleYears);
 };
 
-// Vehicle makes data
-const VEHICLE_MAKES = [
-  "ACURA", "AMERICAN GENERAL", "AUDI", "BENTLEY", "BMW", "BUICK", "CADILLAC",
-  "CHEVROLET", "CHRYSLER", "DAEWOO", "DODGE", "FERRARI", "FORD", "GMC",
-  "HONDA", "HYUNDAI", "INFINITI", "ISUZU", "JAGUAR", "JEEP", "KIA",
-  "LAND ROVER", "LEXUS", "LINCOLN", "MAZDA", "MERCEDES-BENZ", "MERCURY",
-  "MITSUBISHI", "NISSAN", "NISSAN DIESEL", "OLDSMOBILE", "PLYMOUTH",
-  "PONTIAC", "PORSCHE", "ROLLS-ROYCE", "SAAB", "SATURN", "SUBARU",
-  "SUZUKI", "TOYOTA", "VOLKSWAGEN", "VOLVO"
-];
+// Vehicle makes will be loaded from API
 
 const STEPS: Step[] = [
   {
@@ -186,8 +177,10 @@ export function MultiStepForm() {
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [offerAccepted, setOfferAccepted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [vehicleMakes, setVehicleMakes] = useState<string[]>([]);
   const [vehicleModels, setVehicleModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isLoadingMakes, setIsLoadingMakes] = useState(false);
 
   // Simple form with direct state management
   const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
@@ -216,6 +209,11 @@ export function MultiStepForm() {
       zip: "",
     },
   });
+
+  // Load vehicle makes on component mount
+  useEffect(() => {
+    fetchVehicleMakes();
+  }, []);
 
   // Countdown timer effect
   useEffect(() => {
@@ -271,6 +269,24 @@ export function MultiStepForm() {
     }
   };
 
+  const fetchVehicleMakes = async () => {
+    setIsLoadingMakes(true);
+    try {
+      const response = await fetch('/api/vehicles/makes');
+      if (response.ok) {
+        const data = await response.json();
+        const makes = data.map((item: { make: string }) => item.make);
+        setVehicleMakes(makes);
+      } else {
+        console.error('Failed to fetch makes');
+      }
+    } catch (error) {
+      console.error('Error fetching makes:', error);
+    } finally {
+      setIsLoadingMakes(false);
+    }
+  };
+
   const fetchVehicleModels = async (make: string) => {
     if (!make) {
       setVehicleModels([]);
@@ -280,7 +296,7 @@ export function MultiStepForm() {
     setIsLoadingModels(true);
     try {
       const year = getFieldValue('vehicleYear') || new Date().getFullYear().toString();
-      const response = await fetch(`https://www.picknpull.com/cash-for-junk-cars/api/models?year=${year}&make=${make}`);
+      const response = await fetch(`/api/vehicles/models?make=${encodeURIComponent(make)}&year=${year}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -597,12 +613,13 @@ export function MultiStepForm() {
             <Select
               value={getFieldValue("vehicleMake")}
               onValueChange={(value) => updateField("vehicleMake", value)}
+              disabled={isLoadingMakes}
             >
               <SelectTrigger className="text-lg p-4 h-14">
-                <SelectValue placeholder="Select vehicle make" />
+                <SelectValue placeholder={isLoadingMakes ? "Loading makes..." : "Select vehicle make"} />
               </SelectTrigger>
               <SelectContent>
-                {VEHICLE_MAKES.map((make) => (
+                {vehicleMakes.map((make) => (
                   <SelectItem key={make} value={make}>
                     {make}
                   </SelectItem>

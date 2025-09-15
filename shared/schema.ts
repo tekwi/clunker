@@ -105,6 +105,28 @@ export const adminUsers = mysqlTable("admin_users", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
+export const vehicleMakes = mysqlTable("vehicle_makes", {
+  id: varchar("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  make: varchar("make", { length: 100 }).notNull().unique(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+export const vehicleModels = mysqlTable("vehicle_models", {
+  id: varchar("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  makeId: varchar("make_id", { length: 36 }).notNull(),
+  model: varchar("model", { length: 100 }).notNull(),
+  year: varchar("year", { length: 4 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
 // Schema definitions
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
@@ -149,6 +171,10 @@ export type AffiliateSubmission = typeof affiliateSubmissions.$inferSelect;
 export type NewAffiliateSubmission = typeof affiliateSubmissions.$inferInsert;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type NewAdminUser = typeof adminUsers.$inferInsert;
+export type VehicleMake = typeof vehicleMakes.$inferSelect;
+export type NewVehicleMake = typeof vehicleMakes.$inferInsert;
+export type VehicleModel = typeof vehicleModels.$inferSelect;
+export type NewVehicleModel = typeof vehicleModels.$inferInsert;
 
 // Additional type aliases for compatibility
 export type InsertSubmission = typeof submissions.$inferInsert;

@@ -9,6 +9,10 @@ import { notificationService } from "./notifications";
 import { z } from "zod";
 // Route imports will be done dynamically below
 import { setupObjectStorage } from "./objectStorage";
+import adminRoutes from "./routes/admin";
+import affiliateRoutes from "./routes/affiliate";
+import pricingRoutes from "./routes/pricing";
+import vehicleRoutes from "./routes/vehicles";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const objectStorageService = new ObjectStorageService();
@@ -571,10 +575,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { default: adminRoutes } = await import("./routes/admin.js");
   const { default: affiliateRoutes } = await import("./routes/affiliate.js");
   const { default: pricingRoutes } = await import("./routes/pricing.js");
+  const { default: vehicleRoutes } = await import("./routes/vehicles.js");
 
   app.use("/api/admin", adminRoutes);
   app.use("/api/affiliate", affiliateRoutes);
   app.use("/api/pricing", pricingRoutes);
+  app.use("/api/vehicles", vehicleRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

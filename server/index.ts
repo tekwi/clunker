@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeVehicleData } from "./vehicleDataService";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -39,6 +40,11 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Initialize vehicle data in the background
+  setTimeout(() => {
+    initializeVehicleData().catch(console.error);
+  }, 5000); // Wait 5 seconds after server start
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
