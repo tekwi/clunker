@@ -1,4 +1,3 @@
-
 import { db } from './db';
 import { sql } from 'drizzle-orm';
 
@@ -82,9 +81,9 @@ function getYearFromVin(vin: string): number | null {
   if (vin.length < 10) return null;
   const vinYearChar = vin.charAt(9).toUpperCase();
   const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];
-  
+
   if (possibleYears.length === 0) return null;
-  
+
   // For VIN year characters that map to two possible years,
   // choose the later year (2010-2039 range) for newer vehicles
   return Math.max(...possibleYears);
@@ -94,10 +93,10 @@ function getYearFromVin(vin: string): number | null {
 function calculateMedianWithoutOutliers(prices: number[]): number {
   if (prices.length === 0) return 0;
   if (prices.length === 1) return prices[0];
-  
+
   // Sort prices
   const sortedPrices = [...prices].sort((a, b) => a - b);
-  
+
   // Remove outliers using IQR method
   if (sortedPrices.length >= 4) {
     const q1Index = Math.floor(sortedPrices.length * 0.25);
@@ -107,30 +106,31 @@ function calculateMedianWithoutOutliers(prices: number[]): number {
     const iqr = q3 - q1;
     const lowerBound = q1 - (1.5 * iqr);
     const upperBound = q3 + (1.5 * iqr);
-    
+
     const filteredPrices = sortedPrices.filter(price => price >= lowerBound && price <= upperBound);
-    
+
     if (filteredPrices.length > 0) {
       // Calculate median of filtered prices
       const mid = Math.floor(filteredPrices.length / 2);
-      return filteredPrices.length % 2 === 0 
+      return filteredPrices.length % 2 === 0
         ? Math.round((filteredPrices[mid - 1] + filteredPrices[mid]) / 2)
         : filteredPrices[mid];
     }
   }
-  
+
   // If we can't remove outliers or no prices left after filtering, use median of all prices
   const mid = Math.floor(sortedPrices.length / 2);
-  return sortedPrices.length % 2 === 0 
+  return sortedPrices.length % 2 === 0
     ? Math.round((sortedPrices[mid - 1] + sortedPrices[mid]) / 2)
     : sortedPrices[mid];
 }
 
-export async function getVehiclePricing(submittedVin: string, submittedYear: number): Promise<number | null> {
+export async function getVehiclePricing(submittedVin: string, submittedYear: number, isManualEntry: boolean = false): Promise<number | null> {
   try {
-    const vinPrefix = submittedVin.substring(0, 8).toUpperCase();
-    const decodedMake = getMakeFromVin(submittedVin);
-    const vinYear = getYearFromVin(submittedVin);
+    let vinToUse = submittedVin;
+    let vinPrefix = vinToUse.substring(0, 8).toUpperCase();
+    let decodedMake = getMakeFromVin(vinToUse);
+    let vinYear = getYearFromVin(vinToUse);
 
     console.log(`Searching for VIN: ${submittedVin}`);
     console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);
@@ -138,7 +138,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     // Search 1: Exact VIN prefix match (first 8 characters) with year filtering
     let result = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
-      FROM vehicle_pricing 
+      FROM vehicle_pricing
       WHERE LEFT(vin, 8) = ${vinPrefix}
       AND sale_price > 0
       AND vin IS NOT NULL
@@ -162,11 +162,11 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     }
 
     // Search 2: If no matches with year filtering, try make-based search
-    if (rows.length === 0 && decodedMake) {
+    if (rows.length === 0 && decodedMake && !isManualEntry) {
       console.log(`No VIN prefix matches with year, searching by make: ${decodedMake}`);
       result = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
-        FROM vehicle_pricing 
+        FROM vehicle_pricing
         WHERE lot_make = ${decodedMake}
         AND sale_price > 0
         AND vin IS NOT NULL
@@ -190,11 +190,11 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
 
     // Search 3: If still no matches, try shorter VIN prefix without strict year filtering
     if (rows.length === 0) {
-      const shorterPrefix = vinPrefix.substring(0, 6);
+      const shorterPrefix = vinToUse.substring(0, 6); // Use potentially corrected VIN
       console.log(`No matches, searching by shorter VIN prefix: ${shorterPrefix}`);
-      result = await db.execute(sql`
+      const result = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
-        FROM vehicle_pricing 
+        FROM vehicle_pricing
         WHERE LEFT(vin, 6) = ${shorterPrefix}
         AND sale_price > 0
         AND vin IS NOT NULL
@@ -264,11 +264,11 @@ export async function importPricingData(csvData: any[]): Promise<number> {
           lot_color, transmission_type, lot_link, lot_fuel_type,
           lot_sold_run, rerun_count, airbag_depl_flg, business_unit
         ) VALUES (
-          ${row.Automobile}, ${parseFloat(row['Lot Year']) || null}, 
+          ${row.Automobile}, ${parseFloat(row['Lot Year']) || null},
           ${row['Lot Make']}, ${row['Lot Model']}, ${row.Drivetrain},
-          ${row['Vehicle Body Style']}, ${row['Vehicle Engine']}, 
+          ${row['Vehicle Body Style']}, ${row['Vehicle Engine']},
           ${row.VIN}, ${row['Invoice Date'] ? new Date(row['Invoice Date']) : null},
-          ${parseFloat(row['Sale Price'])}, ${row['Lot Run Condition']}, 
+          ${parseFloat(row['Sale Price'])}, ${row['Lot Run Condition']},
           ${row['Sale Title Type']}, ${row['Damage Type Descrition']},
           ${row['Secondary Damage Type Description']}, ${row['Yard ZIP']},
           ${row['Odometer Reading']}, ${parseFloat(row['Yard Number']) || null},

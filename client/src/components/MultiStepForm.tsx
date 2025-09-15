@@ -498,8 +498,12 @@ export function MultiStepForm() {
 
             {showVinScanner && (
               <VinScanner
-                onVinDetected={(vin) => {
+                onVinDetected={(vin, wasScanned) => {
                   updateField("vin", vin);
+                  // Store whether this VIN was scanned for later use in pricing
+                  if (wasScanned) {
+                    updateField("vinWasScanned", true);
+                  }
                   setShowVinScanner(false);
                 }}
                 onClose={() => setShowVinScanner(false)}

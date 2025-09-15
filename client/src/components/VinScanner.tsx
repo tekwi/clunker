@@ -5,7 +5,7 @@ import { Camera, X, Check, Loader2 } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
 
 interface VinScannerProps {
-  onVinDetected: (vin: string) => void;
+  onVinDetected: (vin: string, wasScanned?: boolean) => void;
   onClose: () => void;
 }
 
@@ -76,20 +76,6 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
     }
   };
 
-  // Function to correct common OCR errors in VINs
-  const correctVinCharacters = (text: string): string => {
-    // Common OCR corrections for VIN characters
-    // VINs exclude I, O, Q to avoid confusion
-    return text
-      .replace(/[I1]/g, '1')  // I -> 1
-      .replace(/[O0]/g, '0')  // O -> 0
-      .replace(/[Q]/g, '0')   // Q -> 0 (though Q shouldn't appear in VINs)
-      .replace(/S/g, '5')     // S -> 5 (when 5 is misread as S)
-      .replace(/B/g, '8')     // B -> 8 (when 8 is misread as B)
-      .replace(/G/g, '6')     // G -> 6 (when 6 is misread as G)
-      .toUpperCase();
-  };
-
   const captureAndAnalyze = async () => {
     if (!videoRef.current) return;
 
@@ -124,8 +110,8 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
 
       if (matches && matches.length > 0) {
         const detectedVin = matches[0].toUpperCase();
-        const correctedVin = correctVinCharacters(detectedVin); // Apply corrections
-        onVinDetected(correctedVin);
+        // Pass the VIN with a flag indicating it was scanned (not manually entered)
+        onVinDetected(detectedVin, true);
         onClose();
       } else {
         setError('Could not detect VIN from image. Please try again or enter manually.');
