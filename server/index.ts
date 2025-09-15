@@ -1,12 +1,12 @@
-import 'dotenv/config';
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
 
 const app = express();
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: false, limit: "50mb" }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -55,12 +55,16 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  const port = parseInt(process.env.PORT || '5000');
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  const port = process.env.PORT || 7000;
+  const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
 
   try {
     await initializeDatabase();
     console.log("Database initialized successfully");
+
+    // Initialize vehicle data (makes and models)
+    await initializeVehicleData();
+    console.log("Vehicle data initialized successfully");
   } catch (error) {
     console.error("Database initialization failed:", error);
     process.exit(1);
@@ -71,9 +75,11 @@ app.use((req, res, next) => {
       log(`Server running at http://${host}:${port}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
-    if ((error as any).code === 'EADDRINUSE') {
-      console.error(`Port ${port} is already in use. Try setting a different port using the PORT environment variable.`);
+    console.error("Failed to start server:", error);
+    if ((error as any).code === "EADDRINUSE") {
+      console.error(
+        `Port ${port} is already in use. Try setting a different port using the PORT environment variable.`,
+      );
     }
     process.exit(1);
   }
