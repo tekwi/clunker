@@ -137,7 +137,13 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
     if (Array.isArray(rawMatches)) {
       if (rawMatches.length >= 2 && Array.isArray(rawMatches[0]) && Array.isArray(rawMatches[1])) {
         // Format: [rows[], metadata[]] - take the first array which contains data
-        rows = rawMatches[0];
+        // Check if first array contains actual data objects (not metadata/column definitions)
+        const potentialRows = rawMatches[0];
+        if (potentialRows.length > 0 && typeof potentialRows[0] === 'object' && potentialRows[0] !== null && !Array.isArray(potentialRows[0])) {
+          rows = potentialRows;
+        } else {
+          rows = []; // Empty result set
+        }
         console.log(`VIN prefix search found ${rows.length} raw rows`);
       } else {
         // Format: rows[] directly
@@ -184,7 +190,13 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       if (Array.isArray(rawMatches)) {
         if (rawMatches.length >= 2 && Array.isArray(rawMatches[0]) && Array.isArray(rawMatches[1])) {
           // Format: [rows[], metadata[]] - take the first array which contains data
-          makeRows = rawMatches[0];
+          // Check if first array contains actual data objects (not metadata/column definitions)
+          const potentialRows = rawMatches[0];
+          if (potentialRows.length > 0 && typeof potentialRows[0] === 'object' && potentialRows[0] !== null && !Array.isArray(potentialRows[0])) {
+            makeRows = potentialRows;
+          } else {
+            makeRows = []; // Empty result set
+          }
           console.log(`Make-based search found ${makeRows.length} raw rows for make: ${decodedMake}`);
         } else {
           // Format: rows[] directly
@@ -232,7 +244,13 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       if (Array.isArray(rawMatches)) {
         if (rawMatches.length >= 2 && Array.isArray(rawMatches[0]) && Array.isArray(rawMatches[1])) {
           // Format: [rows[], metadata[]] - take the first array which contains data
-          prefixRows = rawMatches[0];
+          // Check if first array contains actual data objects (not metadata/column definitions)
+          const potentialRows = rawMatches[0];
+          if (potentialRows.length > 0 && typeof potentialRows[0] === 'object' && potentialRows[0] !== null && !Array.isArray(potentialRows[0])) {
+            prefixRows = potentialRows;
+          } else {
+            prefixRows = []; // Empty result set
+          }
           console.log(`Shorter prefix search found ${prefixRows.length} raw rows for prefix: ${shorterPrefix}`);
         } else {
           // Format: rows[] directly
