@@ -18,6 +18,9 @@ import { getPricingForVin } from "@/lib/queryClient";
 
 const submissionSchema = z.object({
   vin: z.string().min(17, "VIN must be 17 characters"),
+  vehicleMake: z.string().min(1, "Vehicle make is required"),
+  vehicleModel: z.string().min(1, "Vehicle model is required"),
+  vehicleYear: z.string().min(4, "Vehicle year is required"),
   ownerName: z.string().min(1, "Owner name is required"),
   email: z.string().email("Valid email is required"),
   phoneNumber: z.string().min(10, "Phone number is required"),
@@ -81,6 +84,12 @@ const STEPS: Step[] = [
     title: "What's your VIN number?",
     subtitle: "You can find this on your dashboard or driver's side door",
     fields: ["vin"],
+  },
+  {
+    id: "vehicle-info",
+    title: "Tell us about your vehicle",
+    subtitle: "Enter your vehicle's make, model, and year",
+    fields: ["vehicleMake", "vehicleModel", "vehicleYear"],
   },
   {
     id: "odometer",
@@ -174,6 +183,9 @@ export function MultiStepForm() {
     resolver: zodResolver(submissionSchema),
     defaultValues: {
       vin: "",
+      vehicleMake: "",
+      vehicleModel: "",
+      vehicleYear: "",
       ownerName: "",
       email: "",
       phoneNumber: "",
@@ -395,7 +407,7 @@ export function MultiStepForm() {
       return;
     }
 
-    if (currentStep === 11) { // Photos step (updated index)
+    if (currentStep === 12) { // Photos step (updated index)
       if (uploadedPhotos.length === 0) {
         toast({
           title: "Photos required",
@@ -416,7 +428,7 @@ export function MultiStepForm() {
     }
 
     // Skip airbag step if no damage reported
-    if (currentStep === 5 && getFieldValue("hasDamage") === "no") { // damage step
+    if (currentStep === 6 && getFieldValue("hasDamage") === "no") { // damage step (updated index)
       setCurrentStep(currentStep + 2); // Skip airbag step
       return;
     }
@@ -444,6 +456,9 @@ export function MultiStepForm() {
 
     submitMutation.mutate({
       vin: getFieldValue("vin"),
+      vehicleMake: getFieldValue("vehicleMake"),
+      vehicleModel: getFieldValue("vehicleModel"),
+      vehicleYear: getFieldValue("vehicleYear"),
       ownerName: getFieldValue("ownerName"),
       email: getFieldValue("email"),
       phoneNumber: getFieldValue("phoneNumber"),
@@ -509,6 +524,33 @@ export function MultiStepForm() {
                 onClose={() => setShowVinScanner(false)}
               />
             )}
+          </div>
+        );
+
+      case "vehicle-info":
+        return (
+          <div className="space-y-6">
+            <Input
+              value={getFieldValue("vehicleMake")}
+              onChange={(e) => updateField("vehicleMake", e.target.value)}
+              placeholder="Vehicle Make (e.g., Toyota, Ford, BMW)"
+              className="text-lg p-4 h-14"
+            />
+            <Input
+              value={getFieldValue("vehicleModel")}
+              onChange={(e) => updateField("vehicleModel", e.target.value)}
+              placeholder="Vehicle Model (e.g., Camry, F-150, X3)"
+              className="text-lg p-4 h-14"
+            />
+            <Input
+              value={getFieldValue("vehicleYear")}
+              onChange={(e) => updateField("vehicleYear", e.target.value)}
+              type="number"
+              placeholder="Year (e.g., 2020)"
+              className="text-lg p-4 h-14"
+              min="1900"
+              max={new Date().getFullYear() + 1}
+            />
           </div>
         );
 
@@ -714,6 +756,10 @@ export function MultiStepForm() {
               <div>
                 <label className="text-sm font-medium text-gray-600">VIN</label>
                 <p className="text-lg">{getFieldValue("vin")}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Vehicle</label>
+                <p className="text-lg">{getFieldValue("vehicleYear")} {getFieldValue("vehicleMake")} {getFieldValue("vehicleModel")}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Mileage</label>
