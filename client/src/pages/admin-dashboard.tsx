@@ -45,6 +45,7 @@ interface Submission {
   vehicleCondition: string;
   odometerReading: string;
   address: string;
+  affiliateCode: string;
   createdAt: string;
   pictures: Array<{ id: string; url: string; createdAt: string }>;
   offer?: {
@@ -415,6 +416,10 @@ export default function AdminDashboard() {
         data = data.filter((s: Submission) => s.offer);
       } else if (statusFilter === "without-offers") {
         data = data.filter((s: Submission) => !s.offer);
+      } else if (statusFilter === "affiliate") {
+        data = data.filter((s: Submission) => s.affiliateCode);
+      } else if (statusFilter === "direct") {
+        data = data.filter((s: Submission) => !s.affiliateCode);
       }
     } else if (activeTab === "offers") {
       data = offers;
@@ -491,6 +496,8 @@ export default function AdminDashboard() {
     totalSubmissions: submissions.length,
     submissionsWithOffers: submissions.filter((s: Submission) => s.offer).length,
     submissionsWithoutOffers: submissions.filter((s: Submission) => !s.offer).length,
+    affiliateSubmissions: submissions.filter((s: Submission) => s.affiliateCode).length,
+    directSubmissions: submissions.filter((s: Submission) => !s.affiliateCode).length,
     totalOffers: offers.length,
     pendingOffers: offers.filter((o: AdminOffer) => o.status === "pending").length,
     acceptedOffers: offers.filter((o: AdminOffer) => o.status === "accepted").length,
@@ -514,7 +521,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <Card 
             className={`cursor-pointer transition-colors ${activeTab === "submissions" && !statusFilter ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
             onClick={() => {
@@ -528,15 +535,27 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           <Card 
-            className={`cursor-pointer transition-colors ${activeTab === "submissions" && statusFilter === "with-offers" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            className={`cursor-pointer transition-colors ${activeTab === "submissions" && statusFilter === "affiliate" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
             onClick={() => {
               setActiveTab("submissions");
-              handleKPIClick("with-offers");
+              handleKPIClick("affiliate");
             }}
           >
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">{stats.submissionsWithOffers}</div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">With Offers</p>
+              <div className="text-2xl font-bold text-purple-600">{stats.affiliateSubmissions}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Affiliate Leads</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors ${activeTab === "submissions" && statusFilter === "direct" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            onClick={() => {
+              setActiveTab("submissions");
+              handleKPIClick("direct");
+            }}
+          >
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-gray-600">{stats.directSubmissions}</div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Direct Leads</p>
             </CardContent>
           </Card>
           <Card 
@@ -626,6 +645,7 @@ export default function AdminDashboard() {
                         <TableHead>Owner</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
+                        <TableHead>Affiliate</TableHead>
                         <TableHead>Title Condition</TableHead>
                         <TableHead>Vehicle Condition</TableHead>
                         <TableHead>Odometer</TableHead>
@@ -650,6 +670,15 @@ export default function AdminDashboard() {
                           <TableCell>{submission.ownerName}</TableCell>
                           <TableCell>{submission.email}</TableCell>
                           <TableCell>{submission.phoneNumber}</TableCell>
+                          <TableCell>
+                            {submission.affiliateCode ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                {submission.affiliateCode}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Direct</span>
+                            )}
+                          </TableCell>
                           <TableCell>{submission.titleCondition}</TableCell>
                           <TableCell>{submission.vehicleCondition || 'Not specified'}</TableCell>
                           <TableCell>{submission.odometerReading || 'Not specified'}</TableCell>
