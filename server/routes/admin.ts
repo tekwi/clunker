@@ -3,7 +3,7 @@ import { Router } from "express";
 import { db } from "../db";
 import { submissions, offers, pictures, affiliates } from "../../shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
-import { sendOfferNotification } from "../notifications";
+import { notificationService } from "../notifications";
 
 const router = Router();
 
@@ -171,7 +171,7 @@ router.put("/offers/:offerId", requireAuth, async (req, res) => {
           .limit(1);
 
         if (submission[0]) {
-          await sendOfferNotification(submission[0], updatedOffer, status === "accepted");
+          await notificationService.sendOfferNotification(submission[0], updatedOffer);
         }
       } catch (notificationError) {
         console.error("Failed to send notification:", notificationError);
