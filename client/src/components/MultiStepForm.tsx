@@ -18,9 +18,9 @@ import { getPricingForVin } from "@/lib/queryClient";
 
 const submissionSchema = z.object({
   vin: z.string().min(17, "VIN must be 17 characters"),
-  vehicleMake: z.string().min(1, "Vehicle make is required"),
-  vehicleModel: z.string().min(1, "Vehicle model is required"),
-  vehicleYear: z.string().min(4, "Vehicle year is required"),
+  vehicleMake: z.string().optional(),
+  vehicleModel: z.string().optional(),
+  vehicleYear: z.string().optional(),
   ownerName: z.string().min(1, "Owner name is required"),
   email: z.string().email("Valid email is required"),
   phoneNumber: z.string().min(10, "Phone number is required"),
@@ -454,6 +454,9 @@ export function MultiStepForm() {
     const step = STEPS[stepIndex];
     if (!step.fields) return true;
 
+    // Skip validation for vehicle-info step since it's now optional
+    if (step.id === "vehicle-info") return true;
+
     for (const field of step.fields) {
       const value = getFieldValue(field);
       if (!value || value.trim() === "") {
@@ -651,6 +654,17 @@ export function MultiStepForm() {
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="text-center pt-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={nextStep}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Skip this step →
+              </Button>
+            </div>
           </div>
         );
 
