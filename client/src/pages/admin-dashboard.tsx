@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Form, FormItem, FormLabel, FormControl, FormField } from "@/components/ui/form";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,6 +73,8 @@ const affiliateFormSchema = z.object({
   commissionRate: z.string().min(1, "Commission rate is required"),
 });
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminDashboard() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
@@ -78,6 +82,8 @@ export default function AdminDashboard() {
   const [editingOffer, setEditingOffer] = useState<AdminOffer | null>(null);
   const [editForm, setEditForm] = useState({ offerPrice: "", notes: "" });
   const [activeTab, setActiveTab] = useState<"offers" | "submissions" | "affiliates">("offers");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof affiliateFormSchema>>({
@@ -97,6 +103,12 @@ export default function AdminDashboard() {
       setIsAuthenticated(true);
     }
   }, []);
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setStatusFilter(null);
+  }, [activeTab]);
 
   const apiRequest = async (method: string, url: string, data?: any) => {
     const headers: any = { "Content-Type": "application/json" };
@@ -393,6 +405,50 @@ export default function AdminDashboard() {
     });
   };
 
+  // Filter and paginate data
+  const getFilteredData = () => {
+    let data: any[] = [];
+    
+    if (activeTab === "submissions") {
+      data = submissions;
+      if (statusFilter === "with-offers") {
+        data = data.filter((s: Submission) => s.offer);
+      } else if (statusFilter === "without-offers") {
+        data = data.filter((s: Submission) => !s.offer);
+      }
+    } else if (activeTab === "offers") {
+      data = offers;
+      if (statusFilter) {
+        data = data.filter((o: AdminOffer) => o.status === statusFilter);
+      }
+    } else if (activeTab === "affiliates") {
+      data = affiliates;
+      if (statusFilter === "active") {
+        data = data.filter((a: Affiliate) => a.isActive === "true");
+      } else if (statusFilter === "inactive") {
+        data = data.filter((a: Affiliate) => a.isActive === "false");
+      }
+    }
+    
+    return data;
+  };
+
+  const getPaginatedData = () => {
+    const filteredData = getFilteredData();
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredData.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    return Math.ceil(getFilteredData().length / ITEMS_PER_PAGE);
+  };
+
+  const handleKPIClick = (filterType: string) => {
+    setStatusFilter(statusFilter === filterType ? null : filterType);
+    setCurrentPage(1);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
@@ -459,31 +515,61 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-colors ${activeTab === "submissions" && !statusFilter ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            onClick={() => {
+              setActiveTab("submissions");
+              handleKPIClick("");
+            }}
+          >
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-primary">{stats.totalSubmissions}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Submissions</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-colors ${activeTab === "submissions" && statusFilter === "with-offers" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            onClick={() => {
+              setActiveTab("submissions");
+              handleKPIClick("with-offers");
+            }}
+          >
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-blue-600">{stats.submissionsWithOffers}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400">With Offers</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-colors ${activeTab === "offers" && statusFilter === "pending" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            onClick={() => {
+              setActiveTab("offers");
+              handleKPIClick("pending");
+            }}
+          >
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-yellow-600">{stats.pendingOffers}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Pending Offers</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-colors ${activeTab === "offers" && statusFilter === "accepted" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            onClick={() => {
+              setActiveTab("offers");
+              handleKPIClick("accepted");
+            }}
+          >
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-green-600">{stats.acceptedOffers}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Accepted Offers</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-colors ${activeTab === "offers" && statusFilter === "rejected" ? "ring-2 ring-primary" : "hover:bg-gray-50"}`}
+            onClick={() => {
+              setActiveTab("offers");
+              handleKPIClick("rejected");
+            }}
+          >
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-red-600">{stats.rejectedOffers}</div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Rejected Offers</p>
@@ -515,338 +601,456 @@ export default function AdminDashboard() {
                 Affiliates ({stats.totalAffiliates})
               </Button>
             </div>
+            {statusFilter && (
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline">Filter: {statusFilter.replace("-", " ")}</Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleKPIClick("")}
+                  className="h-6 px-2"
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {activeTab === "submissions" && (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>VIN</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Title Condition</TableHead>
-                      <TableHead>Vehicle Condition</TableHead>
-                      <TableHead>Odometer</TableHead>
-                      <TableHead>Photos</TableHead>
-                      <TableHead>Offer Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {submissions.map((submission: Submission) => (
-                      <TableRow key={submission.id}>
-                        <TableCell className="font-mono text-sm">
-                          <button
-                            onClick={() => window.open(`/view/${submission.id}`, '_blank')}
-                            className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                            title="View submission details"
-                          >
-                            {submission.vin}
-                          </button>
-                        </TableCell>
-                        <TableCell>{submission.ownerName}</TableCell>
-                        <TableCell>{submission.email}</TableCell>
-                        <TableCell>{submission.phoneNumber}</TableCell>
-                        <TableCell>{submission.titleCondition}</TableCell>
-                        <TableCell>{submission.vehicleCondition || 'Not specified'}</TableCell>
-                        <TableCell>{submission.odometerReading || 'Not specified'}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {submission.pictures.length} photos
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {submission.offer ? (
-                            <div className="space-y-1">
-                              {getStatusBadge(submission.offer.status)}
-                              <div className="text-sm font-semibold text-green-600">
-                                ${parseFloat(submission.offer.offerPrice).toLocaleString()}
-                              </div>
-                            </div>
-                          ) : (
-                            <Badge variant="secondary">No Offer</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {formatDate(submission.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(`/view/${submission.id}`, '_blank')}
-                          >
-                            View Details
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            {activeTab === "offers" && (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>VIN</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Offer Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {offers.map((offer: AdminOffer) => (
-                      <TableRow key={offer.id}>
-                        <TableCell className="font-mono text-sm">
-                          <button
-                            onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
-                            className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                            title="View submission details"
-                          >
-                            {offer.vin}
-                          </button>
-                        </TableCell>
-                        <TableCell>{offer.ownerName}</TableCell>
-                        <TableCell>{offer.email}</TableCell>
-                        <TableCell>{offer.phoneNumber}</TableCell>
-                        <TableCell className="font-semibold">
-                          ${parseFloat(offer.offerPrice).toLocaleString()}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(offer.status)}</TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {formatDate(offer.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            {offer.status === "pending" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => acceptOfferMutation.mutate(offer.id)}
-                                  disabled={acceptOfferMutation.isPending}
-                                >
-                                  Accept
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => rejectOfferMutation.mutate(offer.id)}
-                                  disabled={rejectOfferMutation.isPending}
-                                >
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEditOffer(offer)}
-                                >
-                                  Edit
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit Offer</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium">Offer Price</label>
-                                    <Input
-                                      type="number"
-                                      value={editForm.offerPrice}
-                                      onChange={(e) => setEditForm({ ...editForm, offerPrice: e.target.value })}
-                                      placeholder="Enter offer amount"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Notes</label>
-                                    <Textarea
-                                      value={editForm.notes}
-                                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                                      placeholder="Add notes..."
-                                    />
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() => deleteOfferMutation.mutate(offer.id)}
-                                      disabled={deleteOfferMutation.isPending}
-                                    >
-                                      Delete Offer
-                                    </Button>
-                                    <Button
-                                      onClick={handleUpdateOffer}
-                                      disabled={updateOfferMutation.isPending}
-                                    >
-                                      Update Offer
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            {activeTab === "affiliates" && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Affiliate Management</CardTitle>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <i className="fas fa-plus mr-2"></i>
-                        Add Affiliate
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Affiliate</DialogTitle>
-                      </DialogHeader>
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit((data) => createAffiliateMutation.mutate(data))}>
-                          <div className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Name</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Affiliate name" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="email"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Email</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} type="email" placeholder="affiliate@example.com" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="phone"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Phone</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="(555) 123-4567" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="commissionRate"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Commission Rate</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="0.05" step="0.01" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <Button type="submit" className="w-full">
-                              Create Affiliate
-                            </Button>
-                          </div>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
-                </CardHeader>
-                <CardContent>
+              <>
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
+                        <TableHead>VIN</TableHead>
+                        <TableHead>Owner</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Unique Code</TableHead>
-                        <TableHead>Commission Rate</TableHead>
-                        <TableHead>Referral Link</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Title Condition</TableHead>
+                        <TableHead>Vehicle Condition</TableHead>
+                        <TableHead>Odometer</TableHead>
+                        <TableHead>Photos</TableHead>
+                        <TableHead>Offer Status</TableHead>
+                        <TableHead>Created</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {affiliates.map((affiliate: Affiliate) => (
-                        <TableRow key={affiliate.id}>
-                          <TableCell>{affiliate.name}</TableCell>
-                          <TableCell>{affiliate.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{affiliate.uniqueCode}</Badge>
+                      {getPaginatedData().map((submission: Submission) => (
+                        <TableRow key={submission.id}>
+                          <TableCell className="font-mono text-sm">
+                            <button
+                              onClick={() => window.open(`/view/${submission.id}`, '_blank')}
+                              className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                              title="View submission details"
+                            >
+                              {submission.vin}
+                            </button>
                           </TableCell>
-                          <TableCell>{(parseFloat(affiliate.commissionRate) * 100).toFixed(2)}%</TableCell>
+                          <TableCell>{submission.ownerName}</TableCell>
+                          <TableCell>{submission.email}</TableCell>
+                          <TableCell>{submission.phoneNumber}</TableCell>
+                          <TableCell>{submission.titleCondition}</TableCell>
+                          <TableCell>{submission.vehicleCondition || 'Not specified'}</TableCell>
+                          <TableCell>{submission.odometerReading || 'Not specified'}</TableCell>
                           <TableCell>
-                            <code className="text-xs bg-gray-100 p-1 rounded">
-                              {window.location.origin}/ref/{affiliate.uniqueCode}
-                            </code>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={affiliate.isActive === "true" ? "default" : "destructive"}>
-                              {affiliate.isActive === "true" ? "Active" : "Inactive"}
+                            <Badge variant="outline">
+                              {submission.pictures.length} photos
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <i className="fas fa-ellipsis-h"></i>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => navigator.clipboard.writeText(`${window.location.origin}/ref/${affiliate.uniqueCode}`)}
-                                >
-                                  <i className="fas fa-copy mr-2"></i>
-                                  Copy Link
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => updateAffiliateMutation.mutate({
-                                    affiliateId: affiliate.id,
-                                    data: { isActive: affiliate.isActive === "true" ? "false" : "true" }
-                                  })}
-                                >
-                                  <i className={`fas ${affiliate.isActive === "true" ? "fa-pause" : "fa-play"} mr-2`}></i>
-                                  {affiliate.isActive === "true" ? "Deactivate" : "Activate"}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {submission.offer ? (
+                              <div className="space-y-1">
+                                {getStatusBadge(submission.offer.status)}
+                                <div className="text-sm font-semibold text-green-600">
+                                  ${parseFloat(submission.offer.offerPrice).toLocaleString()}
+                                </div>
+                              </div>
+                            ) : (
+                              <Badge variant="secondary">No Offer</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {formatDate(submission.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(`/view/${submission.id}`, '_blank')}
+                            >
+                              View Details
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </CardContent>
-              </Card>
+                </div>
+                
+                {/* Pagination for Submissions */}
+                {getTotalPages() > 1 && (
+                  <div className="mt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: getTotalPages() }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(Math.min(getTotalPages(), currentPage + 1))}
+                            className={currentPage === getTotalPages() ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === "offers" && (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>VIN</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Offer Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {getPaginatedData().map((offer: AdminOffer) => (
+                        <TableRow key={offer.id}>
+                          <TableCell className="font-mono text-sm">
+                            <button
+                              onClick={() => window.open(`/view/${offer.submissionId}`, '_blank')}
+                              className="text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                              title="View submission details"
+                            >
+                              {offer.vin}
+                            </button>
+                          </TableCell>
+                          <TableCell>{offer.ownerName}</TableCell>
+                          <TableCell>{offer.email}</TableCell>
+                          <TableCell>{offer.phoneNumber}</TableCell>
+                          <TableCell className="font-semibold">
+                            ${parseFloat(offer.offerPrice).toLocaleString()}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(offer.status)}</TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {formatDate(offer.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              {offer.status === "pending" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => acceptOfferMutation.mutate(offer.id)}
+                                    disabled={acceptOfferMutation.isPending}
+                                  >
+                                    Accept
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => rejectOfferMutation.mutate(offer.id)}
+                                    disabled={rejectOfferMutation.isPending}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditOffer(offer)}
+                                  >
+                                    Edit
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Edit Offer</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="text-sm font-medium">Offer Price</label>
+                                      <Input
+                                        type="number"
+                                        value={editForm.offerPrice}
+                                        onChange={(e) => setEditForm({ ...editForm, offerPrice: e.target.value })}
+                                        placeholder="Enter offer amount"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Notes</label>
+                                      <Textarea
+                                        value={editForm.notes}
+                                        onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                        placeholder="Add notes..."
+                                      />
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => deleteOfferMutation.mutate(offer.id)}
+                                        disabled={deleteOfferMutation.isPending}
+                                      >
+                                        Delete Offer
+                                      </Button>
+                                      <Button
+                                        onClick={handleUpdateOffer}
+                                        disabled={updateOfferMutation.isPending}
+                                      >
+                                        Update Offer
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination for Offers */}
+                {getTotalPages() > 1 && (
+                  <div className="mt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: getTotalPages() }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(Math.min(getTotalPages(), currentPage + 1))}
+                            className={currentPage === getTotalPages() ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === "affiliates" && (
+              <>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Affiliate Management</CardTitle>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <i className="fas fa-plus mr-2"></i>
+                          Add Affiliate
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Affiliate</DialogTitle>
+                        </DialogHeader>
+                        <Form {...form}>
+                          <form onSubmit={form.handleSubmit((data) => createAffiliateMutation.mutate(data))}>
+                            <div className="space-y-4">
+                              <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Affiliate name" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} type="email" placeholder="affiliate@example.com" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="phone"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Phone</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="(555) 123-4567" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="commissionRate"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Commission Rate</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="0.05" step="0.01" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full">
+                                Create Affiliate
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Unique Code</TableHead>
+                          <TableHead>Commission Rate</TableHead>
+                          <TableHead>Referral Link</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getPaginatedData().map((affiliate: Affiliate) => (
+                          <TableRow key={affiliate.id}>
+                            <TableCell>{affiliate.name}</TableCell>
+                            <TableCell>{affiliate.email}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{affiliate.uniqueCode}</Badge>
+                            </TableCell>
+                            <TableCell>{(parseFloat(affiliate.commissionRate) * 100).toFixed(2)}%</TableCell>
+                            <TableCell>
+                              <code className="text-xs bg-gray-100 p-1 rounded">
+                                {window.location.origin}/ref/{affiliate.uniqueCode}
+                              </code>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={affiliate.isActive === "true" ? "default" : "destructive"}>
+                                {affiliate.isActive === "true" ? "Active" : "Inactive"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <i className="fas fa-ellipsis-h"></i>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/ref/${affiliate.uniqueCode}`)}
+                                  >
+                                    <i className="fas fa-copy mr-2"></i>
+                                    Copy Link
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => updateAffiliateMutation.mutate({
+                                      affiliateId: affiliate.id,
+                                      data: { isActive: affiliate.isActive === "true" ? "false" : "true" }
+                                    })}
+                                  >
+                                    <i className={`fas ${affiliate.isActive === "true" ? "fa-pause" : "fa-play"} mr-2`}></i>
+                                    {affiliate.isActive === "true" ? "Deactivate" : "Activate"}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    {/* Pagination for Affiliates */}
+                    {getTotalPages() > 1 && (
+                      <div className="mt-4">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                            {Array.from({ length: getTotalPages() }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={() => setCurrentPage(Math.min(getTotalPages(), currentPage + 1))}
+                                className={currentPage === getTotalPages() ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
             )}
           </CardContent>
         </Card>
