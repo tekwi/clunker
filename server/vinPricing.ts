@@ -161,50 +161,10 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
       console.log(`After year filtering (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
     }
 
-    // Search 2: If no matches with year filtering, try make-based search
-    if (rows.length === 0 && decodedMake && !isManualEntry) {
-      console.log(`No VIN prefix matches with year, searching by make: ${decodedMake}`);
-      result = await db.execute(sql`
-        SELECT sale_price, vin, lot_year, lot_make, lot_model
-        FROM vehicle_pricing
-        WHERE lot_make = ${decodedMake}
-        AND sale_price > 0
-        AND vin IS NOT NULL
-        ORDER BY lot_year DESC
-        LIMIT 200
-      `);
+    // If no matches found with VIN prefix and year filtering, stop here
+    // Don't fall back to make-only searches as they can skew pricing data
 
-      rows = Array.isArray(result[0]) ? result[0] : [];
-      console.log(`Make-based search found ${rows.length} rows for make: ${decodedMake}`);
-
-      // Apply year filtering to make-based results
-      if (targetYear && rows.length > 0) {
-        const yearTolerance = 3; // Slightly more tolerance for make-based search
-        rows = rows.filter(row => {
-          const rowYear = Number(row.lot_year);
-          return rowYear >= (targetYear - yearTolerance) && rowYear <= (targetYear + yearTolerance);
-        });
-        console.log(`After year filtering for make search (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
-      }
-    }
-
-    // Search 3: If still no matches, try shorter VIN prefix without strict year filtering
-    if (rows.length === 0) {
-      const shorterPrefix = vinToUse.substring(0, 6); // Use potentially corrected VIN
-      console.log(`No matches, searching by shorter VIN prefix: ${shorterPrefix}`);
-      const result = await db.execute(sql`
-        SELECT sale_price, vin, lot_year, lot_make, lot_model
-        FROM vehicle_pricing
-        WHERE LEFT(vin, 6) = ${shorterPrefix}
-        AND sale_price > 0
-        AND vin IS NOT NULL
-        ORDER BY lot_year DESC
-        LIMIT 100
-      `);
-
-      rows = Array.isArray(result[0]) ? result[0] : [];
-      console.log(`Shorter prefix search found ${rows.length} rows`);
-    }
+    
 
     if (rows.length === 0) {
       console.log(`No pricing data found for VIN: ${submittedVin}`);
