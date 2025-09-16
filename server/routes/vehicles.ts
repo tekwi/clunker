@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getVehicleMakes, getVehicleModelsForMake, refreshVehicleModelsForMake, initializeVehicleData } from '../vehicleDataService';
+import { vehicleDataFetcher } from '../vehicleDataFetcher';
 
 const router = Router();
 
@@ -29,6 +30,44 @@ router.get('/models', async (req, res) => {
   } catch (error) {
     console.error('Error fetching models:', error);
     res.status(500).json({ error: 'Failed to fetch vehicle models' });
+  }
+});
+
+// Fetch and populate vehicle data from PicknPull API
+router.post('/fetch-data', async (req, res) => {
+  try {
+    console.log('Starting vehicle data fetch from PicknPull API...');
+    
+    // Run the fetch process
+    await vehicleDataFetcher.fetchAndStoreAllVehicleData();
+    
+    // Get final stats
+    const stats = await vehicleDataFetcher.getDataStats();
+    
+    res.json({
+      success: true,
+      message: 'Vehicle data fetch completed successfully',
+      stats
+    });
+    
+  } catch (error) {
+    console.error('Error during vehicle data fetch:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch vehicle data',
+      details: error.message 
+    });
+  }
+});
+
+// Get current data statistics
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await vehicleDataFetcher.getDataStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 });
 
