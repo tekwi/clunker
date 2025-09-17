@@ -165,44 +165,7 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
     onPhotosChange(newPhotos);
   };
 
-  if (isCapturing) {
-    return (
-      <Card className="w-full">
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Take Photo</h3>
-            <Button variant="ghost" size="sm" onClick={stopCamera}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <div className="relative aspect-video bg-black rounded-md overflow-hidden">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                autoPlay
-                playsInline
-                muted
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={stopCamera} variant="outline" className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={capturePhoto} className="flex-1">
-                <Camera className="h-4 w-4 mr-2" />
-                Capture
-              </Button>
-            </div>
-          </div>
-
-          <canvas ref={canvasRef} className="hidden" />
-        </CardContent>
-      </Card>
-    );
-  }
+  
 
   return (
     <div className="space-y-4">
