@@ -306,7 +306,7 @@ export function MultiStepForm() {
           // Map common abbreviated makes to full names for better form compatibility
           let makeToUse = data.make;
           const makeUpper = data.make.toUpperCase();
-          
+
           // Comprehensive mapping of VIN decoded abbreviations to full make names
           const makeMapping: { [key: string]: string } = {
             'PORS': 'PORSCHE',
@@ -340,10 +340,10 @@ export function MultiStepForm() {
             'BENT': 'BENTLEY',
             'ROLL': 'ROLLS-ROYCE'
           };
-          
+
           // Apply mapping if found, otherwise use original make
           makeToUse = makeMapping[makeUpper] || data.make;
-          
+
           updateField('vehicleMake', makeToUse);
           // Fetch models for the mapped make and year
           if (data.year) {
@@ -353,7 +353,7 @@ export function MultiStepForm() {
         if (data.model) {
           // Map decoded model names to match what's available in dropdown
           let modelToUse = data.model;
-          
+
           // Common model mappings - extract base model name from full database names
           const modelMappings: { [key: string]: string } = {
             // Porsche models
@@ -367,24 +367,24 @@ export function MultiStepForm() {
             'CAYENNE TURBO': 'CAYENNE',
             'PANAMERA S': 'PANAMERA',
             'PANAMERA TURBO': 'PANAMERA',
-            
+
             // BMW models
             '3 SERIES': '3 SERIES',
             '5 SERIES': '5 SERIES',
             '7 SERIES': '7 SERIES',
             'X3 XDRIVE': 'X3',
             'X5 XDRIVE': 'X5',
-            
+
             // Mercedes models
             'C-CLASS': 'C-CLASS',
             'E-CLASS': 'E-CLASS',
             'S-CLASS': 'S-CLASS',
             'GLE 350': 'GLE',
             'GLC 300': 'GLC',
-            
+
             // Common patterns - remove trim levels and variations
           };
-          
+
           // Check for exact mapping first
           const upperModel = data.model.toUpperCase();
           if (modelMappings[upperModel]) {
@@ -397,7 +397,7 @@ export function MultiStepForm() {
               .replace(/\s+\d+\.?\d*[LTV]?$/i, '') // Remove engine sizes like "2.0T", "3.5L"
               .trim();
           }
-          
+
           updateField('vehicleModel', modelToUse);
         }
 
@@ -442,7 +442,7 @@ export function MultiStepForm() {
 
     setIsLoadingModels(true);
     try {
-      const year = specificYear || getFieldValue('vehicleYear');
+      const year = specificYear || getFieldValue("vehicleYear");
       const url = year ? `/api/vehicles/models?make=${encodeURIComponent(make)}&year=${year}` : `/api/vehicles/models?make=${encodeURIComponent(make)}`;
       const response = await fetch(url);
 
@@ -989,7 +989,7 @@ export function MultiStepForm() {
             {getFieldValue("titleCondition") && (
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-100 shadow-sm">
                 <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white shadow-md">
                     📋
                   </div>
                 </div>
@@ -1075,7 +1075,7 @@ export function MultiStepForm() {
                           </div>
                         </div>
                         <div className="mt-3 pt-3 border-t border-orange-200">
-                          <p className="text-orange-700 font-medium text-sm">We specialize in salvage vehicles</p>
+                          <p className="text-orange-700 font-medium">We specialize in salvage vehicles</p>
                         </div>
                       </div>
                     </div>
@@ -1101,7 +1101,7 @@ export function MultiStepForm() {
                           </div>
                         </div>
                         <div className="mt-3 pt-3 border-t border-blue-200">
-                          <p className="text-blue-700 font-medium text-sm">+$200 Craftsmanship Bonus</p>
+                          <p className="text-blue-700 font-medium">+$200 Craftsmanship Bonus</p>
                         </div>
                       </div>
                     </div>
@@ -1170,62 +1170,66 @@ export function MultiStepForm() {
 
             {/* Dynamic Story Content Based on Answer */}
             {getFieldValue("titleInHand") && (
-              <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-6">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100 shadow-sm">
                 {getFieldValue("titleInHand") === "yes" && (
                   <div className="text-center space-y-4">
-                    <div className="text-5xl mb-3">🚀</div>
-                    <h3 className="font-bold text-green-700 text-xl">Ready for Takeoff!</h3>
-                    <p className="text-green-600 leading-relaxed">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                        🚀
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Ready for Takeoff!</h3>
+                    <p className="text-gray-600 leading-relaxed">
                       Perfect! With your title in hand and ready to sign, you're in the express lane. 
                       This means we can complete your sale in as little as 24 hours!
                     </p>
 
-                    <div className="bg-green-100 rounded-lg p-4 space-y-3">
-                      <h4 className="font-semibold text-green-800">Express Sale Benefits:</h4>
+                    <div className="bg-white rounded-lg p-4 space-y-3 border border-green-100">
+                      <h4 className="font-semibold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Express Sale Benefits:</h4>
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white rounded p-3 text-center">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 text-center border border-blue-100">
                           <div className="text-2xl mb-1">⚡</div>
-                          <p className="text-xs font-medium text-green-800">24-Hour Pickup</p>
-                          <p className="text-xs text-green-600">Next day service</p>
+                          <p className="text-xs font-medium text-gray-800">24-Hour Pickup</p>
+                          <p className="text-xs text-gray-600">Next day service</p>
                         </div>
-                        <div className="bg-white rounded p-3 text-center">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 text-center border border-blue-100">
                           <div className="text-2xl mb-1">💰</div>
-                          <p className="text-xs font-medium text-green-800">Instant Payment</p>
-                          <p className="text-xs text-green-600">Cash on pickup</p>
+                          <p className="text-xs font-medium text-gray-800">Instant Payment</p>
+                          <p className="text-xs text-gray-600">Cash on pickup</p>
                         </div>
-                        <div className="bg-white rounded p-3 text-center">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 text-center border border-blue-100">
                           <div className="text-2xl mb-1">📋</div>
-                          <p className="text-xs font-medium text-green-800">No DMV Trips</p>
-                          <p className="text-xs text-green-600">We handle it all</p>
+                          <p className="text-xs font-medium text-gray-800">No DMV Trips</p>
+                          <p className="text-xs text-gray-600">We handle it all</p>
                         </div>
-                        <div className="bg-white rounded p-3 text-center">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 text-center border border-blue-100">
                           <div className="text-2xl mb-1">🏆</div>
-                          <p className="text-xs font-medium text-green-800">Priority Status</p>
-                          <p className="text-xs text-green-600">VIP treatment</p>
+                          <p className="text-xs font-medium text-gray-800">Priority Status</p>
+                          <p className="text-xs text-gray-600">VIP treatment</p>
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-green-200 to-emerald-200 rounded-lg p-3 mt-4">
+                      <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 mt-4 border border-blue-200">
                         <div className="text-center">
-                          <p className="font-bold text-green-800">Express Sale Bonus: +$150</p>
-                          <p className="text-xs text-green-700">For having your paperwork ready</p>
+                          <p className="font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Express Sale Bonus: +$150</p>
+                          <p className="text-xs text-gray-500">For having your paperwork ready</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-4 border-2 border-green-200">
+                    <div className="bg-white rounded-lg p-4 border border-blue-200">
                       <h4 className="font-medium text-gray-800 mb-2">What to expect next:</h4>
                       <div className="text-left space-y-2">
                         <div className="flex items-center space-x-3">
-                          <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
                           <span className="text-sm text-gray-700">Get your instant cash offer</span>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
                           <span className="text-sm text-gray-700">Schedule pickup for tomorrow</span>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
                           <span className="text-sm text-gray-700">Sign title, get cash, we tow away</span>
                         </div>
                       </div>
@@ -1235,43 +1239,47 @@ export function MultiStepForm() {
 
                 {getFieldValue("titleInHand") === "no" && (
                   <div className="text-center space-y-4">
-                    <div className="text-4xl mb-3">📋</div>
-                    <h3 className="font-bold text-blue-700 text-lg">No Problem - We'll Wait!</h3>
-                    <p className="text-blue-600 leading-relaxed">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                        📋
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">No Problem - We'll Wait!</h3>
+                    <p className="text-gray-600 leading-relaxed">
                       Don't have your title in hand? That's totally normal! Many of our customers are in the same situation. 
                       We can still give you an offer and help you get everything sorted out.
                     </p>
 
-                    <div className="bg-blue-100 rounded-lg p-4 space-y-3">
-                      <h4 className="font-semibold text-blue-800">We Can Help You Get Your Title:</h4>
+                    <div className="bg-white rounded-lg p-4 space-y-3 border border-blue-100">
+                      <h4 className="font-semibold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">We Can Help You Get Your Title:</h4>
                       <div className="space-y-2">
-                        <div className="bg-white rounded p-3 flex items-center space-x-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 flex items-center space-x-3 border border-blue-100">
                           <span className="text-blue-600 text-xl">🏢</span>
                           <div className="text-left flex-1">
-                            <p className="text-sm font-medium text-blue-800">Contact Your Lender</p>
-                            <p className="text-xs text-blue-600">We'll help you request the title</p>
+                            <p className="text-sm font-medium text-gray-800">Contact Your Lender</p>
+                            <p className="text-xs text-gray-600">We'll help you request the title</p>
                           </div>
                         </div>
-                        <div className="bg-white rounded p-3 flex items-center space-x-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 flex items-center space-x-3 border border-blue-100">
                           <span className="text-blue-600 text-xl">📄</span>
                           <div className="text-left flex-1">
-                            <p className="text-sm font-medium text-blue-800">DMV Duplicate Title</p>
-                            <p className="text-xs text-blue-600">Guide you through the process</p>
+                            <p className="text-sm font-medium text-gray-800">DMV Duplicate Title</p>
+                            <p className="text-xs text-gray-600">Guide you through the process</p>
                           </div>
                         </div>
-                        <div className="bg-white rounded p-3 flex items-center space-x-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded p-3 flex items-center space-x-3 border border-blue-100">
                           <span className="text-blue-600 text-xl">⏰</span>
                           <div className="text-left flex-1">
-                            <p className="text-sm font-medium text-blue-800">Hold Your Offer</p>
-                            <p className="text-xs text-blue-600">We'll wait while you get it</p>
+                            <p className="text-sm font-medium text-gray-800">Hold Your Offer</p>
+                            <p className="text-xs text-gray-600">We'll wait while you get it</p>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-                      <p className="text-sm text-yellow-800">
-                        💡 <strong>Pro Tip:</strong> We can still give you an accurate offer today, 
+                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 border border-blue-200">
+                      <p className="text-sm font-medium bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">
+                        💡 Pro Tip: We can still give you an accurate offer today, 
                         and you'll have time to get your title ready before pickup!
                       </p>
                     </div>
@@ -1280,50 +1288,54 @@ export function MultiStepForm() {
 
                 {getFieldValue("titleInHand") === "in-mail" && (
                   <div className="text-center space-y-4">
-                    <div className="text-4xl mb-3">📬</div>
-                    <h3 className="font-bold text-purple-700 text-lg">Perfect Timing!</h3>
-                    <p className="text-purple-600 leading-relaxed">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                        📬
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Perfect Timing!</h3>
+                    <p className="text-gray-600 leading-relaxed">
                       Great news! Since your title is already on its way, we can time everything perfectly. 
                       By the time you're ready to sell, your title should be in your hands.
                     </p>
 
-                    <div className="bg-purple-100 rounded-lg p-4 space-y-3">
-                      <h4 className="font-semibold text-purple-800">Synchronized Sale Process:</h4>
+                    <div className="bg-white rounded-lg p-4 space-y-3 border border-blue-100">
+                      <h4 className="font-semibold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Synchronized Sale Process:</h4>
                       <div className="space-y-3">
-                        <div className="bg-white rounded-lg p-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-purple-800">Today</span>
-                            <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">NOW</span>
+                            <span className="text-sm font-medium text-gray-800">Today</span>
+                            <span className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-2 py-1 rounded">NOW</span>
                           </div>
-                          <p className="text-xs text-purple-600">📋 Get your instant cash offer</p>
+                          <p className="text-xs text-gray-600">📋 Get your instant cash offer</p>
                         </div>
 
-                        <div className="bg-white rounded-lg p-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-purple-800">Next 3-7 Days</span>
+                            <span className="text-sm font-medium text-gray-800">Next 3-7 Days</span>
                             <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">WAITING</span>
                           </div>
-                          <p className="text-xs text-purple-600">📬 Title arrives in your mailbox</p>
+                          <p className="text-xs text-gray-600">📬 Title arrives in your mailbox</p>
                         </div>
 
-                        <div className="bg-white rounded-lg p-3">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-purple-800">When Ready</span>
+                            <span className="text-sm font-medium text-gray-800">When Ready</span>
                             <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">PICKUP</span>
                           </div>
-                          <p className="text-xs text-purple-600">🚚 Schedule pickup & get paid</p>
+                          <p className="text-xs text-gray-600">🚚 Schedule pickup & get paid</p>
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-purple-200 to-pink-200 rounded-lg p-3">
-                        <p className="font-bold text-purple-800">Coordination Bonus: +$75</p>
-                        <p className="text-xs text-purple-700">For advance planning</p>
+                      <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 border border-blue-200">
+                        <p className="font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Coordination Bonus: +$75</p>
+                        <p className="text-xs text-gray-500">For advance planning</p>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-3 border border-purple-200">
-                      <p className="text-sm text-purple-800">
-                        🔔 <strong>We'll remind you:</strong> Text when it's time to schedule pickup!
+                    <div className="bg-white rounded-lg p-3 border border-blue-200">
+                      <p className="text-sm font-medium bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">
+                        🔔 We'll remind you: Text when it's time to schedule pickup!
                       </p>
                     </div>
                   </div>
@@ -1331,80 +1343,84 @@ export function MultiStepForm() {
 
                 {getFieldValue("titleInHand") === "lost" && (
                   <div className="text-center space-y-4">
-                    <div className="text-4xl mb-3">🔍</div>
-                    <h3 className="font-bold text-orange-700 text-lg">Lost Title? No Worries!</h3>
-                    <p className="text-orange-600 leading-relaxed">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                        🔍
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Lost Title? No Worries!</h3>
+                    <p className="text-gray-600 leading-relaxed">
                       This happens more often than you'd think! Lost titles are completely fixable, 
                       and we'll walk you through the entire process step by step.
                     </p>
 
-                    <div className="bg-orange-100 rounded-lg p-4 space-y-3">
-                      <h4 className="font-semibold text-orange-800">Lost Title Recovery Mission:</h4>
+                    <div className="bg-white rounded-lg p-4 space-y-3 border border-blue-100">
+                      <h4 className="font-semibold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Lost Title Recovery Mission:</h4>
 
                       <div className="grid grid-cols-1 gap-3">
-                        <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border-l-4 border-orange-400">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">🎯</span>
                             <div className="text-left flex-1">
-                              <p className="font-medium text-orange-800 text-sm">Step 1: Application</p>
-                              <p className="text-xs text-orange-600">Fill out duplicate title form (we'll help!)</p>
+                              <p className="font-medium text-gray-800 text-sm">Step 1: Application</p>
+                              <p className="text-xs text-gray-600">Fill out duplicate title form (we'll help!)</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border-l-4 border-orange-400">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">💳</span>
                             <div className="text-left flex-1">
-                              <p className="font-medium text-orange-800 text-sm">Step 2: Fee & ID</p>
-                              <p className="text-xs text-orange-600">Usually $20-50 + valid ID</p>
+                              <p className="font-medium text-gray-800 text-sm">Step 2: Fee & ID</p>
+                              <p className="text-xs text-gray-600">Usually $20-50 + valid ID</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border-l-4 border-orange-400">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">📬</span>
                             <div className="text-left flex-1">
-                              <p className="font-medium text-orange-800 text-sm">Step 3: Wait</p>
-                              <p className="text-xs text-orange-600">2-4 weeks for new title to arrive</p>
+                              <p className="font-medium text-gray-800 text-sm">Step 3: Wait</p>
+                              <p className="text-xs text-gray-600">2-4 weeks for new title to arrive</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-orange-200 to-yellow-200 rounded-lg p-3">
+                      <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 border border-blue-200">
                         <div className="flex items-center justify-center space-x-2">
                           <span className="text-xl">🤝</span>
-                          <span className="font-bold text-orange-800">Title Recovery Support</span>
+                          <span className="font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Title Recovery Support</span>
                         </div>
-                        <p className="text-xs text-orange-700 mt-1">
+                        <p className="text-xs text-gray-500 mt-1">
                           We'll provide state-specific forms and guidance
                         </p>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-4 border border-orange-200">
-                      <h4 className="font-medium text-orange-800 mb-2">Meanwhile, we can:</h4>
+                    <div className="bg-white rounded-lg p-4 border border-blue-200">
+                      <h4 className="font-medium text-gray-800 mb-2">Meanwhile, we can:</h4>
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
-                          <span className="text-orange-600">✓</span>
+                          <span className="text-blue-600">✓</span>
                           <span className="text-sm text-gray-700">Give you an accurate cash offer today</span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-orange-600">✓</span>
+                          <span className="text-blue-600">✓</span>
                           <span className="text-sm text-gray-700">Hold your spot in our pickup schedule</span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-orange-600">✓</span>
+                          <span className="text-blue-600">✓</span>
                           <span className="text-sm text-gray-700">Send you the exact DMV forms you need</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-                      <p className="text-sm text-red-800">
-                        ⚠️ <strong>Important:</strong> Some states require a notarized affidavit for lost titles. 
+                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 border border-blue-200">
+                      <p className="text-sm font-medium bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">
+                        ⚠️ Important: Some states require a notarized affidavit for lost titles. 
                         We'll let you know if yours does!
                       </p>
                     </div>
@@ -2187,7 +2203,7 @@ export function MultiStepForm() {
                     <div className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                       <p className="text-xl text-gray-700 font-medium">We'll pay you</p>
                     </div>
-                    
+
                     {/* Main Price with Pulse Animation */}
                     <div className="relative animate-scale-in" style={{ animationDelay: '0.8s' }}>
                       <div className="absolute inset-0 bg-green-400 rounded-full opacity-20 animate-ping"></div>
