@@ -335,6 +335,32 @@ export function MultiStepForm() {
         throw new Error("Geolocation is not supported by this browser");
       }
 
+      // Check current permission state
+      if ('permissions' in navigator) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'geolocation' });
+          
+          if (permission.state === 'denied') {
+            toast({
+              title: "Location permission denied",
+              description: "Please enable location access in your browser settings to use auto-detect.",
+              variant: "destructive",
+            });
+            setIsDetectingLocation(false);
+            return;
+          }
+          
+          if (permission.state === 'prompt') {
+            toast({
+              title: "Location permission required",
+              description: "Please allow location access when prompted to auto-detect your location.",
+            });
+          }
+        } catch (permissionError) {
+          console.log("Permission API not fully supported, proceeding with location request");
+        }
+      }
+
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           resolve,
@@ -378,18 +404,20 @@ export function MultiStepForm() {
 
     } catch (error: any) {
       console.error("Geolocation error:", error);
+      let title = "Location detection failed";
       let message = "Please enter your location manually.";
 
       if (error.code === 1) {
-        message = "Location access was denied. Please enable location services and try again.";
+        title = "Location permission denied";
+        message = "To use auto-detect, please enable location access in your browser settings and refresh the page.";
       } else if (error.code === 2) {
-        message = "Location unavailable. Please enter your location manually.";
+        message = "Location unavailable. Please check your device's location settings or enter manually.";
       } else if (error.code === 3) {
         message = "Location request timed out. Please try again or enter manually.";
       }
 
       toast({
-        title: "Location detection failed",
+        title,
         description: message,
         variant: "destructive",
       });
