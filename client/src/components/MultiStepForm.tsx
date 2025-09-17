@@ -369,30 +369,48 @@ export function MultiStepForm() {
       updateField("latitude", latitude.toString());
       updateField("longitude", longitude.toString());
 
+      let addressFound = false;
+
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
         );
 
         if (response.ok) {
           const data = await response.json();
-          const address = data.address || {};
+          
+          if (data && data.address) {
+            const address = data.address;
+            const displayName = data.display_name || "";
 
-          updateField("address", data.display_name || "");
-          updateField("street", `${address.house_number || ""} ${address.road || ""}`.trim());
-          updateField("city", address.city || address.town || address.village || "");
-          updateField("state", address.state || "");
-          updateField("zip", address.postcode || "");
+            // Update address fields
+            updateField("address", displayName);
+            updateField("street", `${address.house_number || ""} ${address.road || ""}`.trim());
+            updateField("city", address.city || address.town || address.village || address.county || "");
+            updateField("state", address.state || address.province || "");
+            updateField("zip", address.postcode || "");
+
+            addressFound = true;
+          }
         }
       } catch (geocodeError) {
-        console.log("Reverse geocoding failed, but location coordinates were set:", geocodeError);
+        console.log("Reverse geocoding failed:", geocodeError);
       }
 
       setLocationDetected(true);
-      toast({
-        title: "Location detected",
-        description: "Your location has been automatically detected.",
-      });
+      
+      if (addressFound) {
+        toast({
+          title: "Location detected",
+          description: "Your location and address have been automatically filled in.",
+        });
+      } else {
+        toast({
+          title: "Location coordinates detected",
+          description: "We found your coordinates but couldn't auto-fill the address. Please enter your address manually.",
+          variant: "default",
+        });
+      }
 
     } catch (error: any) {
       console.error("Geolocation error:", error);
@@ -877,8 +895,13 @@ export function MultiStepForm() {
                 disabled={isDetectingLocation}
                 className="mb-6"
               >
-                {isDetectingLocation ? "Detecting..." : "📍 Allow location access"}
+                {isDetectingLocation ? "Detecting..." : locationDetected ? "📍 Re-detect location" : "📍 Allow location access"}
               </Button>
+              {locationDetected && !getFieldValue("street") && (
+                <p className="text-sm text-amber-600 mb-4">
+                  Location coordinates detected, but address lookup failed. Please fill in your address manually below.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4">
