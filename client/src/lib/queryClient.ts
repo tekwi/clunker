@@ -24,16 +24,16 @@ export async function apiRequest(method: string, url: string, data?: any) {
   return response;
 }
 
-export const getPricingForVin = async (vin: string, year: number, vehicleMake?: string, vehicleModel?: string, vehicleYear?: string): Promise<number | null> => {
+export const getPricingForVin = async (vin: string, year: number, vehicleMake?: string | null, vehicleModel?: string | null, vehicleYear?: string | null): Promise<number | null> => {
   console.log(`🔍 Requesting pricing for VIN: ${vin}, Year: ${year}`);
   console.log(`📋 Form data - Make: ${vehicleMake}, Model: ${vehicleModel}, Year: ${vehicleYear}`);
 
   const response = await apiRequest("POST", "/api/pricing/lookup", { 
     vin, 
     year, 
-    vehicleMake, 
-    vehicleModel, 
-    vehicleYear 
+    vehicleMake: vehicleMake || null, 
+    vehicleModel: vehicleModel || null, 
+    vehicleYear: vehicleYear || null 
   });
 
   if (!response.ok) {

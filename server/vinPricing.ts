@@ -174,8 +174,9 @@ export async function getVehiclePricing(
 
     
 
-    // If no VIN-based matches and form data is available, try form-based search
-    if (rows.length === 0 && formMake && formModel && formYear) {
+    // If no VIN-based matches and form data is available (not null/empty), try form-based search
+    if (rows.length === 0 && formMake && formModel && formYear && 
+        formMake.trim() !== '' && formModel.trim() !== '' && formYear.trim() !== '') {
       console.log(`No VIN matches found, trying form-based search: ${formMake} ${formModel} ${formYear}`);
       
       result = await db.execute(sql`

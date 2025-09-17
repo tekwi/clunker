@@ -437,9 +437,9 @@ export function MultiStepForm() {
         const price = await getPricingForVin(
           vin, 
           year, 
-          formData.vehicleMake, 
-          formData.vehicleModel, 
-          formData.vehicleYear
+          formData.vehicleMake || null, 
+          formData.vehicleModel || null, 
+          formData.vehicleYear || null
         );
         setEstimatedPrice(price);
       } catch (error) {

@@ -21,7 +21,14 @@ router.post('/lookup', async (req, res) => {
       return res.status(400).json({ error: 'VIN must be 17 characters long' });
     }
     
-    const pricing = await getVehiclePricing(vin, parseInt(year), false, vehicleMake, vehicleModel, vehicleYear);
+    const pricing = await getVehiclePricing(
+      vin, 
+      parseInt(year), 
+      false, 
+      vehicleMake || undefined, 
+      vehicleModel || undefined, 
+      vehicleYear || undefined
+    );
     
     if (pricing === null) {
       console.log(`❌ API Response: 404 - No pricing data found for VIN: ${vin}, Year: ${year}`);
