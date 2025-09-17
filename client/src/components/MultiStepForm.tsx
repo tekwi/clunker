@@ -305,15 +305,44 @@ export function MultiStepForm() {
         if (data.make) {
           // Map common abbreviated makes to full names for better form compatibility
           let makeToUse = data.make;
-          if (data.make === 'PORS') {
-            makeToUse = 'PORSCHE';
-          } else if (data.make === 'MERZ') {
-            makeToUse = 'MERCEDES-BENZ';
-          } else if (data.make === 'CHEV') {
-            makeToUse = 'CHEVROLET';
-          } else if (data.make === 'VOLK') {
-            makeToUse = 'VOLKSWAGEN';
-          }
+          const makeUpper = data.make.toUpperCase();
+          
+          // Comprehensive mapping of VIN decoded abbreviations to full make names
+          const makeMapping: { [key: string]: string } = {
+            'PORS': 'PORSCHE',
+            'MERZ': 'MERCEDES-BENZ',
+            'CHEV': 'CHEVROLET',
+            'VOLK': 'VOLKSWAGEN',
+            'PONT': 'PONTIAC',
+            'OLDSM': 'OLDSMOBILE',
+            'BUIC': 'BUICK',
+            'CADI': 'CADILLAC',
+            'DODS': 'DODGE',
+            'CHRYS': 'CHRYSLER',
+            'TOYT': 'TOYOTA',
+            'HOND': 'HONDA',
+            'ACUR': 'ACURA',
+            'NISS': 'NISSAN',
+            'INFI': 'INFINITI',
+            'MAZD': 'MAZDA',
+            'SUBA': 'SUBARU',
+            'MITS': 'MITSUBISHI',
+            'HYUN': 'HYUNDAI',
+            'LAND': 'LAND ROVER',
+            'JAGU': 'JAGUAR',
+            'VOLV': 'VOLVO',
+            'TESL': 'TESLA',
+            'GENE': 'GENESIS',
+            'ALFA': 'ALFA ROMEO',
+            'MASE': 'MASERATI',
+            'FERR': 'FERRARI',
+            'LAMB': 'LAMBORGHINI',
+            'BENT': 'BENTLEY',
+            'ROLL': 'ROLLS-ROYCE'
+          };
+          
+          // Apply mapping if found, otherwise use original make
+          makeToUse = makeMapping[makeUpper] || data.make;
           
           updateField('vehicleMake', makeToUse);
           // Fetch models for the mapped make and year
