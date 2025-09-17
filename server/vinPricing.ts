@@ -69,11 +69,57 @@ const WMI_TO_MAKE: { [key: string]: string } = {
   'SCA': 'ROLL',
 };
 
+// Mapping from short codes to full make names
+const SHORT_CODE_TO_FULL_NAME: { [key: string]: string } = {
+  'BMW': 'BMW',
+  'MERZ': 'Mercedes-Benz',
+  'AUDI': 'Audi',
+  'VOLK': 'Volkswagen',
+  'PORS': 'Porsche',
+  'FORD': 'Ford',
+  'CHEV': 'Chevrolet',
+  'PONT': 'Pontiac',
+  'OLDSM': 'Oldsmobile',
+  'BUIC': 'Buick',
+  'CADI': 'Cadillac',
+  'DODS': 'Dodge',
+  'JEEP': 'Jeep',
+  'CHRYS': 'Chrysler',
+  'TOYT': 'Toyota',
+  'HOND': 'Honda',
+  'ACUR': 'Acura',
+  'NISS': 'Nissan',
+  'INFI': 'Infiniti',
+  'MAZD': 'Mazda',
+  'SUBA': 'Subaru',
+  'MITS': 'Mitsubishi',
+  'HYUN': 'Hyundai',
+  'KIA': 'Kia',
+  'LAND': 'Land Rover',
+  'JAGU': 'Jaguar',
+  'VOLV': 'Volvo',
+  'TESL': 'Tesla',
+  'MINI': 'MINI',
+  'GENE': 'Genesis',
+  'ALFA': 'Alfa Romeo',
+  'MASE': 'Maserati',
+  'FERR': 'Ferrari',
+  'LAMB': 'Lamborghini',
+  'BENT': 'Bentley',
+  'ROLL': 'Rolls-Royce',
+  'GMC': 'GMC'
+};
+
 // Function to decode make from VIN
 export function getMakeFromVin(vin: string): string | null {
   if (vin.length < 3) return null;
   const wmi = vin.substring(0, 3).toUpperCase();
-  return WMI_TO_MAKE[wmi] || null;
+  const shortCode = WMI_TO_MAKE[wmi];
+  
+  if (!shortCode) return null;
+  
+  // Return the full make name if we have a mapping, otherwise return the short code
+  return SHORT_CODE_TO_FULL_NAME[shortCode] || shortCode;
 }
 
 // Function to get year from VIN (10th character)

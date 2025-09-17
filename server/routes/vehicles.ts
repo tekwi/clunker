@@ -81,8 +81,54 @@ router.post('/decode-vin', async (req, res) => {
       return res.status(400).json({ error: 'Valid 17-character VIN is required' });
     }
 
-    const make = getMakeFromVin(vin);
+    let make = getMakeFromVin(vin);
     const year = getYearFromVin(vin);
+
+    // If we got a make, try to find the exact match in our database
+    if (make) {
+      const availableMakes = await getVehicleMakes();
+      
+      // First try exact match (case insensitive)
+      let exactMatch = availableMakes.find(m => 
+        m.make.toLowerCase() === make!.toLowerCase()
+      );
+      
+      // If no exact match, try partial matches
+      if (!exactMatch) {
+        // Try to find a make that contains the decoded make
+        exactMatch = availableMakes.find(m => 
+          m.make.toLowerCase().includes(make!.toLowerCase()) ||
+          make!.toLowerCase().includes(m.make.toLowerCase())
+        );
+        
+        // Try common variations and abbreviations
+        if (!exactMatch) {
+          const makeUpper = make.toUpperCase();
+          exactMatch = availableMakes.find(m => {
+            const dbMakeUpper = m.make.toUpperCase();
+            return (
+              // Handle common abbreviations
+              (makeUpper === 'CHEV' && dbMakeUpper === 'CHEVROLET') ||
+              (makeUpper === 'CHEVROLET' && dbMakeUpper === 'CHEV') ||
+              (makeUpper === 'MERZ' && dbMakeUpper.includes('MERCEDES')) ||
+              (makeUpper === 'MERCEDES-BENZ' && dbMakeUpper.includes('MERCEDES')) ||
+              (makeUpper === 'VOLK' && dbMakeUpper === 'VOLKSWAGEN') ||
+              (makeUpper === 'VOLKSWAGEN' && dbMakeUpper === 'VOLK') ||
+              (makeUpper === 'PORS' && dbMakeUpper === 'PORSCHE') ||
+              (makeUpper === 'PORSCHE' && dbMakeUpper === 'PORS') ||
+              // Add more common patterns
+              dbMakeUpper.startsWith(makeUpper) ||
+              makeUpper.startsWith(dbMakeUpper)
+            );
+          });
+        }
+      }
+      
+      // Use the matched make name from database if found
+      if (exactMatch) {
+        make = exactMatch.make;
+      }
+    }
 
     console.log(`VIN decode: ${vin} -> Make: ${make}, Year: ${year}`);
 
