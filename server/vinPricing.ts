@@ -125,7 +125,14 @@ function calculateMedianWithoutOutliers(prices: number[]): number {
     : sortedPrices[mid];
 }
 
-export async function getVehiclePricing(submittedVin: string, submittedYear: number, isManualEntry: boolean = false): Promise<number | null> {
+export async function getVehiclePricing(
+  submittedVin: string, 
+  submittedYear: number, 
+  isManualEntry: boolean = false,
+  formMake?: string,
+  formModel?: string,
+  formYear?: string
+): Promise<number | null> {
   try {
     let vinToUse = submittedVin;
     let vinPrefix = vinToUse.substring(0, 8).toUpperCase();
@@ -134,6 +141,7 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
 
     console.log(`Searching for VIN: ${submittedVin}`);
     console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);
+    console.log(`Form Data - Make: ${formMake}, Model: ${formModel}, Year: ${formYear}`);
 
     // Search 1: Exact VIN prefix match (first 8 characters) with year filtering
     let result = await db.execute(sql`
@@ -166,8 +174,37 @@ export async function getVehiclePricing(submittedVin: string, submittedYear: num
 
     
 
+    // If no VIN-based matches and form data is available, try form-based search
+    if (rows.length === 0 && formMake && formModel && formYear) {
+      console.log(`No VIN matches found, trying form-based search: ${formMake} ${formModel} ${formYear}`);
+      
+      result = await db.execute(sql`
+        SELECT sale_price, vin, lot_year, lot_make, lot_model
+        FROM vehicle_pricing
+        WHERE UPPER(lot_make) = ${formMake.toUpperCase()}
+        AND UPPER(lot_model) = ${formModel.toUpperCase()}
+        AND sale_price > 0
+        ORDER BY lot_year DESC
+        LIMIT 100
+      `);
+
+      rows = Array.isArray(result[0]) ? result[0] : [];
+      console.log(`Form-based search found ${rows.length} rows before year filtering`);
+
+      // Filter by form year with tolerance
+      if (rows.length > 0 && formYear) {
+        const targetYear = parseInt(formYear);
+        const yearTolerance = 2;
+        rows = rows.filter(row => {
+          const rowYear = Number(row.lot_year);
+          return rowYear >= (targetYear - yearTolerance) && rowYear <= (targetYear + yearTolerance);
+        });
+        console.log(`After year filtering (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
+      }
+    }
+
     if (rows.length === 0) {
-      console.log(`No pricing data found for VIN: ${submittedVin}`);
+      console.log(`No pricing data found for VIN: ${submittedVin} or form data: ${formMake} ${formModel} ${formYear}`);
       return null;
     }
 

@@ -434,7 +434,13 @@ export function MultiStepForm() {
       const year = getFieldValue("vehicleYear") ? parseInt(getFieldValue("vehicleYear")) : getYearFromVin(vin);
 
       try {
-        const price = await getPricingForVin(vin, year);
+        const price = await getPricingForVin(
+          vin, 
+          year, 
+          formData.vehicleMake, 
+          formData.vehicleModel, 
+          formData.vehicleYear
+        );
         setEstimatedPrice(price);
       } catch (error) {
         console.error("Failed to get pricing:", error);

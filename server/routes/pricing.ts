@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Get pricing for a specific VIN and year
 router.post('/lookup', async (req, res) => {
   try {
-    const { vin, year } = req.body;
+    const { vin, year, vehicleMake, vehicleModel, vehicleYear } = req.body;
     
     if (!vin || !year) {
       return res.status(400).json({ error: 'VIN and year are required' });
@@ -21,7 +21,7 @@ router.post('/lookup', async (req, res) => {
       return res.status(400).json({ error: 'VIN must be 17 characters long' });
     }
     
-    const pricing = await getVehiclePricing(vin, parseInt(year));
+    const pricing = await getVehiclePricing(vin, parseInt(year), false, vehicleMake, vehicleModel, vehicleYear);
     
     if (pricing === null) {
       console.log(`❌ API Response: 404 - No pricing data found for VIN: ${vin}, Year: ${year}`);
