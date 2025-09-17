@@ -70,14 +70,14 @@ const WMI_TO_MAKE: { [key: string]: string } = {
 };
 
 // Function to decode make from VIN
-function getMakeFromVin(vin: string): string | null {
+export function getMakeFromVin(vin: string): string | null {
   if (vin.length < 3) return null;
   const wmi = vin.substring(0, 3).toUpperCase();
   return WMI_TO_MAKE[wmi] || null;
 }
 
 // Function to get year from VIN (10th character)
-function getYearFromVin(vin: string): number | null {
+export function getYearFromVin(vin: string): number | null {
   if (vin.length < 10) return null;
   const vinYearChar = vin.charAt(9).toUpperCase();
   const possibleYears = VIN_YEAR_MAP[vinYearChar] || [];

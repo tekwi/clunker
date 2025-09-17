@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getVehicleMakes, getVehicleModelsForMake, refreshVehicleModelsForMake, initializeVehicleData } from '../vehicleDataService';
 import { vehicleDataFetcher } from '../vehicleDataFetcher';
+import { getMakeFromVin, getYearFromVin } from '../vinPricing';
 
 const router = Router();
 
@@ -68,6 +69,32 @@ router.get('/stats', async (req, res) => {
   } catch (error) {
     console.error('Error fetching stats:', error);
     res.status(500).json({ error: 'Failed to fetch statistics' });
+  }
+});
+
+// Decode VIN to extract make and year
+router.post('/decode-vin', async (req, res) => {
+  try {
+    const { vin } = req.body;
+
+    if (!vin || vin.length !== 17) {
+      return res.status(400).json({ error: 'Valid 17-character VIN is required' });
+    }
+
+    const make = getMakeFromVin(vin);
+    const year = getYearFromVin(vin);
+
+    console.log(`VIN decode: ${vin} -> Make: ${make}, Year: ${year}`);
+
+    res.json({
+      make: make,
+      year: year,
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Error decoding VIN:', error);
+    res.status(500).json({ error: 'Failed to decode VIN' });
   }
 });
 

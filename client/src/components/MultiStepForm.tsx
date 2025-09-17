@@ -189,6 +189,7 @@ export function MultiStepForm() {
   const [vehicleModels, setVehicleModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [isLoadingMakes, setIsLoadingMakes] = useState(false);
+  const [isDecodingVin, setIsDecodingVin] = useState(false);
 
   // Simple form with direct state management
   const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
@@ -271,10 +272,56 @@ export function MultiStepForm() {
     setFormData(prev => ({ ...prev, [field]: value }));
     form.setValue(field, value);
 
+    // If VIN is entered and is 17 characters, auto-decode vehicle info
+    if (field === 'vin' && value.length === 17) {
+      decodeVinToVehicleInfo(value);
+    }
+
     // If make is changed, fetch models and clear current model
     if (field === 'vehicleMake' && value) {
       fetchVehicleModels(value);
       updateField('vehicleModel', ''); // Clear model when make changes
+    }
+  };
+
+  const decodeVinToVehicleInfo = async (vin: string) => {
+    setIsDecodingVin(true);
+    try {
+      const response = await fetch('/api/vehicles/decode-vin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ vin }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Auto-fill the decoded information
+        if (data.year) {
+          updateField('vehicleYear', data.year.toString());
+        }
+        if (data.make) {
+          updateField('vehicleMake', data.make);
+          // Fetch models for the decoded make
+          if (data.year) {
+            fetchVehicleModels(data.make);
+          }
+        }
+
+        if (data.make || data.year) {
+          toast({
+            title: "VIN Auto-Decoded",
+            description: `Found: ${data.year || ''} ${data.make || ''}`.trim(),
+          });
+        }
+      }
+    } catch (error) {
+      console.error('VIN decode error:', error);
+      // Don't show error toast as this is automatic, user can still manually enter
+    } finally {
+      setIsDecodingVin(false);
     }
   };
 
@@ -657,7 +704,17 @@ export function MultiStepForm() {
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 {getFieldValue("vin").length}/17 characters entered
+                {isDecodingVin && " • Decoding..."}
               </p>
+              
+              {getFieldValue("vin").length === 17 && !isDecodingVin && (
+                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700 flex items-center justify-center">
+                    <span className="mr-1">🔍</span>
+                    Auto-filling vehicle details from VIN
+                  </p>
+                </div>
+              )}
             </div>
 
             <Dialog open={showVinScanner} onOpenChange={setShowVinScanner}>
