@@ -311,11 +311,14 @@ export function MultiStepForm() {
             fetchVehicleModels(data.make, data.year.toString());
           }
         }
+        if (data.model) {
+          updateField('vehicleModel', data.model);
+        }
 
-        if (data.make || data.year) {
+        if (data.make || data.model || data.year) {
           toast({
             title: "VIN Auto-Decoded",
-            description: `Found: ${data.year || ''} ${data.make || ''}`.trim(),
+            description: `Found: ${data.year || ''} ${data.make || ''} ${data.model || ''}`.trim(),
           });
         }
       }

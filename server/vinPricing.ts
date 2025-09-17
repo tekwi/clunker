@@ -1,5 +1,6 @@
 import { db } from './db';
 import { sql } from 'drizzle-orm';
+import { getMakeFromVin, getModelFromVin, getYearFromVin } from '../vinPricing';
 
 // VIN year character mapping
 const VIN_YEAR_MAP: { [key: string]: number[] } = {
@@ -115,9 +116,9 @@ export function getMakeFromVin(vin: string): string | null {
   if (vin.length < 3) return null;
   const wmi = vin.substring(0, 3).toUpperCase();
   const shortCode = WMI_TO_MAKE[wmi];
-  
+
   if (!shortCode) return null;
-  
+
   // Return the full make name if we have a mapping, otherwise return the short code
   return SHORT_CODE_TO_FULL_NAME[shortCode] || shortCode;
 }
@@ -184,10 +185,12 @@ export async function getVehiclePricing(
     let vinPrefix = vinToUse.substring(0, 8).toUpperCase();
     let decodedMake = getMakeFromVin(vinToUse);
     let vinYear = getYearFromVin(vinToUse);
+    let decodedModel = getModelFromVin(vinToUse); // Decode model name
 
     console.log(`Searching for VIN: ${submittedVin}`);
     console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);
     console.log(`Form Data - Make: ${formMake}, Model: ${formModel}, Year: ${formYear}`);
+    console.log(`Decoded Model: ${decodedModel}`); // Log decoded model
 
     // Search 1: Exact VIN prefix match (first 8 characters) with year filtering
     let result = await db.execute(sql`
@@ -215,16 +218,19 @@ export async function getVehiclePricing(
       console.log(`After year filtering (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
     }
 
-    // If no matches found with VIN prefix and year filtering, stop here
-    // Don't fall back to make-only searches as they can skew pricing data
-
-    
+    // Filter by decoded model if available and VIN prefix matches
+    if (decodedModel && rows.length > 0) {
+      rows = rows.filter(row => 
+        row.lot_model && row.lot_model.toUpperCase().includes(decodedModel.toUpperCase())
+      );
+      console.log(`After model filtering (${decodedModel}): ${rows.length} rows`);
+    }
 
     // If no VIN-based matches and form data is available (not null/empty), try form-based search
     if (rows.length === 0 && formMake && formModel && formYear && 
         formMake.trim() !== '' && formModel.trim() !== '' && formYear.trim() !== '') {
       console.log(`No VIN matches found, trying form-based search: ${formMake} ${formModel} ${formYear}`);
-      
+
       result = await db.execute(sql`
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing

@@ -139,7 +139,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// Decode VIN to extract make and year
+// Decode VIN to extract make, model, and year
 router.post('/decode-vin', async (req, res) => {
   try {
     const { vin } = req.body;
@@ -149,6 +149,7 @@ router.post('/decode-vin', async (req, res) => {
     }
 
     let make = getMakeFromVin(vin);
+    let model = getModelFromVin(vin);
     const year = getYearFromVin(vin);
 
     // If we got a make, try to find the exact match in our database
@@ -197,10 +198,11 @@ router.post('/decode-vin', async (req, res) => {
       }
     }
 
-    console.log(`VIN decode: ${vin} -> Make: ${make}, Year: ${year}`);
+    console.log(`VIN decode: ${vin} -> Make: ${make}, Model: ${model}, Year: ${year}`);
 
     res.json({
       make: make,
+      model: model,
       year: year,
       success: true
     });
