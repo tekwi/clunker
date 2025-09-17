@@ -297,7 +297,7 @@ export function MultiStepForm() {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Auto-fill the decoded information
         if (data.year) {
           updateField('vehicleYear', data.year.toString());
@@ -306,7 +306,7 @@ export function MultiStepForm() {
           updateField('vehicleMake', data.make);
           // Fetch models for the decoded make
           if (data.year) {
-            fetchVehicleModels(data.make);
+            fetchVehicleModels(data.make, data.year.toString()); // Pass the decoded year
           }
         }
 
@@ -343,7 +343,7 @@ export function MultiStepForm() {
     }
   };
 
-  const fetchVehicleModels = async (make: string) => {
+  const fetchVehicleModels = async (make: string, specificYear?: string) => {
     if (!make) {
       setVehicleModels([]);
       return;
@@ -351,8 +351,9 @@ export function MultiStepForm() {
 
     setIsLoadingModels(true);
     try {
-      const year = getFieldValue('vehicleYear') || new Date().getFullYear().toString();
-      const response = await fetch(`/api/vehicles/models?make=${encodeURIComponent(make)}&year=${year}`);
+      const year = specificYear || getFieldValue('vehicleYear');
+      const url = year ? `/api/vehicles/models?make=${encodeURIComponent(make)}&year=${year}` : `/api/vehicles/models?make=${encodeURIComponent(make)}`;
+      const response = await fetch(url);
 
       if (response.ok) {
         const data = await response.json();
@@ -425,7 +426,7 @@ export function MultiStepForm() {
 
         if (response.ok) {
           const data = await response.json();
-          
+
           if (data && data.address) {
             const address = data.address;
             const displayName = data.display_name || "";
@@ -445,7 +446,7 @@ export function MultiStepForm() {
       }
 
       setLocationDetected(true);
-      
+
       if (addressFound) {
         toast({
           title: "Location detected",
@@ -466,7 +467,7 @@ export function MultiStepForm() {
 
       if (error.code === 1) {
         title = "Location permission needed";
-        message = "Please allow location access when prompted, then try again. You can also enable location services in your device settings.";
+        message = "Please allow location access when prompted, then try again. You can also enable location services in your browser settings.";
       } else if (error.code === 2) {
         title = "Location unavailable";
         message = "Your location could not be determined. Please check that location services are enabled and try again.";
@@ -706,7 +707,7 @@ export function MultiStepForm() {
                 {getFieldValue("vin").length}/17 characters entered
                 {isDecodingVin && " • Decoding..."}
               </p>
-              
+
               {getFieldValue("vin").length === 17 && !isDecodingVin && (
                 <div className="mt-3 p-2 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-700 flex items-center justify-center">
@@ -749,7 +750,7 @@ export function MultiStepForm() {
                 // Refetch models if make is already selected and year changes
                 const currentMake = getFieldValue("vehicleMake");
                 if (currentMake && year) {
-                  fetchVehicleModels(currentMake);
+                  fetchVehicleModels(currentMake, year); // Pass the year to fetchVehicleModels
                 }
               }}
               type="number"
@@ -833,7 +834,7 @@ export function MultiStepForm() {
                 <div className="text-4xl mb-2">🛣️</div>
                 <h3 className="font-semibold text-gray-800">Miles of Memories</h3>
               </div>
-              
+
               {getFieldValue("odometerReading") && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -842,7 +843,7 @@ export function MultiStepForm() {
                       {Number(getFieldValue("odometerReading")).toLocaleString()} miles
                     </span>
                   </div>
-                  
+
                   <div className="bg-white rounded-full h-3 overflow-hidden">
                     <div 
                       className="bg-gradient-to-r from-orange-400 to-yellow-400 h-full transition-all duration-1000"
@@ -851,12 +852,12 @@ export function MultiStepForm() {
                       }}
                     />
                   </div>
-                  
+
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>Brand New</span>
                     <span>Well Traveled</span>
                   </div>
-                  
+
                   <div className="text-center text-sm text-gray-600">
                     {Number(getFieldValue("odometerReading")) < 30000 && "🌟 Low mileage gem!"}
                     {Number(getFieldValue("odometerReading")) >= 30000 && Number(getFieldValue("odometerReading")) < 100000 && "👍 Great condition range"}
@@ -901,7 +902,7 @@ export function MultiStepForm() {
                       <div className="text-3xl mb-2">🏆</div>
                       <h4 className="font-bold text-green-800 mb-2">Premium Title Status!</h4>
                       <p className="text-green-700 text-sm mb-3">Clean titles are the gold standard - maximum value unlocked!</p>
-                      
+
                       <div className="bg-white rounded-lg p-3">
                         <div className="flex items-center justify-center space-x-2 mb-2">
                           <span className="text-green-600 text-xl">💎</span>
@@ -911,7 +912,7 @@ export function MultiStepForm() {
                         <p className="text-xs text-green-600">No liens, accidents, or issues</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       <div className="bg-green-200 rounded-lg p-2 text-center">
                         <div className="text-lg">✅</div>
@@ -935,7 +936,7 @@ export function MultiStepForm() {
                       <div className="text-3xl mb-2">🔗</div>
                       <h4 className="font-bold text-yellow-800 mb-2">Lien Title - We Can Help!</h4>
                       <p className="text-yellow-700 text-sm mb-3">No problem! We handle lien payoffs all the time.</p>
-                      
+
                       <div className="bg-white rounded-lg p-3">
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
@@ -962,7 +963,7 @@ export function MultiStepForm() {
                       <div className="text-3xl mb-2">🛠️</div>
                       <h4 className="font-bold text-orange-800 mb-2">Salvage Title - Still Valuable!</h4>
                       <p className="text-orange-700 text-sm mb-3">Salvage vehicles have parts value and restoration potential.</p>
-                      
+
                       <div className="bg-white rounded-lg p-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="text-center">
@@ -988,7 +989,7 @@ export function MultiStepForm() {
                       <div className="text-3xl mb-2">🔨</div>
                       <h4 className="font-bold text-blue-800 mb-2">Rebuilt Title - Second Life!</h4>
                       <p className="text-blue-700 text-sm mb-3">Rebuilt vehicles show craftsmanship and care.</p>
-                      
+
                       <div className="bg-white rounded-lg p-3">
                         <div className="space-y-2">
                           <div className="flex items-center justify-center space-x-2">
@@ -1014,7 +1015,7 @@ export function MultiStepForm() {
                       <div className="text-3xl mb-2">📋</div>
                       <h4 className="font-bold text-red-800 mb-2">No Title - We Can Still Help!</h4>
                       <p className="text-red-700 text-sm mb-3">Don't worry! We have solutions for vehicles without titles.</p>
-                      
+
                       <div className="bg-white rounded-lg p-3">
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
@@ -1079,7 +1080,7 @@ export function MultiStepForm() {
                       Perfect! With your title in hand and ready to sign, you're in the express lane. 
                       This means we can complete your sale in as little as 24 hours!
                     </p>
-                    
+
                     <div className="bg-green-100 rounded-lg p-4 space-y-3">
                       <h4 className="font-semibold text-green-800">Express Sale Benefits:</h4>
                       <div className="grid grid-cols-2 gap-3">
@@ -1104,7 +1105,7 @@ export function MultiStepForm() {
                           <p className="text-xs text-green-600">VIP treatment</p>
                         </div>
                       </div>
-                      
+
                       <div className="bg-gradient-to-r from-green-200 to-emerald-200 rounded-lg p-3 mt-4">
                         <div className="text-center">
                           <p className="font-bold text-green-800">Express Sale Bonus: +$150</p>
@@ -1112,7 +1113,7 @@ export function MultiStepForm() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white rounded-lg p-4 border-2 border-green-200">
                       <h4 className="font-medium text-gray-800 mb-2">What to expect next:</h4>
                       <div className="text-left space-y-2">
@@ -1141,7 +1142,7 @@ export function MultiStepForm() {
                       Don't have your title in hand? That's totally normal! Many of our customers are in the same situation. 
                       We can still give you an offer and help you get everything sorted out.
                     </p>
-                    
+
                     <div className="bg-blue-100 rounded-lg p-4 space-y-3">
                       <h4 className="font-semibold text-blue-800">We Can Help You Get Your Title:</h4>
                       <div className="space-y-2">
@@ -1168,7 +1169,7 @@ export function MultiStepForm() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
                       <p className="text-sm text-yellow-800">
                         💡 <strong>Pro Tip:</strong> We can still give you an accurate offer today, 
@@ -1186,7 +1187,7 @@ export function MultiStepForm() {
                       Great news! Since your title is already on its way, we can time everything perfectly. 
                       By the time you're ready to sell, your title should be in your hands.
                     </p>
-                    
+
                     <div className="bg-purple-100 rounded-lg p-4 space-y-3">
                       <h4 className="font-semibold text-purple-800">Synchronized Sale Process:</h4>
                       <div className="space-y-3">
@@ -1197,7 +1198,7 @@ export function MultiStepForm() {
                           </div>
                           <p className="text-xs text-purple-600">📋 Get your instant cash offer</p>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-purple-800">Next 3-7 Days</span>
@@ -1205,7 +1206,7 @@ export function MultiStepForm() {
                           </div>
                           <p className="text-xs text-purple-600">📬 Title arrives in your mailbox</p>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-purple-800">When Ready</span>
@@ -1214,13 +1215,13 @@ export function MultiStepForm() {
                           <p className="text-xs text-purple-600">🚚 Schedule pickup & get paid</p>
                         </div>
                       </div>
-                      
+
                       <div className="bg-gradient-to-r from-purple-200 to-pink-200 rounded-lg p-3">
                         <p className="font-bold text-purple-800">Coordination Bonus: +$75</p>
                         <p className="text-xs text-purple-700">For advance planning</p>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white rounded-lg p-3 border border-purple-200">
                       <p className="text-sm text-purple-800">
                         🔔 <strong>We'll remind you:</strong> Text when it's time to schedule pickup!
@@ -1237,10 +1238,10 @@ export function MultiStepForm() {
                       This happens more often than you'd think! Lost titles are completely fixable, 
                       and we'll walk you through the entire process step by step.
                     </p>
-                    
+
                     <div className="bg-orange-100 rounded-lg p-4 space-y-3">
                       <h4 className="font-semibold text-orange-800">Lost Title Recovery Mission:</h4>
-                      
+
                       <div className="grid grid-cols-1 gap-3">
                         <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400">
                           <div className="flex items-center space-x-3">
@@ -1251,7 +1252,7 @@ export function MultiStepForm() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">💳</span>
@@ -1261,7 +1262,7 @@ export function MultiStepForm() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-3 border-l-4 border-orange-400">
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl">📬</span>
@@ -1272,7 +1273,7 @@ export function MultiStepForm() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="bg-gradient-to-r from-orange-200 to-yellow-200 rounded-lg p-3">
                         <div className="flex items-center justify-center space-x-2">
                           <span className="text-xl">🤝</span>
@@ -1283,7 +1284,7 @@ export function MultiStepForm() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white rounded-lg p-4 border border-orange-200">
                       <h4 className="font-medium text-orange-800 mb-2">Meanwhile, we can:</h4>
                       <div className="space-y-2">
@@ -1301,7 +1302,7 @@ export function MultiStepForm() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-red-50 rounded-lg p-3 border border-red-200">
                       <p className="text-sm text-red-800">
                         ⚠️ <strong>Important:</strong> Some states require a notarized affidavit for lost titles. 
@@ -1374,7 +1375,7 @@ export function MultiStepForm() {
                     </>
                   )}
                 </div>
-                
+
                 <div className="bg-white rounded-lg p-3">
                   <p className="text-xs text-gray-500 mb-1">Honesty Bonus</p>
                   <div className="text-green-600 font-bold">+$50 Fair Assessment</div>
@@ -1411,7 +1412,7 @@ export function MultiStepForm() {
                     <div className="text-5xl mb-3">✨</div>
                     <h3 className="font-bold text-green-700">Perfect Condition!</h3>
                     <p className="text-green-600 mb-4">Your car is in pristine shape - that's premium value!</p>
-                    
+
                     <div className="bg-green-100 rounded-lg p-4">
                       <div className="flex items-center justify-center space-x-2 mb-2">
                         <div className="text-2xl">🏆</div>
@@ -1428,7 +1429,7 @@ export function MultiStepForm() {
                     <div className="text-4xl mb-3">🔧</div>
                     <h3 className="font-bold text-blue-700">Minor Touch-Ups</h3>
                     <p className="text-blue-600 mb-4">Small imperfections are totally normal - still great value!</p>
-                    
+
                     <div className="bg-blue-100 rounded-lg p-4">
                       <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
@@ -1452,7 +1453,7 @@ export function MultiStepForm() {
                     <div className="text-4xl mb-3">🛠️</div>
                     <h3 className="font-bold text-orange-700">Battle Scars</h3>
                     <p className="text-orange-600 mb-4">Your car has stories to tell - and we still want to buy it!</p>
-                    
+
                     <div className="bg-orange-100 rounded-lg p-4">
                       <div className="space-y-3">
                         <div className="flex justify-center space-x-3">
@@ -1480,7 +1481,7 @@ export function MultiStepForm() {
                     <div className="text-4xl mb-3">🔥</div>
                     <h3 className="font-bold text-red-700">Survivor Status</h3>
                     <p className="text-red-600 mb-4">Even damaged cars have valuable parts - we're still interested!</p>
-                    
+
                     <div className="bg-red-100 rounded-lg p-4">
                       <div className="space-y-3">
                         <div className="text-center">
@@ -1488,7 +1489,7 @@ export function MultiStepForm() {
                           <h4 className="font-bold text-red-800">Recycling Hero</h4>
                           <p className="text-red-600 text-sm">Giving your car a second life through parts</p>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-3">
                           <div className="grid grid-cols-3 gap-2 text-center">
                             <div>
@@ -1505,7 +1506,7 @@ export function MultiStepForm() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <p className="text-red-700 font-medium">Every car has value - even this one!</p>
                       </div>
                     </div>
@@ -1595,7 +1596,7 @@ export function MultiStepForm() {
                       <p className="text-xs text-gray-500">With detailed value breakdown</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-blue-600 text-sm">📋</span>
@@ -1681,7 +1682,7 @@ export function MultiStepForm() {
                       {Math.min(getFieldValue("phoneNumber").length, 10)}/10
                     </span>
                   </div>
-                  
+
                   <div className="bg-gray-200 rounded-full h-2 mb-2">
                     <div 
                       className="bg-gradient-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all duration-300"
@@ -1871,7 +1872,7 @@ export function MultiStepForm() {
               <div className="text-5xl mb-3">🎉</div>
               <h3 className="text-xl font-bold text-green-700 mb-2">Almost There!</h3>
               <p className="text-green-600">You've completed all the steps - time for your reward!</p>
-              
+
               <div className="bg-white rounded-lg p-4 mt-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
