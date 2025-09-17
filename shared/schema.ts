@@ -6,6 +6,7 @@ import {
   decimal,
   boolean,
   mysqlEnum,
+  int,
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import crypto from "crypto";
@@ -23,6 +24,7 @@ export const submissions = mysqlTable("submissions", {
   email: varchar("email", { length: 100 }).notNull(),
   phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
   titleCondition: varchar("title_condition", { length: 50 }).notNull(),
+  titleInHand: varchar("title_in_hand", { length: 50 }).notNull(),
   vehicleCondition: varchar("vehicle_condition", { length: 50 }).notNull(),
   odometerReading: varchar("odometer_reading", { length: 20 }).notNull(),
   hasDamage: varchar("has_damage", { length: 50 }).notNull(),

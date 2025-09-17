@@ -25,6 +25,7 @@ const submissionSchema = z.object({
   email: z.string().email("Valid email is required"),
   phoneNumber: z.string().min(10, "Phone number is required"),
   titleCondition: z.string().min(1, "Title condition is required"),
+  titleInHand: z.string().min(1, "Please specify if you have the title in-hand"),
   vehicleCondition: z.string().min(1, "Vehicle condition is required"),
   odometerReading: z.string().min(1, "Odometer reading is required"),
   hasDamage: z.string().min(1, "Please specify if the vehicle has damage"),
@@ -104,6 +105,12 @@ const STEPS: Step[] = [
     title: "What's your title condition?",
     subtitle: "This affects the value of your vehicle",
     fields: ["titleCondition"],
+  },
+  {
+    id: "title-in-hand",
+    title: "Do you have the title in-hand and able to sign?",
+    subtitle: "This is required to complete the sale",
+    fields: ["titleInHand"],
   },
   {
     id: "vehicle-condition",
@@ -196,6 +203,7 @@ export function MultiStepForm() {
       email: "",
       phoneNumber: "",
       titleCondition: "",
+      titleInHand: "",
       vehicleCondition: "",
       odometerReading: "",
       hasDamage: "",
@@ -472,7 +480,7 @@ export function MultiStepForm() {
       return;
     }
 
-    if (currentStep === 12) { // Photos step (updated index)
+    if (currentStep === 13) { // Photos step (updated index)
       if (uploadedPhotos.length === 0) {
         toast({
           title: "Photos required",
@@ -493,7 +501,7 @@ export function MultiStepForm() {
     }
 
     // Skip airbag step if no damage reported
-    if (currentStep === 6 && getFieldValue("hasDamage") === "no") { // damage step (updated index)
+    if (currentStep === 7 && getFieldValue("hasDamage") === "no") { // damage step (updated index)
       setCurrentStep(currentStep + 2); // Skip airbag step
       return;
     }
@@ -528,6 +536,7 @@ export function MultiStepForm() {
       email: getFieldValue("email"),
       phoneNumber: getFieldValue("phoneNumber"),
       titleCondition: getFieldValue("titleCondition"),
+      titleInHand: getFieldValue("titleInHand"),
       vehicleCondition: getFieldValue("vehicleCondition"),
       odometerReading: getFieldValue("odometerReading"),
       hasDamage: getFieldValue("hasDamage"),
@@ -697,6 +706,26 @@ export function MultiStepForm() {
                 <SelectItem value="rebuilt">Rebuilt</SelectItem>
                 <SelectItem value="lien">Lien</SelectItem>
                 <SelectItem value="no-title">No Title</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "title-in-hand":
+        return (
+          <div className="space-y-4">
+            <Select
+              value={getFieldValue("titleInHand")}
+              onValueChange={(value) => updateField("titleInHand", value)}
+            >
+              <SelectTrigger className="text-lg p-4 h-14">
+                <SelectValue placeholder="Select title availability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Yes, I have the title and can sign</SelectItem>
+                <SelectItem value="no">No, I don't have the title in-hand</SelectItem>
+                <SelectItem value="in-mail">Title is in the mail</SelectItem>
+                <SelectItem value="lost">Title is lost/misplaced</SelectItem>
               </SelectContent>
             </Select>
           </div>
