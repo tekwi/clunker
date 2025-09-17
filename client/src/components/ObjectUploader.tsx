@@ -271,7 +271,7 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
               muted
             />
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50">
+            <div className="absolute bottom-16 left-0 right-0 p-4 bg-black/50">
               <div className="flex gap-4 max-w-sm mx-auto">
                 <Button onClick={stopCamera} variant="outline" className="flex-1">
                   Cancel
