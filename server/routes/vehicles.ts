@@ -10,6 +10,11 @@ router.get('/makes', async (req, res) => {
   try {
     const makes = await getVehicleMakes();
     console.log(`Found ${makes.length} vehicle makes`);
+    
+    // Debug: Check if PORSCHE exists
+    const porscheMakes = makes.filter(m => m.make.toUpperCase().includes('PORSCHE') || m.make.toUpperCase().includes('PORS'));
+    console.log(`Porsche-related makes:`, porscheMakes.map(m => m.make));
+    
     res.json(makes.map(make => ({ make: make.make })));
   } catch (error) {
     console.error('Error fetching makes:', error);
@@ -28,26 +33,32 @@ router.get('/models', async (req, res) => {
 
     // Apply the same flexible matching logic used in VIN decode
     const availableMakes = await getVehicleMakes();
+    console.log(`Available makes in database:`, availableMakes.map(m => m.make).slice(0, 10)); // Show first 10 for debugging
+    console.log(`Looking for make: "${make}"`);
     
     // First try exact match (case insensitive)
     let exactMatch = availableMakes.find(m => 
       m.make.toLowerCase() === (make as string).toLowerCase()
     );
+    console.log(`Exact match found: ${exactMatch ? exactMatch.make : 'None'}`);
     
     // If no exact match, try partial matches
     if (!exactMatch) {
+      console.log(`Trying partial matches for: ${make}`);
       // Try to find a make that contains the requested make
       exactMatch = availableMakes.find(m => 
         m.make.toLowerCase().includes((make as string).toLowerCase()) ||
         (make as string).toLowerCase().includes(m.make.toLowerCase())
       );
+      console.log(`Partial match found: ${exactMatch ? exactMatch.make : 'None'}`);
       
       // Try common variations and abbreviations
       if (!exactMatch) {
+        console.log(`Trying abbreviation matches for: ${make}`);
         const makeUpper = (make as string).toUpperCase();
         exactMatch = availableMakes.find(m => {
           const dbMakeUpper = m.make.toUpperCase();
-          return (
+          const isMatch = (
             // Handle common abbreviations
             (makeUpper === 'CHEV' && dbMakeUpper === 'CHEVROLET') ||
             (makeUpper === 'CHEVROLET' && dbMakeUpper === 'CHEV') ||
@@ -61,16 +72,23 @@ router.get('/models', async (req, res) => {
             dbMakeUpper.startsWith(makeUpper) ||
             makeUpper.startsWith(dbMakeUpper)
           );
+          if (isMatch) {
+            console.log(`Abbreviation match found: ${makeUpper} -> ${dbMakeUpper}`);
+          }
+          return isMatch;
         });
+        console.log(`Abbreviation match result: ${exactMatch ? exactMatch.make : 'None'}`);
       }
     }
     
     // Use the matched make name from database if found
     if (exactMatch) {
+      const originalMake = make;
       make = exactMatch.make;
-      console.log(`Make mapping: ${req.query.make} -> ${make}`);
+      console.log(`✅ Make mapping successful: "${originalMake}" -> "${make}"`);
     } else {
-      console.log(`No make match found for: ${req.query.make}`);
+      console.log(`❌ No make match found for: "${req.query.make}"`);
+      console.log(`Available makes sample:`, availableMakes.map(m => m.make).slice(0, 20));
       // Return empty array if no make match found
       return res.json([]);
     }
