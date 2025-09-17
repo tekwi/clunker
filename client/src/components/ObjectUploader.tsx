@@ -2,6 +2,12 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Camera, Upload, X, Image } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ObjectUploaderProps {
   onPhotosChange: (photos: string[]) => void;
@@ -22,7 +28,7 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
     setIsUploading(true);
     setError(null);
     setUploadProgress(`Preparing ${file.name}...`);
-    
+
     try {
       // Get upload URL from server
       setUploadProgress(`Getting upload URL for ${file.name}...`);
@@ -147,7 +153,7 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
         console.error('File upload error:', err);
       }
     }
-    
+
     // Reset file input
     if (event.target) {
       event.target.value = '';
@@ -201,9 +207,9 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Button 
-          onClick={startCamera} 
-          variant="outline" 
+        <Button
+          onClick={startCamera}
+          variant="outline"
           className="flex-1"
           disabled={isUploading}
         >
@@ -280,6 +286,44 @@ export function ObjectUploader({ photos = [], onPhotosChange }: ObjectUploaderPr
           <p className="text-gray-500">No photos uploaded yet</p>
         </div>
       )}
+
+      {/* Fullscreen Camera Modal */}
+      <Dialog open={isCapturing} onOpenChange={stopCamera}>
+        <DialogContent className="max-w-screen max-h-screen w-screen h-screen p-0 m-0">
+          <div className="relative w-full h-full bg-black">
+            <DialogHeader className="absolute top-0 left-0 right-0 z-10 p-4 bg-black/50">
+              <div className="flex justify-between items-center">
+                <DialogTitle className="text-white text-lg font-semibold">Take Photo</DialogTitle>
+                <Button variant="ghost" size="sm" onClick={stopCamera} className="text-white hover:bg-white/20">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogHeader>
+
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+              muted
+            />
+
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50">
+              <div className="flex gap-4 max-w-sm mx-auto">
+                <Button onClick={stopCamera} variant="outline" className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={capturePhoto} className="flex-1">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Capture
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }
