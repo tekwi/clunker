@@ -634,6 +634,32 @@ export function MultiStepForm() {
               </Button>
             </div>
 
+            {/* Gamification: VIN Progress Visualization */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="text-4xl animate-pulse">🔍</div>
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Your Vehicle's DNA</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Every VIN tells a unique story about your car's journey
+              </p>
+              <div className="flex justify-center space-x-2">
+                {Array.from({ length: 17 }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`w-3 h-8 rounded-sm transition-all duration-300 ${
+                      i < getFieldValue("vin").length
+                        ? "bg-green-500 shadow-sm"
+                        : "bg-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {getFieldValue("vin").length}/17 characters entered
+              </p>
+            </div>
+
             <Dialog open={showVinScanner} onOpenChange={setShowVinScanner}>
               <DialogContent className="max-w-md mx-auto">
                 <DialogHeader>
@@ -743,6 +769,45 @@ export function MultiStepForm() {
               inputMode="numeric"
               pattern="[0-9]*"
             />
+
+            {/* Gamification: Mileage Journey Visualization */}
+            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-6">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">🛣️</div>
+                <h3 className="font-semibold text-gray-800">Miles of Memories</h3>
+              </div>
+              
+              {getFieldValue("odometerReading") && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Your Journey:</span>
+                    <span className="font-bold text-orange-600">
+                      {Number(getFieldValue("odometerReading")).toLocaleString()} miles
+                    </span>
+                  </div>
+                  
+                  <div className="bg-white rounded-full h-3 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-orange-400 to-yellow-400 h-full transition-all duration-1000"
+                      style={{ 
+                        width: `${Math.min((Number(getFieldValue("odometerReading")) / 200000) * 100, 100)}%` 
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Brand New</span>
+                    <span>Well Traveled</span>
+                  </div>
+                  
+                  <div className="text-center text-sm text-gray-600">
+                    {Number(getFieldValue("odometerReading")) < 30000 && "🌟 Low mileage gem!"}
+                    {Number(getFieldValue("odometerReading")) >= 30000 && Number(getFieldValue("odometerReading")) < 100000 && "👍 Great condition range"}
+                    {Number(getFieldValue("odometerReading")) >= 100000 && "🚗 Experienced traveler"}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         );
 
@@ -805,6 +870,55 @@ export function MultiStepForm() {
                 <SelectItem value="junk">Junk/Non-running</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Gamification: Condition Stars Visualization */}
+            {getFieldValue("vehicleCondition") && (
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 text-center">
+                <div className="mb-4">
+                  {getFieldValue("vehicleCondition") === "excellent" && (
+                    <>
+                      <div className="text-4xl mb-2">⭐⭐⭐⭐⭐</div>
+                      <h3 className="font-bold text-green-600">Premium Vehicle!</h3>
+                      <p className="text-sm text-gray-600">Your car is in amazing shape - expect top dollar!</p>
+                    </>
+                  )}
+                  {getFieldValue("vehicleCondition") === "good" && (
+                    <>
+                      <div className="text-4xl mb-2">⭐⭐⭐⭐</div>
+                      <h3 className="font-bold text-blue-600">Great Condition!</h3>
+                      <p className="text-sm text-gray-600">Well maintained vehicles get excellent offers!</p>
+                    </>
+                  )}
+                  {getFieldValue("vehicleCondition") === "fair" && (
+                    <>
+                      <div className="text-4xl mb-2">⭐⭐⭐</div>
+                      <h3 className="font-bold text-yellow-600">Good Value!</h3>
+                      <p className="text-sm text-gray-600">Fair condition vehicles still have great value!</p>
+                    </>
+                  )}
+                  {getFieldValue("vehicleCondition") === "poor" && (
+                    <>
+                      <div className="text-4xl mb-2">⭐⭐</div>
+                      <h3 className="font-bold text-orange-600">Fixer Upper!</h3>
+                      <p className="text-sm text-gray-600">We buy cars in any condition - still valuable!</p>
+                    </>
+                  )}
+                  {getFieldValue("vehicleCondition") === "junk" && (
+                    <>
+                      <div className="text-4xl mb-2">🔧</div>
+                      <h3 className="font-bold text-gray-600">For Parts!</h3>
+                      <p className="text-sm text-gray-600">Even non-running cars have value for parts!</p>
+                    </>
+                  )}
+                </div>
+                
+                <div className="bg-white rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">Honesty Bonus</p>
+                  <div className="text-green-600 font-bold">+$50 Fair Assessment</div>
+                  <p className="text-xs text-gray-400">Accurate descriptions get better offers</p>
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -855,6 +969,21 @@ export function MultiStepForm() {
               placeholder="Enter your full name"
               className="text-lg p-4 h-14"
             />
+
+            {/* Gamification: Trust Building */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 text-center">
+              <div className="text-4xl mb-3">🤝</div>
+              <h3 className="font-semibold text-gray-800 mb-2">Building Trust</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Your information helps us personalize your cash offer
+              </p>
+              <div className="bg-white rounded-lg p-3">
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-700">Secure & Confidential</span>
+                </div>
+              </div>
+            </div>
           </div>
         );
 
@@ -950,12 +1079,93 @@ export function MultiStepForm() {
                 Please upload at least one photo to continue
               </p>
             )}
+
+            {/* Gamification: Photo Achievement System */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">📸</div>
+                <h3 className="font-semibold text-gray-800">Photo Power-Up</h3>
+                <p className="text-sm text-gray-600">More photos = Better offers!</p>
+              </div>
+
+              <div className="space-y-3">
+                {/* Photo Achievement Badges */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 1 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{uploadedPhotos.length >= 1 ? '✅' : '📱'}</div>
+                      <p className="text-xs font-medium">First Photo</p>
+                      <p className="text-xs text-gray-500">+$25 bonus</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 3 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{uploadedPhotos.length >= 3 ? '✅' : '🚗'}</div>
+                      <p className="text-xs font-medium">Complete Set</p>
+                      <p className="text-xs text-gray-500">+$50 bonus</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 5 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{uploadedPhotos.length >= 5 ? '✅' : '⭐'}</div>
+                      <p className="text-xs font-medium">Detail Master</p>
+                      <p className="text-xs text-gray-500">+$75 bonus</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 8 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{uploadedPhotos.length >= 8 ? '✅' : '🏆'}</div>
+                      <p className="text-xs font-medium">Pro Seller</p>
+                      <p className="text-xs text-gray-500">+$100 bonus</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-3 text-center">
+                  <p className="text-sm font-medium text-gray-800">
+                    Photo Bonus: <span className="text-green-600 font-bold">
+                      +${uploadedPhotos.length >= 8 ? 250 : uploadedPhotos.length >= 5 ? 150 : uploadedPhotos.length >= 3 ? 75 : uploadedPhotos.length >= 1 ? 25 : 0}
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {uploadedPhotos.length}/8 photos uploaded
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         );
 
       case "review":
         return (
           <div className="space-y-6">
+            {/* Gamification: Completion Achievement */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 text-center mb-6">
+              <div className="text-5xl mb-3">🎉</div>
+              <h3 className="text-xl font-bold text-green-700 mb-2">Almost There!</h3>
+              <p className="text-green-600">You've completed all the steps - time for your reward!</p>
+              
+              <div className="bg-white rounded-lg p-4 mt-4">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl mb-1">✅</div>
+                    <p className="text-xs text-gray-600">Vehicle Info</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl mb-1">✅</div>
+                    <p className="text-xs text-gray-600">Photos</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl mb-1">✅</div>
+                    <p className="text-xs text-gray-600">Contact</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-gray-50 rounded-lg p-6 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-600">VIN</label>
@@ -982,10 +1192,19 @@ export function MultiStepForm() {
             <Button
               onClick={onSubmit}
               disabled={submitMutation.isPending}
-              className="w-full h-14 text-lg"
+              className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
               size="lg"
             >
-              {submitMutation.isPending ? "Getting Your Offer..." : "Get My Cash Offer"}
+              {submitMutation.isPending ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Getting Your Offer...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <span>🚀 Get My Cash Offer</span>
+                </div>
+              )}
             </Button>
           </div>
         );
