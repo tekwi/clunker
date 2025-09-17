@@ -351,7 +351,54 @@ export function MultiStepForm() {
           }
         }
         if (data.model) {
-          updateField('vehicleModel', data.model);
+          // Map decoded model names to match what's available in dropdown
+          let modelToUse = data.model;
+          
+          // Common model mappings - extract base model name from full database names
+          const modelMappings: { [key: string]: string } = {
+            // Porsche models
+            '911 CARRER': '911',
+            '911 CARRERA': '911',
+            '911 TURBO': '911',
+            '911 GT3': '911',
+            'MACAN S': 'MACAN',
+            'MACAN TURBO': 'MACAN',
+            'CAYENNE S': 'CAYENNE',
+            'CAYENNE TURBO': 'CAYENNE',
+            'PANAMERA S': 'PANAMERA',
+            'PANAMERA TURBO': 'PANAMERA',
+            
+            // BMW models
+            '3 SERIES': '3 SERIES',
+            '5 SERIES': '5 SERIES',
+            '7 SERIES': '7 SERIES',
+            'X3 XDRIVE': 'X3',
+            'X5 XDRIVE': 'X5',
+            
+            // Mercedes models
+            'C-CLASS': 'C-CLASS',
+            'E-CLASS': 'E-CLASS',
+            'S-CLASS': 'S-CLASS',
+            'GLE 350': 'GLE',
+            'GLC 300': 'GLC',
+            
+            // Common patterns - remove trim levels and variations
+          };
+          
+          // Check for exact mapping first
+          const upperModel = data.model.toUpperCase();
+          if (modelMappings[upperModel]) {
+            modelToUse = modelMappings[upperModel];
+          } else {
+            // If no exact mapping, try to extract base model name
+            // Remove common trim suffixes and variations
+            modelToUse = data.model
+              .replace(/\s+(S|TURBO|GT\d*|XDRIVE|AWD|FWD|RWD|PREMIUM|LUXURY|SPORT|BASE)$/i, '')
+              .replace(/\s+\d+\.?\d*[LTV]?$/i, '') // Remove engine sizes like "2.0T", "3.5L"
+              .trim();
+          }
+          
+          updateField('vehicleModel', modelToUse);
         }
 
         if (data.make || data.model || data.year) {
