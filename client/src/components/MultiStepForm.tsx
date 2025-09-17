@@ -774,35 +774,37 @@ export function MultiStepForm() {
             </div>
 
             {/* Gamification: VIN Progress Visualization */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-100 shadow-sm">
               <div className="flex justify-center mb-4">
-                <div className="text-4xl animate-pulse">🔍</div>
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl animate-pulse shadow-md">
+                  🔍
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Your Vehicle's DNA</h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Your Vehicle's DNA</h3>
+              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                 Every VIN tells a unique story about your car's journey
               </p>
-              <div className="flex justify-center space-x-2">
+              <div className="flex justify-center space-x-1 mb-3">
                 {Array.from({ length: 17 }, (_, i) => (
                   <div
                     key={i}
                     className={`w-3 h-8 rounded-sm transition-all duration-300 ${
                       i < getFieldValue("vin").length
-                        ? "bg-green-500 shadow-sm"
+                        ? "bg-gradient-to-b from-blue-400 to-purple-500 shadow-sm"
                         : "bg-gray-200"
                     }`}
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 font-medium">
                 {getFieldValue("vin").length}/17 characters entered
                 {isDecodingVin && " • Decoding..."}
               </p>
 
               {getFieldValue("vin").length === 17 && !isDecodingVin && (
-                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-700 flex items-center justify-center">
-                    <span className="mr-1">🔍</span>
+                <div className="mt-4 p-3 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-200">
+                  <p className="text-sm font-medium bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent flex items-center justify-center">
+                    <span className="mr-2">🔍</span>
                     Auto-filling vehicle details from VIN
                   </p>
                 </div>
@@ -920,39 +922,43 @@ export function MultiStepForm() {
             />
 
             {/* Gamification: Mileage Journey Visualization */}
-            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-6">
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">🛣️</div>
-                <h3 className="font-semibold text-gray-800">Miles of Memories</h3>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-100 shadow-sm">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                  🛣️
+                </div>
               </div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">Miles of Memories</h3>
 
               {getFieldValue("odometerReading") && (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Your Journey:</span>
-                    <span className="font-bold text-orange-600">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-white rounded-lg p-3 border border-blue-100">
+                    <span className="text-sm font-medium text-gray-600">Your Journey:</span>
+                    <span className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       {Number(getFieldValue("odometerReading")).toLocaleString()} miles
                     </span>
                   </div>
 
-                  <div className="bg-white rounded-full h-3 overflow-hidden">
+                  <div className="bg-white rounded-full h-4 overflow-hidden border border-blue-100 shadow-inner">
                     <div 
-                      className="bg-gradient-to-r from-orange-400 to-yellow-400 h-full transition-all duration-1000"
+                      className="bg-gradient-to-r from-blue-400 to-purple-500 h-full transition-all duration-1000 rounded-full"
                       style={{ 
                         width: `${Math.min((Number(getFieldValue("odometerReading")) / 200000) * 100, 100)}%` 
                       }}
                     />
                   </div>
 
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs font-medium text-gray-500">
                     <span>Brand New</span>
                     <span>Well Traveled</span>
                   </div>
 
-                  <div className="text-center text-sm text-gray-600">
-                    {Number(getFieldValue("odometerReading")) < 30000 && "🌟 Low mileage gem!"}
-                    {Number(getFieldValue("odometerReading")) >= 30000 && Number(getFieldValue("odometerReading")) < 100000 && "👍 Great condition range"}
-                    {Number(getFieldValue("odometerReading")) >= 100000 && "🚗 Experienced traveler"}
+                  <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 border border-blue-200">
+                    <p className="text-sm font-medium bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">
+                      {Number(getFieldValue("odometerReading")) < 30000 && "🌟 Low mileage gem!"}
+                      {Number(getFieldValue("odometerReading")) >= 30000 && Number(getFieldValue("odometerReading")) < 100000 && "👍 Great condition range"}
+                      {Number(getFieldValue("odometerReading")) >= 100000 && "🚗 Experienced traveler"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -981,11 +987,13 @@ export function MultiStepForm() {
 
             {/* Gamification: Title Status Achievement System */}
             {getFieldValue("titleCondition") && (
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
-                <div className="text-center mb-4">
-                  <div className="text-4xl mb-3">📋</div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Title Status Analysis</h3>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-100 shadow-sm">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                    📋
+                  </div>
                 </div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">Title Status Analysis</h3>
 
                 {getFieldValue("titleCondition") === "clean" && (
                   <div className="space-y-4">
@@ -1428,49 +1436,55 @@ export function MultiStepForm() {
 
             {/* Gamification: Condition Stars Visualization */}
             {getFieldValue("vehicleCondition") && (
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 text-center">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-100 shadow-sm">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white shadow-md">
+                    {getFieldValue("vehicleCondition") === "junk" ? "🔧" : "⭐"}
+                  </div>
+                </div>
+
                 <div className="mb-4">
                   {getFieldValue("vehicleCondition") === "excellent" && (
                     <>
-                      <div className="text-4xl mb-2">⭐⭐⭐⭐⭐</div>
-                      <h3 className="font-bold text-green-600">Premium Vehicle!</h3>
-                      <p className="text-sm text-gray-600">Your car is in amazing shape - expect top dollar!</p>
+                      <div className="text-3xl mb-2 text-yellow-400">⭐⭐⭐⭐⭐</div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Premium Vehicle!</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">Your car is in amazing shape - expect top dollar!</p>
                     </>
                   )}
                   {getFieldValue("vehicleCondition") === "good" && (
                     <>
-                      <div className="text-4xl mb-2">⭐⭐⭐⭐</div>
-                      <h3 className="font-bold text-blue-600">Great Condition!</h3>
-                      <p className="text-sm text-gray-600">Well maintained vehicles get excellent offers!</p>
+                      <div className="text-3xl mb-2 text-yellow-400">⭐⭐⭐⭐</div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Great Condition!</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">Well maintained vehicles get excellent offers!</p>
                     </>
                   )}
                   {getFieldValue("vehicleCondition") === "fair" && (
                     <>
-                      <div className="text-4xl mb-2">⭐⭐⭐</div>
-                      <h3 className="font-bold text-yellow-600">Good Value!</h3>
-                      <p className="text-sm text-gray-600">Fair condition vehicles still have great value!</p>
+                      <div className="text-3xl mb-2 text-yellow-400">⭐⭐⭐</div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Good Value!</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">Fair condition vehicles still have great value!</p>
                     </>
                   )}
                   {getFieldValue("vehicleCondition") === "poor" && (
                     <>
-                      <div className="text-4xl mb-2">⭐⭐</div>
-                      <h3 className="font-bold text-orange-600">Fixer Upper!</h3>
-                      <p className="text-sm text-gray-600">We buy cars in any condition - still valuable!</p>
+                      <div className="text-3xl mb-2 text-yellow-400">⭐⭐</div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Fixer Upper!</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">We buy cars in any condition - still valuable!</p>
                     </>
                   )}
                   {getFieldValue("vehicleCondition") === "junk" && (
                     <>
-                      <div className="text-4xl mb-2">🔧</div>
-                      <h3 className="font-bold text-gray-600">For Parts!</h3>
-                      <p className="text-sm text-gray-600">Even non-running cars have value for parts!</p>
+                      <div className="text-3xl mb-2">🔧</div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">For Parts!</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">Even non-running cars have value for parts!</p>
                     </>
                   )}
                 </div>
 
-                <div className="bg-white rounded-lg p-3">
-                  <p className="text-xs text-gray-500 mb-1">Honesty Bonus</p>
-                  <div className="text-green-600 font-bold">+$50 Fair Assessment</div>
-                  <p className="text-xs text-gray-400">Accurate descriptions get better offers</p>
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 border border-blue-200">
+                  <p className="text-xs font-medium text-gray-600 mb-1">Honesty Bonus</p>
+                  <div className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">+$50 Fair Assessment</div>
+                  <p className="text-xs text-gray-500">Accurate descriptions get better offers</p>
                 </div>
               </div>
             )}
@@ -1497,7 +1511,7 @@ export function MultiStepForm() {
 
             {/* Gamification: Damage Assessment with Visual Stories */}
             {getFieldValue("hasDamage") && (
-              <div className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-6">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100 shadow-sm">
                 {getFieldValue("hasDamage") === "no" && (
                   <div className="text-center space-y-4">
                     <div className="text-5xl mb-3">✨</div>
@@ -1637,16 +1651,20 @@ export function MultiStepForm() {
             />
 
             {/* Gamification: Trust Building */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 text-center">
-              <div className="text-4xl mb-3">🤝</div>
-              <h3 className="font-semibold text-gray-800 mb-2">Building Trust</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-100 shadow-sm">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                  🤝
+                </div>
+              </div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Building Trust</h3>
+              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                 Your information helps us personalize your cash offer
               </p>
-              <div className="bg-white rounded-lg p-3">
+              <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 border border-blue-200">
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">Secure & Confidential</span>
+                  <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  <span className="text-sm font-medium bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Secure & Confidential</span>
                 </div>
               </div>
             </div>
@@ -1665,10 +1683,14 @@ export function MultiStepForm() {
             />
 
             {/* Story Content: Email Trust Building */}
-            <div className="bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-lg p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100 shadow-sm">
               <div className="text-center mb-4">
-                <div className="text-4xl mb-3">📧</div>
-                <h3 className="font-semibold text-gray-800 mb-2">Your Digital Mailbox</h3>
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                    📧
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Your Digital Mailbox</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   This is where your cash offer will land! We'll send you a detailed breakdown 
                   showing exactly how we calculated your vehicle's value.
@@ -1736,10 +1758,14 @@ export function MultiStepForm() {
             />
 
             {/* Gamification: Communication Achievement System */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100 shadow-sm">
               <div className="text-center mb-4">
-                <div className="text-4xl mb-3">📞</div>
-                <h3 className="font-semibold text-gray-800 mb-2">Direct Line Established</h3>
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                    📞
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Direct Line Established</h3>
                 <p className="text-sm text-gray-600">
                   Your phone number unlocks premium service benefits!
                 </p>
@@ -1748,7 +1774,7 @@ export function MultiStepForm() {
               {/* Communication Achievements */}
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className={`p-3 rounded-lg border-2 transition-all ${getFieldValue("phoneNumber").length >= 3 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`p-3 rounded-lg border-2 transition-all ${getFieldValue("phoneNumber").length >= 3 ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300' : 'bg-white border-gray-200'}`}>
                     <div className="text-center">
                       <div className="text-2xl mb-1">{getFieldValue("phoneNumber").length >= 3 ? '✅' : '📱'}</div>
                       <p className="text-xs font-medium">Quick Contact</p>
@@ -1756,7 +1782,7 @@ export function MultiStepForm() {
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-lg border-2 transition-all ${getFieldValue("phoneNumber").length >= 10 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`p-3 rounded-lg border-2 transition-all ${getFieldValue("phoneNumber").length >= 10 ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300' : 'bg-white border-gray-200'}`}>
                     <div className="text-center">
                       <div className="text-2xl mb-1">{getFieldValue("phoneNumber").length >= 10 ? '✅' : '⚡'}</div>
                       <p className="text-xs font-medium">Fast Track</p>
@@ -1774,9 +1800,9 @@ export function MultiStepForm() {
                     </span>
                   </div>
 
-                  <div className="bg-gray-200 rounded-full h-2 mb-2">
+                  <div className="bg-gray-200 rounded-full h-3 mb-2 border border-gray-300">
                     <div 
-                      className="bg-gradient-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-blue-400 to-purple-500 h-full rounded-full transition-all duration-300"
                       style={{ 
                         width: `${Math.min((getFieldValue("phoneNumber").length / 10) * 100, 100)}%` 
                       }}
@@ -1897,17 +1923,21 @@ export function MultiStepForm() {
             )}
 
             {/* Gamification: Photo Achievement System */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100 shadow-sm">
               <div className="text-center mb-4">
-                <div className="text-4xl mb-2">📸</div>
-                <h3 className="font-semibold text-gray-800">Photo Power-Up</h3>
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+                    📸
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Photo Power-Up</h3>
                 <p className="text-sm text-gray-600">More photos = Better offers!</p>
               </div>
 
               <div className="space-y-3">
                 {/* Photo Achievement Badges */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 1 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 1 ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300' : 'bg-white border-gray-200'}`}>
                     <div className="text-center">
                       <div className="text-2xl mb-1">{uploadedPhotos.length >= 1 ? '✅' : '📱'}</div>
                       <p className="text-xs font-medium">First Photo</p>
@@ -1915,7 +1945,7 @@ export function MultiStepForm() {
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 3 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 3 ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300' : 'bg-white border-gray-200'}`}>
                     <div className="text-center">
                       <div className="text-2xl mb-1">{uploadedPhotos.length >= 3 ? '✅' : '🚗'}</div>
                       <p className="text-xs font-medium">Complete Set</p>
@@ -1923,7 +1953,7 @@ export function MultiStepForm() {
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 5 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 5 ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300' : 'bg-white border-gray-200'}`}>
                     <div className="text-center">
                       <div className="text-2xl mb-1">{uploadedPhotos.length >= 5 ? '✅' : '⭐'}</div>
                       <p className="text-xs font-medium">Detail Master</p>
@@ -1931,7 +1961,7 @@ export function MultiStepForm() {
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 8 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`p-3 rounded-lg border-2 transition-all ${uploadedPhotos.length >= 8 ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300' : 'bg-white border-gray-200'}`}>
                     <div className="text-center">
                       <div className="text-2xl mb-1">{uploadedPhotos.length >= 8 ? '✅' : '🏆'}</div>
                       <p className="text-xs font-medium">Pro Seller</p>
@@ -1940,13 +1970,13 @@ export function MultiStepForm() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-3 text-center">
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 text-center border border-blue-200">
                   <p className="text-sm font-medium text-gray-800">
-                    Photo Bonus: <span className="text-green-600 font-bold">
+                    Photo Bonus: <span className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       +${uploadedPhotos.length >= 8 ? 250 : uploadedPhotos.length >= 5 ? 150 : uploadedPhotos.length >= 3 ? 75 : uploadedPhotos.length >= 1 ? 25 : 0}
                     </span>
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 font-medium">
                     {uploadedPhotos.length}/8 photos uploaded
                   </p>
                 </div>
@@ -1959,24 +1989,28 @@ export function MultiStepForm() {
         return (
           <div className="space-y-6">
             {/* Gamification: Completion Achievement */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 text-center mb-6">
-              <div className="text-5xl mb-3">🎉</div>
-              <h3 className="text-xl font-bold text-green-700 mb-2">Almost There!</h3>
-              <p className="text-green-600">You've completed all the steps - time for your reward!</p>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center mb-6 border border-blue-100 shadow-sm">
+              <div className="flex justify-center mb-4">
+                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl shadow-md">
+                  🎉
+                </div>
+              </div>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Almost There!</h3>
+              <p className="text-gray-600 leading-relaxed">You've completed all the steps - time for your reward!</p>
 
-              <div className="bg-white rounded-lg p-4 mt-4">
+              <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 mt-4 border border-blue-200">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="text-2xl mb-1">✅</div>
-                    <p className="text-xs text-gray-600">Vehicle Info</p>
+                    <p className="text-xs font-medium text-gray-600">Vehicle Info</p>
                   </div>
                   <div>
                     <div className="text-2xl mb-1">✅</div>
-                    <p className="text-xs text-gray-600">Photos</p>
+                    <p className="text-xs font-medium text-gray-600">Photos</p>
                   </div>
                   <div>
                     <div className="text-2xl mb-1">✅</div>
-                    <p className="text-xs text-gray-600">Contact</p>
+                    <p className="text-xs font-medium text-gray-600">Contact</p>
                   </div>
                 </div>
               </div>
