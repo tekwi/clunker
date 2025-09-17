@@ -335,30 +335,22 @@ export function MultiStepForm() {
         throw new Error("Geolocation is not supported by this browser");
       }
 
-      // Check current permission state
-      if ('permissions' in navigator) {
+      // Check if we already have permission
+      let permissionStatus;
+      if ("permissions" in navigator) {
         try {
-          const permission = await navigator.permissions.query({ name: 'geolocation' });
-          
-          if (permission.state === 'denied') {
-            toast({
-              title: "Location permission denied",
-              description: "Please enable location access in your browser settings to use auto-detect.",
-              variant: "destructive",
-            });
-            setIsDetectingLocation(false);
-            return;
-          }
-          
-          if (permission.state === 'prompt') {
-            toast({
-              title: "Location permission required",
-              description: "Please allow location access when prompted to auto-detect your location.",
-            });
-          }
-        } catch (permissionError) {
-          console.log("Permission API not fully supported, proceeding with location request");
+          permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        } catch (e) {
+          // Permissions API might not be available on some older browsers
         }
+      }
+
+      // If permission is denied, show helpful message
+      if (permissionStatus?.state === 'denied') {
+        throw {
+          code: 1,
+          message: "Location access was previously denied. Please enable location permission in your browser settings and try again."
+        };
       }
 
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -367,7 +359,7 @@ export function MultiStepForm() {
           reject,
           {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 15000, // Increased timeout for mobile devices
             maximumAge: 60000
           }
         );
@@ -408,12 +400,16 @@ export function MultiStepForm() {
       let message = "Please enter your location manually.";
 
       if (error.code === 1) {
-        title = "Location permission denied";
-        message = "To use auto-detect, please enable location access in your browser settings and refresh the page.";
+        title = "Location permission needed";
+        message = "Please allow location access when prompted, then try again. You can also enable location services in your device settings.";
       } else if (error.code === 2) {
-        message = "Location unavailable. Please check your device's location settings or enter manually.";
+        title = "Location unavailable";
+        message = "Your location could not be determined. Please check that location services are enabled and try again.";
       } else if (error.code === 3) {
-        message = "Location request timed out. Please try again or enter manually.";
+        title = "Location request timed out";
+        message = "The location request took too long. Please ensure you have a good connection and try again.";
+      } else if (error.message) {
+        message = error.message;
       }
 
       toast({
@@ -881,7 +877,7 @@ export function MultiStepForm() {
                 disabled={isDetectingLocation}
                 className="mb-6"
               >
-                {isDetectingLocation ? "Detecting..." : "📍 Auto-detect my location"}
+                {isDetectingLocation ? "Detecting..." : "📍 Allow location access"}
               </Button>
             </div>
 
