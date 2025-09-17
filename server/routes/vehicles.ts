@@ -20,10 +20,59 @@ router.get('/makes', async (req, res) => {
 // Get models for a specific make and optional year
 router.get('/models', async (req, res) => {
   try {
-    const { make, year } = req.query;
+    let { make, year } = req.query;
 
     if (!make) {
       return res.status(400).json({ error: 'Make parameter is required' });
+    }
+
+    // Apply the same flexible matching logic used in VIN decode
+    const availableMakes = await getVehicleMakes();
+    
+    // First try exact match (case insensitive)
+    let exactMatch = availableMakes.find(m => 
+      m.make.toLowerCase() === (make as string).toLowerCase()
+    );
+    
+    // If no exact match, try partial matches
+    if (!exactMatch) {
+      // Try to find a make that contains the requested make
+      exactMatch = availableMakes.find(m => 
+        m.make.toLowerCase().includes((make as string).toLowerCase()) ||
+        (make as string).toLowerCase().includes(m.make.toLowerCase())
+      );
+      
+      // Try common variations and abbreviations
+      if (!exactMatch) {
+        const makeUpper = (make as string).toUpperCase();
+        exactMatch = availableMakes.find(m => {
+          const dbMakeUpper = m.make.toUpperCase();
+          return (
+            // Handle common abbreviations
+            (makeUpper === 'CHEV' && dbMakeUpper === 'CHEVROLET') ||
+            (makeUpper === 'CHEVROLET' && dbMakeUpper === 'CHEV') ||
+            (makeUpper === 'MERZ' && dbMakeUpper.includes('MERCEDES')) ||
+            (makeUpper === 'MERCEDES-BENZ' && dbMakeUpper.includes('MERCEDES')) ||
+            (makeUpper === 'VOLK' && dbMakeUpper === 'VOLKSWAGEN') ||
+            (makeUpper === 'VOLKSWAGEN' && dbMakeUpper === 'VOLK') ||
+            (makeUpper === 'PORS' && dbMakeUpper === 'PORSCHE') ||
+            (makeUpper === 'PORSCHE' && dbMakeUpper === 'PORS') ||
+            // Add more common patterns
+            dbMakeUpper.startsWith(makeUpper) ||
+            makeUpper.startsWith(dbMakeUpper)
+          );
+        });
+      }
+    }
+    
+    // Use the matched make name from database if found
+    if (exactMatch) {
+      make = exactMatch.make;
+      console.log(`Make mapping: ${req.query.make} -> ${make}`);
+    } else {
+      console.log(`No make match found for: ${req.query.make}`);
+      // Return empty array if no make match found
+      return res.json([]);
     }
 
     const models = await getVehicleModelsForMake(make as string, year as string);
