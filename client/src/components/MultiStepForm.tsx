@@ -695,9 +695,11 @@ export function MultiStepForm() {
             <Input
               value={getFieldValue("odometerReading")}
               onChange={(e) => updateField("odometerReading", e.target.value)}
-              type="number"
+              type="tel"
               placeholder="Enter mileage"
               className="text-lg p-4 h-14"
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
           </div>
         );
