@@ -303,10 +303,22 @@ export function MultiStepForm() {
           updateField('vehicleYear', data.year.toString());
         }
         if (data.make) {
-          updateField('vehicleMake', data.make);
-          // Fetch models for the decoded make and year
+          // Map common abbreviated makes to full names for better form compatibility
+          let makeToUse = data.make;
+          if (data.make === 'PORS') {
+            makeToUse = 'PORSCHE';
+          } else if (data.make === 'MERZ') {
+            makeToUse = 'MERCEDES-BENZ';
+          } else if (data.make === 'CHEV') {
+            makeToUse = 'CHEVROLET';
+          } else if (data.make === 'VOLK') {
+            makeToUse = 'VOLKSWAGEN';
+          }
+          
+          updateField('vehicleMake', makeToUse);
+          // Fetch models for the mapped make and year
           if (data.year) {
-            fetchVehicleModels(data.make, data.year.toString());
+            fetchVehicleModels(makeToUse, data.year.toString());
           }
         }
         if (data.model) {
