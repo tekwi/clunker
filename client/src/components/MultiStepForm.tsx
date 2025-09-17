@@ -939,6 +939,117 @@ export function MultiStepForm() {
                 <SelectItem value="major">Major damage (accident damage, structural issues)</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Gamification: Damage Assessment with Visual Stories */}
+            {getFieldValue("hasDamage") && (
+              <div className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-6">
+                {getFieldValue("hasDamage") === "no" && (
+                  <div className="text-center space-y-4">
+                    <div className="text-5xl mb-3">✨</div>
+                    <h3 className="font-bold text-green-700">Perfect Condition!</h3>
+                    <p className="text-green-600 mb-4">Your car is in pristine shape - that's premium value!</p>
+                    
+                    <div className="bg-green-100 rounded-lg p-4">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="text-2xl">🏆</div>
+                        <span className="font-bold text-green-800">Pristine Bonus</span>
+                      </div>
+                      <p className="text-green-700 font-bold text-lg">+$500 No Damage Premium</p>
+                      <p className="text-xs text-green-600">Clean vehicles get top dollar</p>
+                    </div>
+                  </div>
+                )}
+
+                {getFieldValue("hasDamage") === "minor" && (
+                  <div className="text-center space-y-4">
+                    <div className="text-4xl mb-3">🔧</div>
+                    <h3 className="font-bold text-blue-700">Minor Touch-Ups</h3>
+                    <p className="text-blue-600 mb-4">Small imperfections are totally normal - still great value!</p>
+                    
+                    <div className="bg-blue-100 rounded-lg p-4">
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <div className="text-xl mb-1">💎</div>
+                          <p className="text-xs text-blue-700">Diamond in the rough</p>
+                        </div>
+                        <div>
+                          <div className="text-xl mb-1">🔨</div>
+                          <p className="text-xs text-blue-700">Easy fixes</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <p className="text-blue-700 font-medium">Minor damage = Major honesty points!</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {getFieldValue("hasDamage") === "moderate" && (
+                  <div className="text-center space-y-4">
+                    <div className="text-4xl mb-3">🛠️</div>
+                    <h3 className="font-bold text-orange-700">Battle Scars</h3>
+                    <p className="text-orange-600 mb-4">Your car has stories to tell - and we still want to buy it!</p>
+                    
+                    <div className="bg-orange-100 rounded-lg p-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-center space-x-3">
+                          <div className="bg-orange-200 rounded-full p-2">
+                            <span className="text-sm">⚡</span>
+                          </div>
+                          <div className="bg-orange-200 rounded-full p-2">
+                            <span className="text-sm">💪</span>
+                          </div>
+                          <div className="bg-orange-200 rounded-full p-2">
+                            <span className="text-sm">🎯</span>
+                          </div>
+                        </div>
+                        <p className="text-orange-700 font-medium">Character adds value in its own way</p>
+                        <div className="bg-white rounded p-2">
+                          <p className="text-orange-600 text-sm">+$25 Honesty Bonus Applied</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {getFieldValue("hasDamage") === "major" && (
+                  <div className="text-center space-y-4">
+                    <div className="text-4xl mb-3">🔥</div>
+                    <h3 className="font-bold text-red-700">Survivor Status</h3>
+                    <p className="text-red-600 mb-4">Even damaged cars have valuable parts - we're still interested!</p>
+                    
+                    <div className="bg-red-100 rounded-lg p-4">
+                      <div className="space-y-3">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">♻️</div>
+                          <h4 className="font-bold text-red-800">Recycling Hero</h4>
+                          <p className="text-red-600 text-sm">Giving your car a second life through parts</p>
+                        </div>
+                        
+                        <div className="bg-white rounded-lg p-3">
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            <div>
+                              <div className="text-lg">🔩</div>
+                              <p className="text-xs text-gray-600">Parts</p>
+                            </div>
+                            <div>
+                              <div className="text-lg">⚙️</div>
+                              <p className="text-xs text-gray-600">Engine</p>
+                            </div>
+                            <div>
+                              <div className="text-lg">🔋</div>
+                              <p className="text-xs text-gray-600">Metals</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="text-red-700 font-medium">Every car has value - even this one!</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -989,7 +1100,7 @@ export function MultiStepForm() {
 
       case "email":
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Input
               value={getFieldValue("email")}
               onChange={(e) => updateField("email", e.target.value)}
@@ -997,19 +1108,169 @@ export function MultiStepForm() {
               placeholder="Enter your email address"
               className="text-lg p-4 h-14"
             />
+
+            {/* Story Content: Email Trust Building */}
+            <div className="bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-lg p-6">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-3">📧</div>
+                <h3 className="font-semibold text-gray-800 mb-2">Your Digital Mailbox</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  This is where your cash offer will land! We'll send you a detailed breakdown 
+                  showing exactly how we calculated your vehicle's value.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg p-4 space-y-3">
+                <h4 className="font-medium text-gray-800 text-sm">What you'll receive:</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-sm">💰</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800">Your personalized cash offer</p>
+                      <p className="text-xs text-gray-500">With detailed value breakdown</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 text-sm">📋</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800">Pickup scheduling details</p>
+                      <p className="text-xs text-gray-500">When we can come to you</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 text-sm">📄</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800">Required documents checklist</p>
+                      <p className="text-xs text-gray-500">So you're prepared for pickup</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg p-3">
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="text-green-600">🔒</span>
+                  <p className="text-sm text-gray-700 font-medium">Protected by 256-bit encryption</p>
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  We never share your email with third parties
+                </p>
+              </div>
+            </div>
           </div>
         );
 
       case "phone":
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Input
               value={getFieldValue("phoneNumber")}
               onChange={(e) => updateField("phoneNumber", e.target.value)}
               type="tel"
               placeholder="Enter your phone number"
               className="text-lg p-4 h-14"
+              inputMode="numeric"
             />
+
+            {/* Gamification: Communication Achievement System */}
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-6">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-3">📞</div>
+                <h3 className="font-semibold text-gray-800 mb-2">Direct Line Established</h3>
+                <p className="text-sm text-gray-600">
+                  Your phone number unlocks premium service benefits!
+                </p>
+              </div>
+
+              {/* Communication Achievements */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`p-3 rounded-lg border-2 transition-all ${getFieldValue("phoneNumber").length >= 3 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{getFieldValue("phoneNumber").length >= 3 ? '✅' : '📱'}</div>
+                      <p className="text-xs font-medium">Quick Contact</p>
+                      <p className="text-xs text-gray-500">+Priority status</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-3 rounded-lg border-2 transition-all ${getFieldValue("phoneNumber").length >= 10 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{getFieldValue("phoneNumber").length >= 10 ? '✅' : '⚡'}</div>
+                      <p className="text-xs font-medium">Fast Track</p>
+                      <p className="text-xs text-gray-500">+Same day pickup</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone Number Progress */}
+                <div className="bg-white rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Contact Complete:</span>
+                    <span className="text-sm font-bold text-emerald-600">
+                      {Math.min(getFieldValue("phoneNumber").length, 10)}/10
+                    </span>
+                  </div>
+                  
+                  <div className="bg-gray-200 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-gradient-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${Math.min((getFieldValue("phoneNumber").length / 10) * 100, 100)}%` 
+                      }}
+                    />
+                  </div>
+
+                  {getFieldValue("phoneNumber").length >= 10 && (
+                    <div className="text-center mt-3 p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-green-600">🎉</span>
+                        <span className="text-sm font-bold text-green-700">VIP Communication Unlocked!</span>
+                      </div>
+                      <p className="text-xs text-green-600 mt-1">Personal pickup coordinator assigned</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Service Level Indicator */}
+                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-3">
+                  <div className="text-center">
+                    <h4 className="font-medium text-gray-800 text-sm mb-2">Service Level</h4>
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="flex space-x-1">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <div
+                            key={i}
+                            className={`w-3 h-3 rounded-full ${
+                              i < Math.min(Math.floor(getFieldValue("phoneNumber").length / 2), 5)
+                                ? "bg-yellow-500"
+                                : "bg-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {getFieldValue("phoneNumber").length >= 10 ? "Premium" :
+                         getFieldValue("phoneNumber").length >= 7 ? "Enhanced" :
+                         getFieldValue("phoneNumber").length >= 3 ? "Standard" : "Basic"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {getFieldValue("phoneNumber").length >= 10 ? "White-glove service activated" :
+                       getFieldValue("phoneNumber").length >= 7 ? "Priority scheduling available" :
+                       getFieldValue("phoneNumber").length >= 3 ? "Standard pickup service" : "Enter number for upgrades"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         );
 
