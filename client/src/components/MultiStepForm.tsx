@@ -297,6 +297,7 @@ export function MultiStepForm() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`VIN decode response:`, data); // Debug log
 
         // Auto-fill the decoded information
         if (data.year) {
@@ -304,9 +305,10 @@ export function MultiStepForm() {
         }
         if (data.make) {
           updateField('vehicleMake', data.make);
-          // Fetch models for the decoded make
+          // Fetch models for the decoded make and year
           if (data.year) {
-            fetchVehicleModels(data.make, data.year.toString()); // Pass the decoded year
+            console.log(`Calling fetchVehicleModels with make: ${data.make}, year: ${data.year}`); // Debug log
+            fetchVehicleModels(data.make, data.year.toString());
           }
         }
 
@@ -353,6 +355,7 @@ export function MultiStepForm() {
     try {
       const year = specificYear || getFieldValue('vehicleYear');
       const url = year ? `/api/vehicles/models?make=${encodeURIComponent(make)}&year=${year}` : `/api/vehicles/models?make=${encodeURIComponent(make)}`;
+      console.log(`Fetching models with URL: ${url}`); // Debug log
       const response = await fetch(url);
 
       if (response.ok) {
