@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { VinScanner } from "@/components/VinScanner";
 import { useToast } from "@/hooks/use-toast";
@@ -585,19 +586,24 @@ export function MultiStepForm() {
               </Button>
             </div>
 
-            {showVinScanner && (
-              <VinScanner
-                onVinDetected={(vin, wasScanned) => {
-                  updateField("vin", vin);
-                  // Store whether this VIN was scanned for later use in pricing
-                  if (wasScanned) {
-                    updateField("vinWasScanned", true);
-                  }
-                  setShowVinScanner(false);
-                }}
-                onClose={() => setShowVinScanner(false)}
-              />
-            )}
+            <Dialog open={showVinScanner} onOpenChange={setShowVinScanner}>
+              <DialogContent className="max-w-md mx-auto">
+                <DialogHeader>
+                  <DialogTitle>VIN Scanner</DialogTitle>
+                </DialogHeader>
+                <VinScanner
+                  onVinDetected={(vin, wasScanned) => {
+                    updateField("vin", vin);
+                    // Store whether this VIN was scanned for later use in pricing
+                    if (wasScanned) {
+                      updateField("vinWasScanned", true);
+                    }
+                    setShowVinScanner(false);
+                  }}
+                  onClose={() => setShowVinScanner(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         );
 

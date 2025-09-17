@@ -134,22 +134,14 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
   }, []);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">VIN Scanner</h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+    <div className="w-full">
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-sm">
+          {error}
         </div>
+      )}
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-
-        {showManualInput ? (
+      {showManualInput ? (
           <div className="space-y-4">
             <div className="text-center text-sm text-gray-600 mb-4">
               Camera not available. Please enter VIN manually:
@@ -240,7 +232,6 @@ export function VinScanner({ onVinDetected, onClose }: VinScannerProps) {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
