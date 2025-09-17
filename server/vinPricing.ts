@@ -123,6 +123,16 @@ export function getMakeFromVin(vin: string): string | null {
   return SHORT_CODE_TO_FULL_NAME[shortCode] || shortCode;
 }
 
+// Function to decode model from VIN (positions 4-8, simplified approach)
+export function getModelFromVin(vin: string): string | null {
+  if (vin.length < 8) return null;
+  
+  // This is a simplified approach. A full VIN decoder would require
+  // extensive manufacturer-specific databases for accurate model decoding
+  // For now, return null to indicate model should be manually entered
+  return null;
+}
+
 // Function to get year from VIN (10th character)
 export function getYearFromVin(vin: string): number | null {
   if (vin.length < 10) return null;
