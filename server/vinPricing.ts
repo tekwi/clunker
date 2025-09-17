@@ -123,14 +123,33 @@ export function getMakeFromVin(vin: string): string | null {
   return SHORT_CODE_TO_FULL_NAME[shortCode] || shortCode;
 }
 
-// Function to decode model from VIN (positions 4-8, simplified approach)
-export function getModelFromVin(vin: string): string | null {
+// Function to decode model from VIN using vehicle_pricing table
+export async function getModelFromVin(vin: string): Promise<string | null> {
   if (vin.length < 8) return null;
   
-  // This is a simplified approach. A full VIN decoder would require
-  // extensive manufacturer-specific databases for accurate model decoding
-  // For now, return null to indicate model should be manually entered
-  return null;
+  try {
+    // Get the first 8 characters of the VIN for matching
+    const vinPrefix = vin.substring(0, 8).toUpperCase();
+
+    // Query vehicle_pricing table for model using VIN prefix
+    const result = await db.execute(sql`
+      SELECT DISTINCT lot_model
+      FROM vehicle_pricing
+      WHERE LEFT(vin, 8) = ${vinPrefix}
+      AND lot_model IS NOT NULL
+      LIMIT 1
+    `);
+
+    const rows = Array.isArray(result[0]) ? result[0] : [];
+    if (rows.length > 0) {
+      return rows[0].lot_model;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting model from VIN:', error);
+    return null;
+  }
 }
 
 // Function to get year from VIN (10th character)
@@ -195,7 +214,7 @@ export async function getVehiclePricing(
     let vinPrefix = vinToUse.substring(0, 8).toUpperCase();
     let decodedMake = getMakeFromVin(vinToUse);
     let vinYear = getYearFromVin(vinToUse);
-    let decodedModel = getModelFromVin(vinToUse); // Decode model name
+    let decodedModel = await getModelFromVin(vinToUse); // Decode model name
 
     console.log(`Searching for VIN: ${submittedVin}`);
     console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);

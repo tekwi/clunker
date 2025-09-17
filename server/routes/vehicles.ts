@@ -127,57 +127,88 @@ router.post('/decode-vin', async (req, res) => {
       return res.status(400).json({ error: 'Valid 17-character VIN is required' });
     }
 
-    let make = getMakeFromVin(vin);
-    let model = getModelFromVin(vin);
+    const { db } = await import('../db');
+    const { sql } = await import('drizzle-orm');
+
+    // Get year from VIN
     const year = getYearFromVin(vin);
 
-    // If we got a make, try to find the exact match in our database
-    if (make) {
-      const availableMakes = await getVehicleMakes();
+    // Get the first 8 characters of the VIN for matching
+    const vinPrefix = vin.substring(0, 8).toUpperCase();
+
+    // Query vehicle_pricing table for make and model using VIN prefix
+    const result = await db.execute(sql`
+      SELECT DISTINCT lot_make, lot_model
+      FROM vehicle_pricing
+      WHERE LEFT(vin, 8) = ${vinPrefix}
+      AND lot_make IS NOT NULL
+      AND lot_model IS NOT NULL
+      LIMIT 1
+    `);
+
+    let make = null;
+    let model = null;
+
+    // Extract make and model from database result
+    const rows = Array.isArray(result[0]) ? result[0] : [];
+    if (rows.length > 0) {
+      const row = rows[0];
+      make = row.lot_make;
+      model = row.lot_model;
+    }
+
+    // If no match found in vehicle_pricing table, fall back to VIN decoding
+    if (!make) {
+      make = getMakeFromVin(vin);
       
-      // First try exact match (case insensitive)
-      let exactMatch = availableMakes.find(m => 
-        m.make.toLowerCase() === make!.toLowerCase()
-      );
-      
-      // If no exact match, try partial matches
-      if (!exactMatch) {
-        // Try to find a make that contains the decoded make
-        exactMatch = availableMakes.find(m => 
-          m.make.toLowerCase().includes(make!.toLowerCase()) ||
-          make!.toLowerCase().includes(m.make.toLowerCase())
+      // If we got a make from VIN decode, try to find the exact match in our database
+      if (make) {
+        const availableMakes = await getVehicleMakes();
+        
+        // First try exact match (case insensitive)
+        let exactMatch = availableMakes.find(m => 
+          m.make.toLowerCase() === make!.toLowerCase()
         );
         
-        // Try common variations and abbreviations
+        // If no exact match, try partial matches
         if (!exactMatch) {
-          const makeUpper = make.toUpperCase();
-          exactMatch = availableMakes.find(m => {
-            const dbMakeUpper = m.make.toUpperCase();
-            return (
-              // Handle common abbreviations
-              (makeUpper === 'CHEV' && dbMakeUpper === 'CHEVROLET') ||
-              (makeUpper === 'CHEVROLET' && dbMakeUpper === 'CHEV') ||
-              (makeUpper === 'MERZ' && dbMakeUpper.includes('MERCEDES')) ||
-              (makeUpper === 'MERCEDES-BENZ' && dbMakeUpper.includes('MERCEDES')) ||
-              (makeUpper === 'VOLK' && dbMakeUpper === 'VOLKSWAGEN') ||
-              (makeUpper === 'VOLKSWAGEN' && dbMakeUpper === 'VOLK') ||
-              (makeUpper === 'PORS' && dbMakeUpper === 'PORSCHE') ||
-              (makeUpper === 'PORSCHE' && dbMakeUpper === 'PORS') ||
-              // Add more common patterns
-              dbMakeUpper.startsWith(makeUpper) ||
-              makeUpper.startsWith(dbMakeUpper)
-            );
-          });
+          // Try to find a make that contains the decoded make
+          exactMatch = availableMakes.find(m => 
+            m.make.toLowerCase().includes(make!.toLowerCase()) ||
+            make!.toLowerCase().includes(m.make.toLowerCase())
+          );
+          
+          // Try common variations and abbreviations
+          if (!exactMatch) {
+            const makeUpper = make.toUpperCase();
+            exactMatch = availableMakes.find(m => {
+              const dbMakeUpper = m.make.toUpperCase();
+              return (
+                // Handle common abbreviations
+                (makeUpper === 'CHEV' && dbMakeUpper === 'CHEVROLET') ||
+                (makeUpper === 'CHEVROLET' && dbMakeUpper === 'CHEV') ||
+                (makeUpper === 'MERZ' && dbMakeUpper.includes('MERCEDES')) ||
+                (makeUpper === 'MERCEDES-BENZ' && dbMakeUpper.includes('MERCEDES')) ||
+                (makeUpper === 'VOLK' && dbMakeUpper === 'VOLKSWAGEN') ||
+                (makeUpper === 'VOLKSWAGEN' && dbMakeUpper === 'VOLK') ||
+                (makeUpper === 'PORS' && dbMakeUpper === 'PORSCHE') ||
+                (makeUpper === 'PORSCHE' && dbMakeUpper === 'PORS') ||
+                // Add more common patterns
+                dbMakeUpper.startsWith(makeUpper) ||
+                makeUpper.startsWith(dbMakeUpper)
+              );
+            });
+          }
         }
-      }
-      
-      // Use the matched make name from database if found
-      if (exactMatch) {
-        make = exactMatch.make;
+        
+        // Use the matched make name from database if found
+        if (exactMatch) {
+          make = exactMatch.make;
+        }
       }
     }
 
-    console.log(`VIN decode: ${vin} -> Make: ${make}, Model: ${model}, Year: ${year}`);
+    console.log(`VIN decode: ${vin} -> VIN Prefix: ${vinPrefix}, Make: ${make}, Model: ${model}, Year: ${year}`);
 
     res.json({
       make: make,
