@@ -2136,13 +2136,47 @@ export function MultiStepForm() {
                   </div>
                 </div>
               ) : estimatedPrice && timeLeft > 0 ? (
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-8 space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-lg text-gray-700">We'll pay you</p>
-                    <div className="text-5xl font-bold text-green-600">
-                      ${estimatedPrice.toLocaleString()}
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-8 space-y-6">
+                  {/* Animated Vehicle Info Header */}
+                  {(getFieldValue("vehicleYear") || getFieldValue("vehicleMake") || getFieldValue("vehicleModel")) && (
+                    <div className="text-center space-y-2 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                      <div className="text-4xl mb-2 animate-bounce">🚗</div>
+                      <h3 className="text-xl font-bold text-gray-800">
+                        For Your {getFieldValue("vehicleYear")} {getFieldValue("vehicleMake")} {getFieldValue("vehicleModel")}
+                      </h3>
+                      <div className="w-20 h-1 bg-gradient-to-r from-green-400 to-blue-400 mx-auto rounded-full"></div>
                     </div>
-                    <p className="text-sm text-gray-600">Cash on pickup</p>
+                  )}
+
+                  {/* Animated Cash Reveal */}
+                  <div className="text-center space-y-4">
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                      <p className="text-xl text-gray-700 font-medium">We'll pay you</p>
+                    </div>
+                    
+                    {/* Main Price with Pulse Animation */}
+                    <div className="relative animate-scale-in" style={{ animationDelay: '0.8s' }}>
+                      <div className="absolute inset-0 bg-green-400 rounded-full opacity-20 animate-ping"></div>
+                      <div className="relative bg-white rounded-2xl p-6 border-4 border-green-400 shadow-2xl">
+                        <div className="text-6xl font-black text-green-600 animate-pulse">
+                          ${estimatedPrice.toLocaleString()}
+                        </div>
+                        <div className="flex items-center justify-center space-x-2 mt-2">
+                          <span className="text-green-500 text-2xl">💰</span>
+                          <p className="text-lg text-gray-600 font-semibold">Cash on pickup</p>
+                          <span className="text-green-500 text-2xl">💰</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Celebration Emojis */}
+                    <div className="flex justify-center space-x-4 animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '0s' }}>🎉</span>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '0.1s' }}>💰</span>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>🚗</span>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '0.3s' }}>💸</span>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '0.4s' }}>🎊</span>
+                    </div>
                   </div>
 
                   <div className="bg-red-100 border border-red-300 rounded-lg p-4">
