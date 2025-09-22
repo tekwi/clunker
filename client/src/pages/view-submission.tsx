@@ -351,7 +351,7 @@ export default function ViewSubmission() {
           <div className="flex items-center justify-between">
             <a href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
               <i className="fas fa-car text-2xl"></i>
-              <h1 className="text-xl font-semibold">Car Cash Offer</h1>
+              <h1 className="text-xl font-semibold">TrackWala</h1>
             </a>
             <div className="flex items-center">
               <DropdownMenu>
@@ -995,7 +995,7 @@ export default function ViewSubmission() {
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <i className="fas fa-car text-xl"></i>
-              <span className="text-lg font-semibold">Car Cash Offer</span>
+              <span className="text-lg font-semibold">TrackWala</span>
             </div>
             <p className="text-sm text-gray-400 mb-4">Get instant cash offers for your unwanted vehicles</p>
             <div className="flex justify-center space-x-6 text-sm">
@@ -1004,7 +1004,7 @@ export default function ViewSubmission() {
               <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a>
             </div>
             <div className="mt-4 pt-4 border-t border-gray-700 text-xs text-gray-500">
-              © 2024 Car Cash Offer. All rights reserved.
+              © 2024 TrackWala. All rights reserved.
             </div>
           </div>
         </div>

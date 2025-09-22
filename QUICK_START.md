@@ -106,7 +106,7 @@ Your app is ready to use with MySQL, but you need to:
 
 ## 🎉 What's Next?
 
-Once your MySQL database is connected, your Car Cash Offers App will:
+Once your MySQL database is connected, your TrackWala App will:
 - Save form submissions to MySQL
 - Store vehicle photos in cloud storage
 - Support admin offer management

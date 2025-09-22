@@ -123,7 +123,7 @@ docker-compose -f docker-compose.mysql.yml restart mysql
 docker exec -it car-cash-mysql mysql -u car_user -p
 
 # Backup database
-docker exec car-cash-mysql mysqldump -u root -p car_cash_offers > backup.sql
+docker exec car-cash-mysql mysqldump -u root -p trackwala > backup.sql
 
 # Import SQL file
 docker exec -i car-cash-mysql mysql -u root -p car_cash_offers < schema.sql

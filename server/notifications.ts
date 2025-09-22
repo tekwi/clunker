@@ -111,7 +111,7 @@ export class NotificationService {
         <div style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
             <p style="color: #64748b; margin: 0; font-size: 14px;">
                 Best regards,<br>
-                <strong style="color: #1e293b;">Car Cash Offer Team</strong>
+                <strong style="color: #1e293b;">TrackWala Team</strong>
             </p>
             <p style="color: #94a3b8; margin: 16px 0 0 0; font-size: 12px;">
                 This email was sent to ${submission.email}. If you have any questions, please contact our support team.
@@ -215,7 +215,7 @@ export class NotificationService {
         <div style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
             <p style="color: #64748b; margin: 0; font-size: 14px;">
                 Best regards,<br>
-                <strong style="color: #1e293b;">Car Cash Offer Team</strong>
+                <strong style="color: #1e293b;">TrackWala Team</strong>
             </p>
             <p style="color: #94a3b8; margin: 16px 0 0 0; font-size: 12px;">
                 This email was sent to ${submission.email}. If you have any questions, please contact our support team.
