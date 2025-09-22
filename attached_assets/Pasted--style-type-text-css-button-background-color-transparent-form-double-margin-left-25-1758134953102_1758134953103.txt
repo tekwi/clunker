@@ -1,0 +1,639 @@
+<style type="text/css">
+  button {background-color: transparent;}
+  .form-double{
+    margin-left:25px;
+  }
+  .form-double .form-group {
+    display: inline-block;
+    margin-bottom: 0;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+
+  section {
+    overflow: hidden;
+  }
+  .control-box {
+    background: none padding-box rgb(255, 255, 255);
+    display: block;
+    border: 0px;
+    margin: 0px;
+    padding: 4px;
+    text-transform: none;
+    appearance: none;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    direction: ltr;
+    overflow: hidden;
+    text-align: left;
+    color: rgb(86, 86, 86);
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 11px;
+    border-bottom-left-radius: 2px;
+    border-top-left-radius: 2px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+  }
+
+
+
+</style>
+<div class="jumbotron">
+      <h3 align="center"> 
+        <i class="icon-md ion-location wow fadeIn"></i>
+        <strong><?=$this->viewtitle;?></strong>
+      </h3>
+      <div class="container">
+        <ul class="breadcrumb">
+            <li><a href="<?=$this->url(array('action'=>'index', 'controller' => 'dashboard'),null,true);?>">Dashboard</a></li>
+            <li class="active"><?=$this->viewtitle;?></li>
+        </ul>
+      </div>
+</div>
+<section class="tab-section bg-alt overlay-spinner">
+  <button class="navbar-toggler hidden-md-up pull-left m-b-1" type="button" data-toggle="collapse" data-target="#collapsingNavbarVertical">
+      <i title="Navigation Menu" class="ion-navicon"></i>
+  </button>
+  <?= $this->render('/menus/side.phtml'); //SIDE MENU?>
+
+  <div class="col-sm-10">
+      <div id="pickup_location_table" class="tab-pane row row-centered p-a-2 fp-row" >
+          <div class="col-lg-12">
+            <?php if($this->splash->danger){
+            print '<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'.$this->splash->danger.'</div>';
+            }elseif($this->splash->success){
+            print '<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'.$this->splash->success.'</div>';
+            }elseif($this->splash->warning){
+            print '<div class="alert alert-warning"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'.$this->splash->warning.'</div>';
+            }
+            $this->splash->danger = null;
+            $this->splash->success = null;
+            $this->splash->warning = null;
+            ?>
+            <?php if($this->login->is_zone && $this->login->is_zone_map): ?>
+            <div class="row m-b-1">
+              <ul class="nav nav-tabs nav-fill" role="tablist">
+                <li class="nav-item">
+                  <a class="nav-link active" data-toggle="tab" id="tab-1" href="#map" role="tab">Zone Map <span class="badge badge-primary">BETA!</span></a>
+                </li>
+              </ul>
+            </div>
+            <?php endif; ?>
+
+            <div id="pickup_location_map overlay-spinner" >
+              <section class="tab-section bg-alt">
+                  <div class="fp-row">
+                      <div class="row row-centered p-x-2">
+                          <div class="col-lg-12">
+
+                            <h3><?= $this->markers == "null" ? "No Contacts": "{$this->marker_count} Active Contacts";?></h3>
+                            <p>
+                          </div>
+
+                          <div class="col-lg-12">
+                              <div id="map" style="width: 98%; height: 700px">
+                              </div>
+                          </div>
+                      </div>
+              </section>
+              <div id="modal_zone_map" class="modal fade">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title statusupdate-modal-title">Save Zone</h4>
+                    </div>
+                      <div class="modal-body">
+                        <?=$this->zone_form; ?>
+                      </div>
+                  </div>
+                </div>
+              </div> 
+            </div>
+          </div>
+      </div>
+      <div id="example1" style="width:auto"></div>
+  </div>
+</section>
+
+<script>
+
+  // $(function(){
+  //            var loadurl = "/dashboard/locationmap";
+  //           $("#pickup_location_map").show();
+  //            $.get(loadurl, function(data) {
+  //               $("#pickup_location_map").html(data);
+  //           });
+  //           $("#locations-table_wrapper").hide();    
+  // });
+
+
+</script>
+
+<script>
+
+
+var initMap = function () 
+{
+
+    var drawingManager;
+    var selectedShape;
+    var selectedId;
+    var selectedName;
+    var drawingManager;
+    var coordinates;
+    var infoWindow;
+    var coordinates_array = [];
+    var locations;
+    var polygon_array;
+
+    function setSelection(shape, elm) {
+        // alert(JSON.stringify(elm));
+        selectedShape = shape;
+        selectedId = elm !== undefined ? elm.id : null;
+        selectedName = elm !== undefined ? elm.zone_name : null;
+        shape.setEditable(true);
+
+
+    }
+    function clearSelection() {
+        if (selectedShape) {
+            selectedShape.setEditable(false);
+            selectedShape = null;
+        }
+    }
+    function deleteSelectedShape() {
+                    if (selectedShape) {
+                        selectedShape.setMap(null);
+                        /*if (selectedId) {
+                            $.post("/post", {
+                                "service_area_polygon": null,
+                                "property_area_cat_id": selectedId,
+                                "category_area_name": selectedName,
+                            }, (d) => {
+                                if (d) {
+                                    swal(
+                                        'Property Updated!',
+                                        'Property Service Area Polygon Deleted',
+                                        'success'
+                                    ).then(function () {
+                                        location.reload();
+                                    });
+                                } else {
+                                    swal({
+                                        type: 'error',
+                                        title: 'Oops...',
+                                        text: 'Something went wrong!'
+                                    })
+                                }
+                            });
+                        }*/
+                    }
+                }
+
+    google.maps.InfoWindow.prototype.isOpen = function(){
+        var map = this.getMap();
+        return (map !== null && typeof map !== "undefined");
+    }
+     
+
+
+    var map = new google.maps.Map(document.getElementById("map"),
+    {
+        zoom: 13,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapTypeControlOptions: {
+          mapTypeIds: ["roadmap", "satellite", "hybrid", "terrain", "styled_map"],
+        },
+    });
+
+    var bounds = new google.maps.LatLngBounds();
+    var infoWindow = new google.maps.InfoWindow({maxWidth: 300});
+
+
+    const styledMapType = new google.maps.StyledMapType(
+    [
+      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+      {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#263c3f" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#6b9a76" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#38414e" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#212a37" }],
+      },
+      {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#9ca5b3" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [{ color: "#746855" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#1f2835" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#f3d19c" }],
+      },
+      {
+        featureType: "transit",
+        elementType: "geometry",
+        stylers: [{ color: "#2f3948" }],
+      },
+      {
+        featureType: "transit.station",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#17263c" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#515c6d" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#17263c" }],
+      },
+    ],
+    { name: "Night Mode" }
+  );
+      map.setMapTypeId('roadmap');
+      locations = <?=$this->markers;?>;
+
+      var image = new google.maps.MarkerImage(
+        '//freightprint.com/assets/fp/img/logo-freightprint.png',
+        null, // size
+        null, // origin
+        new google.maps.Point( 8, 8 ), // anchor (move to center of marker)
+        new google.maps.Size( 50, 50 ) // scaled size (required for Retina display icon)
+      );
+
+  // Add some markers to the map.
+  const markers = locations.map((position,i) => {
+
+    const marker = new google.maps.Marker({
+      position: new google.maps.LatLng(locations[i][0], locations[i][1]),
+      // position,
+      icon: {
+        url: '//maps.google.com/mapfiles/ms/icons/orange.png',
+        labelOrigin: new google.maps.Point(15, 10)
+      },
+    });
+    
+    bounds.extend(new google.maps.LatLng(locations[i][0], locations[i][1]));
+
+    // markers can only be keyboard focusable when they have click listeners
+    // open info window when marker is clicked
+    marker.addListener("click", () => {
+       var contentString = '<div id="content">'+
+            '<div id="siteNotice">'+
+            '</div>'+
+            '<div id="bodyContent">'+
+            '<p><small class="text-muted">Company: </small><a href=/start/addpickuplocation/id/'+locations[i][5]+'>'+locations[i][2]+'</a><br/>'+
+            '<small class="text-muted">Address: </small>'+locations[i][6]+'<br/>'+
+            '<small class="text-muted">Phone: </small>'+locations[i][4]+'<br/>'+
+            '</p>'+
+            '</div>'+
+            '</div>';
+
+      infoWindow.setContent(contentString);
+      infoWindow.open(map, marker);
+    });
+    return marker;
+  });          
+
+// Add a marker clusterer to manage the markers.
+  const markerCluster = new markerClusterer.MarkerClusterer({ markers, map });
+
+
+      drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
+          drawingControl: true,
+          drawingControlOptions: {
+              position: google.maps.ControlPosition.TOP_CENTER,
+              drawingModes: [
+                  google.maps.drawing.OverlayType.POLYGON,
+              ]
+          },
+          polygonOptions: {
+              editable: true,
+              strokeColor: '#FF0000',
+              fillColor: '#FF0000',
+          }
+      });
+      drawingManager.setMap(map);
+      var cancelDrawingShape = false;
+      google.maps.event.addListener(drawingManager, 'polygoncomplete', function (polygon) {
+
+          coordinates = (polygon.getPath().getArray());
+
+      if (cancelDrawingShape) {
+          cancelDrawingShape = false;
+          polygon.setMap(null); // Remove drawn but unwanted shape
+          return;
+      } 
+      setSelection(polygon);
+      $("form#zone #id").val('');
+      $("form#zone #zone_name").val('');
+      $("#modal_zone_map").modal("show");
+      zone_modal_helper();
+      $("input[name=zone_polygon]").val(JSON.stringify(coordinates));
+
+
+      });
+
+      google.maps.event.addListener(map, 'click', function(event) {
+          $("button[title='Stop drawing']").closest(".gmnoprint").css("border","3px solid #f2a1a1");
+      });
+
+      google.maps.event.addListener(drawingManager, 'drawingmode_changed', clearSelection);
+      google.maps.event.addListener(map, 'click', clearSelection);
+      map.mapTypes.set("roadmap", styledMapType);
+      map.fitBounds(bounds);
+      // load saved polygons/zones
+      polygon_array = <?=$this->zone_array;?>;
+
+      if ((typeof polygon_array !== 'undefined' ) && polygon_array != 0) {
+          polygon_array.forEach(elm => {
+              drawPolygon(elm);
+          })
+      }
+      //remove spinner
+      
+google.maps.event.addListenerOnce(map, 'idle', function(){
+    setTimeout(function() {
+           $(".tab-section").removeClass("overlay-spinner");
+
+        },2000);
+});
+                function drawPolygon(elm){
+                  var poly_draw = new google.maps.Polygon({
+                      paths: [JSON.parse(elm.zone_polygon)],
+                      strokeColor: '#FF0000',
+                      strokeOpacity: 0.8,
+                      strokeWeight: 2,
+                      fillColor: '#FF0000',
+                      fillOpacity: 0.35,
+                      name: elm.zone_name,
+                      // editable: true
+                  });
+                  poly_draw.setMap(map);
+
+                  var place_polygon_path = poly_draw.getPath()
+                  google.maps.event.addListener(place_polygon_path, 'set_at', function(){console.log('poly set');});
+                  google.maps.event.addListener(place_polygon_path, 'insert_at', function(){console.log('poly insert');});
+
+                  attachPolygonInfoWindow(poly_draw, elm.zone_name, elm);
+
+
+                }
+
+                function attachPolygonInfoWindow(polygon, label, elm) {
+                    infoWindow = new google.maps.InfoWindow();
+
+                    google.maps.event.addListener(polygon, 'click', function (e) {
+
+                    var polygon_label = '<div id="content">'+
+                        '<div id="siteNotice">'+
+                        '</div>'+
+                        '<div id="bodyContent"><br/>'+
+                        '<p>Zone: <b>'+label+'</b><br/>'+
+                        '<a class="clickable small edit-zone" data-zone_name="'+elm.zone_name+'" data-zone_id="'+elm.id+'"title="Edit Zone">Edit</a> <a class="clickable small delete-zone" data-zone_name="'+elm.zone_name+'" data-zone_id="'+elm.id+'"title="Delete Zone">Delete</a> <a class="clickable small edit-zone" data-zone_name="'+elm.zone_name+'" data-zone_id="'+elm.id+'"title="Save Zone">Save</a>'+
+                        '</p>'+
+                        '</div>'+
+                        '</div>';
+
+                        infoWindow.setContent(polygon_label);
+                        var latLng = e.latLng;
+                        infoWindow.setPosition(latLng);
+                        infoWindow.open(map);
+                        setSelection(polygon, elm);
+
+
+                    });
+
+                }
+
+
+$(document).keydown(function (event) {
+    if (event.keyCode === 27) { // Escape key pressed
+        cancelDrawingShape = true;
+        drawingManager.setDrawingMode(null); // To terminate the drawing, will result in autoclosing of the shape being drawn.
+    }
+});
+
+
+
+$(document).on("click",".edit-zone", (e)=>{
+
+                  $("form#zone #id").val(e.target.dataset.zone_id);
+                  // $("form#zone #zone_name").val(e.target.dataset.zone_name);
+                  //get zone form data and populate
+                   $.post("/dashboard/getzonedata",  $("#zone").serialize(), function(data) {
+                      var zone_data = JSON.parse(data.response)[0];
+
+                      $("form#zone #zone_name").val(zone_data.zone_name);
+
+                      //loop through zone_data
+                       $.each(zone_data, function(key, value) {
+                        if(key.startsWith("zone_route")){ //select type
+                          if(key == "zone_route_enabled"){
+                            if(value == 1){
+                             check_route_schedule($("form#zone #"+key).prop("checked", value));
+                           }else{
+                             check_route_schedule($("form#zone #"+key).prop("checked", 0));
+                           }
+                          }else{
+                            if(value == 1){
+                              $("form#zone #"+key).prop("checked", 1);
+                            }else{
+                              $("form#zone #"+key).prop("checked", 0);
+                            }
+                          }
+                        }else{ // text type
+                             $("form#zone #"+key).val(value);
+                        }
+
+                       });
+
+
+                    });
+                  $("input[name=zone_polygon]").val(JSON.stringify((selectedShape.getPath().getArray())));
+                  $("#modal_zone_map").modal("show");
+                  zone_modal_helper();
+            
+});
+
+$(document).on("click",".delete-zone", (e)=>{
+                  $("#modal_zone_map").modal("hide");
+                  
+                  if(typeof infoWindow !== 'undefined' && infoWindow.isOpen){
+                    infoWindow.close(map);
+                  }
+                  $("form#zone #id").val(e.target.dataset.zone_id);
+
+                    var conf = confirm('Are you sure you want to delete?');
+                    if (conf) {
+                          $.post("/dashboard/locationmap/rm/1",  $("#zone").serialize(), function(data) {
+                            
+                          });
+                          deleteSelectedShape();
+                    } else {
+                      $("#modal_zone_map").modal("hide");
+                    }
+
+
+                  // $("form#zone #zone_name").val(e.target.dataset.zone_name);
+                  // $("#modal_zone_map").modal("show");
+            
+});
+
+$(document).on("click","#zone_save,#zone_cancel", (e)=>{
+          if(typeof infoWindow !== 'undefined' && infoWindow.isOpen){
+            infoWindow.close(map);
+          }
+          if(e.target.id ==  "zone_save"){
+             $("#zone input[name=zone_polygon]").val(JSON.stringify((selectedShape.getPath().getArray())));
+             
+            $.post( "/dashboard/locationmap",  $("#zone").serialize()+"&zone_save=1", function(data) {
+                if(data.status == 2){
+                  // attachPolygonInfoWindow(selectedShape, data.zone.name, data.zone);
+                  deleteSelectedShape();
+                  drawPolygon(data.zone);
+                  $("#modal_zone_map").modal("hide");
+                }
+                });
+          }else if(!$("#zone #id").val()){
+            deleteSelectedShape();
+          }
+
+
+});
+
+
+
+
+} // end of initMap
+
+
+  var zone_modal_helper = function(){
+
+    //check for truck_pickup or truck_delivery
+    if($("#truck_pickup").length >0){
+      msf_autocomplete(".search-truck-pickup","<?php echo $this->url(array('controller'=>'start', 'action'=>'autocompletetruck', 'nopad' => 1));?>","#truck_id_pickup");
+
+      msf_autocomplete(".search-truck-delivery","<?php echo $this->url(array('controller'=>'start', 'action'=>'autocompletetruck', 'nopad' => 1));?>","#truck_id_delivery");
+
+      $( "#zone .search-truck-pickup" ).autocomplete( "option", "appendTo", "#zone" );
+      $( "#zone .search-truck-delivery" ).autocomplete( "option", "appendTo", "#zone" );
+    }
+
+    msf_autocomplete(".search-shipper-pickup","<?php echo $this->url(array('controller'=>'start', 'action'=>'autocompletecarrier', 'nopad' => 1));?>","#shipper_id_pickup");
+
+    msf_autocomplete(".search-shipper-delivery","<?php echo $this->url(array('controller'=>'start', 'action'=>'autocompletecarrier', 'nopad' => 1));?>","#shipper_id_delivery");
+
+
+    $( "#zone .search-shipper-pickup" ).autocomplete( "option", "appendTo", "#zone" );
+    $( "#zone .search-shipper-delivery" ).autocomplete( "option", "appendTo", "#zone" );
+
+  }
+
+  $(document).on("change","#zone_route_enabled",function(){
+    check_route_schedule(this);
+
+  });
+  
+  $(document).on("change","#route_type",function(){
+    check_truck_route(this);
+  });
+
+  var check_route_schedule = function(v){
+   if($(v).prop('checked')){ 
+      $("form").find(".form-double").show();
+      $("form").find("#route_type").parent(".form-group").show();
+      check_truck_route($("#route_type"));
+    }else{
+      $("form").find(".form-double").hide();
+      $("form").find("#route_type").parent(".form-group").hide();
+      $("form").find("#truck_pickup").parent(".form-group").hide();
+      $("form").find("#truck_delivery").parent(".form-group").hide();
+      $("form").find("#shipper_pickup").parent(".form-group").hide();
+      $("form").find("#shipper_delivery").parent(".form-group").hide();
+    }   
+
+  }
+
+  var check_truck_route = function(v){
+   
+    if($("#zone_route_enabled").prop('checked')){
+       if($(v).val() == "Pickup"){ 
+          $("form").find("#truck_pickup").parent(".form-group").show();
+          $("form").find("#shipper_pickup").parent(".form-group").show();
+          $("form").find("#truck_delivery").parent(".form-group").hide();
+          $("form").find("#shipper_delivery").parent(".form-group").hide();
+        }else if($(v).val() == "Delivery"){
+          $("form").find("#truck_delivery").parent(".form-group").show();
+          $("form").find("#shipper_delivery").parent(".form-group").show();
+          $("form").find("#truck_pickup").parent(".form-group").hide();
+          $("form").find("#shipper_pickup").parent(".form-group").hide();
+        }else if($(v).val() == "Both"){
+          $("form").find("#truck_pickup").parent(".form-group").show();
+          $("form").find("#truck_pickup").parent(".form-group").show();
+          $("form").find("#shipper_delivery").parent(".form-group").show();
+          $("form").find("#shipper_delivery").parent(".form-group").show();
+        }else{
+          $("form").find("#truck_pickup").parent(".form-group").hide();
+          $("form").find("#shipper_pickup").parent(".form-group").hide();
+          $("form").find("#truck_delivery").parent(".form-group").hide();
+          $("form").find("#shipper_delivery").parent(".form-group").hide();
+        }
+    }
+  }
+
+ $(function(){
+    check_route_schedule($("#zone_route_enabled"));
+    check_truck_route($("#route_type"));
+ });
+
+
+</script>
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+<script type="text/javascript" src="//maps.google.com/maps/api/js?libraries=geometry,drawing&key=AIzaSyAprKbVgejCdXOXX6v2WP0pDBdY74yACFw&sensor=false&callback=initMap" async defer>
+</script>

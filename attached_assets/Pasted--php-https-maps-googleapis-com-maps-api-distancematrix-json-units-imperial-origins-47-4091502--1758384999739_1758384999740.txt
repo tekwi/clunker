@@ -1,0 +1,252 @@
+<?php
+
+//https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=47.4091502,-120.2985774&destinations=place_id:ChIJj1mCS3xVkFQRGwZKqAsy3Ao&key=AIzaSyA1xLYDS_b3WkkreDDh6w2MvBNZDjnR16s
+
+class Application_Model_Google_Geocode {
+
+	protected $key;
+
+	function __construct(){
+		$this->key = "AIzaSyD_kMT5jOaX-g_tBSRiA-Ki-EPXik2wUOo";
+	}
+	public function getDistancematrix($start, $end) {
+
+
+		$key = "AIzaSyD_kMT5jOaX-g_tBSRiA-Ki-EPXik2wUOo";
+		if (!$start && !$end) {
+			return null;
+		}
+		if (is_array($start)) {
+			$start = implode("|", $start);
+		}
+		if (is_array($end)) {
+			$end = implode("|", $end);
+		}
+		$url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins={$start}&destinations={$end}";
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url.'&key='.$this->key);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$result = curl_exec($ch);
+
+		$dresult = json_decode($result, true);
+
+		// print_r($dresult);
+		if(!empty($dresult['rows'])):
+			foreach ($dresult['rows'][0]['elements'] as $key => $value) {
+					$distance_remaining[] = $value['distance'];
+					$time_remaining[] = $value['duration'];
+			}
+
+			$final = array("distance" => $distance_remaining, "time" => $time_remaining, "details" => $result);
+
+			return $final;
+		else:
+			return null;
+		endif;
+
+		// $state = '';
+		
+	}
+	public function getAddressdetails($address=null) {
+
+		$key = "AIzaSyD_kMT5jOaX-g_tBSRiA-Ki-EPXik2wUOo";
+		if (!$address) {
+			return null;
+		}
+
+		//Check if the gps table has the lat lng entry
+		$gps_m = new Application_Model_DbTable_Gps();
+		$gps = $gps_m->getgps(0,0,0,$address);
+		
+		if(empty($gps['id']) || empty($gps['place_id'])):
+
+			$url = "https://maps.googleapis.com/maps/api/geocode/json?address=".urlencode($address);
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url.'&key='.$this->key);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			$result = curl_exec($ch);
+
+			$dresult = json_decode($result, true);
+
+			// print_r($dresult);
+			foreach ($dresult['results'][0]['address_components'] as $key => $value) {
+				if ($value['types'][0] == 'postal_code') {
+					$zipcode = $value['long_name'];
+				}
+				if ($value['types'][0] == 'sublocality_level_1' || $value['types'][0] == 'neighborhood') {
+					$neighborhood = $value['long_name'];
+				}
+				if ($value['types'][0] == 'locality') {
+					$city = $value['long_name'];
+				}
+				if ($value['types'][0] == 'administrative_area_level_1') {
+					$state = $value['long_name'];
+				}
+				if ($value['types'][0] == 'administrative_area_level_2') {
+					$county = $value['long_name'];
+				}
+				if ($value['types'][0] == 'country') {
+					$country = $value['long_name'];
+				}
+				//get lat-lng
+				$location_coordinates = $dresult['results'][0]['geometry']['location'];
+			}
+
+			// $state = '';
+			$final = array("zipcode" => $zipcode, "place_id" => $dresult['results'][0]['place_id'], "address" => $dresult['results'][0]['formatted_address'], "neighborhood" => isset($neighborhood)? $neighborhood.$zipcode: $zipcode, "city" => $city, "county" => isset($county)?$county:'--', "state" => $state, "country" => $country, "details" => $result, "location" => $location_coordinates);
+
+			return $final;
+		endif;
+		
+		return $gps;
+	}
+	public function getPlacedetails($place_id=0) {
+		
+		// NEW
+		if (!$place_id) {
+			return null;
+		}
+		$key = "AIzaSyD_kMT5jOaX-g_tBSRiA-Ki-EPXik2wUOo"; 
+
+
+		//Check if the gps table has the lat lng entry
+		$gps_m = new Application_Model_DbTable_Gps();
+		$gps = $gps_m->getgps(0,0,$place_id);
+		
+		if(empty($gps['id']) || empty($gps['place_id'])):
+
+			$url = "https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id";
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url.'&key='.$this->key);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			$result = curl_exec($ch);
+
+			$dresult = json_decode($result, true);
+			$city = "";
+			// print_r($dresult);
+			if(!empty($dresult['result']['address_components'])):
+				foreach ($dresult['result']['address_components'] as $key => $value) {
+					if ($value['types'][0] == 'postal_code') {
+						$zipcode = $value['long_name'];
+					}
+					if ($value['types'][0] == 'sublocality_level_1' || $value['types'][0] == 'neighborhood') {
+						$neighborhood = $value['long_name'];
+					}
+					if ($value['types'][0] == 'locality') {
+						$city = $value['long_name'];
+					}
+					if ($value['types'][0] == 'administrative_area_level_1') {
+						$state = $value['long_name'];
+					}
+					if ($value['types'][0] == 'administrative_area_level_2') {
+						$county = $value['long_name'];
+					}
+					if ($value['types'][0] == 'country') {
+						$country = $value['long_name'];
+					}
+				}
+				
+				$final = array( "zipcode" => $zipcode, "place_id" => $dresult['result']['place_id'], "address" => $dresult['result']['formatted_address'], "neighborhood" => isset($neighborhood)? $neighborhood.$zipcode: $zipcode, "city" => !empty($city)?$city:"", "county" => isset($county)?$county:'--', "state" => $state, "country" => $country, "lat" => $dresult['result']['geometry']['location']['lat'], "lng" => $dresult['result']['geometry']['location']['lng'], "details" => $result);
+			
+			
+
+				if($place_id){
+					$gps_m->putgps($final);
+				}
+				return $final;
+
+			endif;
+		endif;
+			return $gps;
+
+//
+
+
+	}
+	public function getGoogleZip($data) {
+
+		$key = "AIzaSyD_kMT5jOaX-g_tBSRiA-Ki-EPXik2wUOo"; //AIzaSyBhHJtuj8MoB2bZVJHDpdw6o-r2rd65CIo
+
+		$latitude  = $data['lat'];
+		$longitude = $data['lng'];
+
+		//Check if the gps table has the lat lng entry
+		$gps_m = new Application_Model_DbTable_Gps();
+		$gps = $gps_m->getgps($latitude,$longitude);
+		
+		if(empty($gps['id']) || empty($gps['place_id'])):
+
+			$url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude";
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url.'&key='.$this->key);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			$result = curl_exec($ch);
+
+			$dresult = json_decode($result, true);
+
+			// print_r($dresult);
+			foreach ($dresult['results'][0]['address_components'] as $key => $value) {
+				if ($value['types'][0] == 'postal_code') {
+					$zipcode = $value['long_name'];
+				}
+				if ($value['types'][0] == 'sublocality_level_1' || $value['types'][0] == 'neighborhood') {
+					$neighborhood = $value['long_name'];
+				}
+				if ($value['types'][0] == 'locality') {
+					$city = $value['long_name'];
+				}
+				if ($value['types'][0] == 'administrative_area_level_1') {
+					$state = $value['long_name'];
+				}
+				if ($value['types'][0] == 'administrative_area_level_2') {
+					$county = $value['long_name'];
+				}
+				if ($value['types'][0] == 'country') {
+					$country = $value['long_name'];
+				}
+			}
+			$place_id = $dresult['results'][0]['place_id'];
+			// $state = '';
+			$final = array( "zipcode" => $zipcode, "address" => $dresult['results'][0]['formatted_address'], "neighborhood" => isset($neighborhood)?$neighborhood:'', "city" => $city, "county" => isset($county)?$county:'--', "state" => $state, "country" => $country, "place_id" => $place_id, "lat" => $latitude, "lng" => $longitude);
+			
+			if($latitude && $longitude){
+				$gps_m->putgps($final);
+			}
+
+			return $final;
+		endif;
+			return $gps;
+	}
+	public function getRouteMap($data) {
+
+		$key = "AIzaSyD_kMT5jOaX-g_tBSRiA-Ki-EPXik2wUOo"; //AIzaSyBhHJtuj8MoB2bZVJHDpdw6o-r2rd65CIo
+
+		$origin  = $data['origin']?:"Boston,MA";
+		$destination = $data['destination']?:"Concord,MA";
+		$way_points = $data['way_points'] ? implode("|", $data['way_points']) :"Charlestown,MA|Lexington,MA";
+
+
+		$url = "https://maps.googleapis.com/maps/api/directions/json?origin={$origin}&destination={$destination}&waypoints=optimize:true|{$way_points}";
+
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url.'&key='.$this->key);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$result = curl_exec($ch);
+
+		$final = json_decode($result, true);
+		
+		foreach ($final['routes'][0]['legs'] as $key => $value) {
+			// if($key == 'end_address'){	
+				$routes[] = ["start_address" => $value['start_address'], "start_location" => $value['start_location'], "end_address" => $value['end_address'], "end_location" => $value['end_location']];
+			// }	
+		}
+
+		return $routes;
+
+	}
+}

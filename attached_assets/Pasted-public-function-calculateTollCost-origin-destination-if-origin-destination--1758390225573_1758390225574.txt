@@ -1,0 +1,68 @@
+public function calculateTollCost($origin, $destination) {
+    if (!$origin || !$destination) {
+        return null; // Return null if origin or destination is not provided
+    }
+
+    // Prepare the coordinates for the API request (you may need to convert addresses to lat/lng first)
+    // Here we are using dummy lat/lng values; replace these with actual coordinates
+    $originCoords = ['latitude' => 27.964157, 'longitude' =>  -82.452606]; // Example for origin
+    $destinationCoords = ['latitude' => 25.761681, 'longitude' => -80.191788]; // Example for destination
+
+    $data = [
+        'origin' => [
+            'location' => [
+                'latLng' => $originCoords,
+            ],
+        ],
+        'destination' => [
+            'location' => [
+                'latLng' => $destinationCoords,
+            ],
+        ],
+        'travelMode' => 'DRIVE',
+        'extraComputations' => ['TOLLS'],
+        'routeModifiers' => [
+            'vehicleInfo' => [
+                'emissionType' => 'GASOLINE',
+            ],
+            'tollPasses' => [
+                'US_MA_EZPASSMA',
+                'US_WA_GOOD_TO_GO', // Example toll passes
+            ],
+        ],
+    ];
+
+    $url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+    $headers = [
+        'Content-Type: application/json',
+        'X-Goog-Api-Key: ' . "AIzaSyCIEj8t9FGUW7IUWrMIxg-AIrXN-3jke8Y", // Ensure this is your Google API Key
+        'X-Goog-FieldMask: routes.duration,routes.distanceMeters,routes.travelAdvisory.tollInfo,routes.legs.travelAdvisory.tollInfo',
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    $dresult = json_decode($result, true);
+
+    // print_r($dresult);
+    
+    if ($dresult['routes'] && count($dresult['routes']) > 0) {
+        $tollInfo = $dresult['routes'][0]['legs'][0]['travelAdvisory']['tollInfo'] ?: [];
+        $totalToll = array_reduce($tollInfo, function ($accum, $info) {
+            return $accum + ($info['value'] ?: 0);
+        }, 0);
+        
+        return $totalToll / 100; // Convert to dollars if the value is in cents
+    } else {
+        error_log("Google API error: " . json_encode($dresult));
+    }
+    
+    return null; // Return null if no toll information found
+}

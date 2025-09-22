@@ -1,0 +1,59 @@
+Array
+(
+    [routes] => Array
+        (
+            [0] => Array
+                (
+                    [legs] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [travelAdvisory] => Array
+                                        (
+                                            [tollInfo] => Array
+                                                (
+                                                    [estimatedPrice] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [currencyCode] => USD
+                                                                    [units] => 4
+                                                                    [nanos] => 340000000
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                    [distanceMeters] => 466673
+                    [duration] => 15136s
+                    [travelAdvisory] => Array
+                        (
+                            [tollInfo] => Array
+                                (
+                                    [estimatedPrice] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [currencyCode] => USD
+                                                    [units] => 4
+                                                    [nanos] => 340000000
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
