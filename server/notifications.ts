@@ -337,8 +337,8 @@ export class NotificationService {
     `.trim();
 
     await this.sendEmail({
-      to: 'samvtitus@gmail.com',
-      name: 'Sam Titus',
+      to: 'trackwalaco@gmail.com',
+      name: 'TrackWala Team',
       subject,
       body,
     });
@@ -563,8 +563,8 @@ export class NotificationService {
     `.trim();
 
     await this.sendEmail({
-      to: 'samvtitus@gmail.com',
-      name: 'Sam Titus',
+      to: 'trackwalaco@gmail.com',
+      name: 'TrackWala Team',
       subject,
       body,
     });
@@ -574,7 +574,7 @@ export class NotificationService {
     const subject = 'Welcome to the Affiliate Program - Your Account & Referral Link';
     const affiliateLink = `https://trackwala.com/ref/${affiliate.uniqueCode}`;
     const dashboardUrl = `https://trackwala.com/affiliate-dashboard?code=${affiliate.uniqueCode}`;
-    
+
     const body = `
 <!DOCTYPE html>
 <html>
