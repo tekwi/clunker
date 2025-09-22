@@ -212,16 +212,12 @@ export async function getVehiclePricing(
   try {
     let vinToUse = submittedVin;
     let vinPrefix = vinToUse.substring(0, 8).toUpperCase();
-    let decodedMake = getMakeFromVin(vinToUse);
     let vinYear = getYearFromVin(vinToUse);
-    let decodedModel = await getModelFromVin(vinToUse); // Decode model name
 
     console.log(`Searching for VIN: ${submittedVin}`);
-    console.log(`VIN Prefix: ${vinPrefix}, Decoded Make: ${decodedMake}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);
-    console.log(`Form Data - Make: ${formMake}, Model: ${formModel}, Year: ${formYear}`);
-    console.log(`Decoded Model: ${decodedModel}`); // Log decoded model
+    console.log(`VIN Prefix: ${vinPrefix}, VIN Year: ${vinYear}, Submitted Year: ${submittedYear}`);
 
-    // Search 1: Exact VIN prefix match (first 8 characters) with year filtering
+    // Primary search: VIN prefix (first 8 characters) with year filtering
     let result = await db.execute(sql`
       SELECT sale_price, vin, lot_year, lot_make, lot_model
       FROM vehicle_pricing
@@ -233,30 +229,39 @@ export async function getVehiclePricing(
     `);
 
     let rows = Array.isArray(result[0]) ? result[0] : [];
-    console.log(`VIN prefix search found ${rows.length} rows before year filtering`);
+    console.log(`VIN prefix search found ${rows.length} rows`);
 
-    // Filter by year if we have VIN year or submitted year
-    const targetYear = vinYear || submittedYear;
-    if (targetYear && rows.length > 0) {
-      // Allow ±2 years flexibility for better matching
-      const yearTolerance = 2;
-      rows = rows.filter(row => {
-        const rowYear = Number(row.lot_year);
-        return rowYear >= (targetYear - yearTolerance) && rowYear <= (targetYear + yearTolerance);
-      });
-      console.log(`After year filtering (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
+    // If we have VIN prefix matches, filter by year and use them
+    if (rows.length > 0) {
+      const targetYear = vinYear || submittedYear;
+      if (targetYear) {
+        // Allow ±2 years flexibility for better matching
+        const yearTolerance = 2;
+        rows = rows.filter(row => {
+          const rowYear = Number(row.lot_year);
+          return rowYear >= (targetYear - yearTolerance) && rowYear <= (targetYear + yearTolerance);
+        });
+        console.log(`After year filtering (${targetYear} ±${yearTolerance}): ${rows.length} rows`);
+      }
+
+      // If we still have matches after year filtering, use them - don't over-filter
+      if (rows.length > 0) {
+        console.log(`Using ${rows.length} VIN prefix matches for pricing`);
+        const validPrices = rows
+          .filter(row => row && row.sale_price > 0)
+          .map(row => Number(row.sale_price))
+          .filter(price => price > 0 && price < 1000000);
+
+        if (validPrices.length > 0) {
+          const medianPrice = calculateMedianPrice(validPrices);
+          console.log(`✅ VIN-based pricing: $${medianPrice} from ${validPrices.length} records`);
+          return medianPrice;
+        }
+      }
     }
 
-    // Filter by decoded model if available and VIN prefix matches
-    if (decodedModel && rows.length > 0) {
-      rows = rows.filter(row => 
-        row.lot_model && row.lot_model.toUpperCase().includes(decodedModel.toUpperCase())
-      );
-      console.log(`After model filtering (${decodedModel}): ${rows.length} rows`);
-    }
-
-    // If no VIN-based matches and form data is available (not null/empty), try form-based search
-    if (rows.length === 0 && formMake && formModel && formYear && 
+    // Fallback: Form-based search only if no VIN matches found
+    if (formMake && formModel && formYear && 
         formMake.trim() !== '' && formModel.trim() !== '' && formYear.trim() !== '') {
       console.log(`No VIN matches found, trying form-based search: ${formMake} ${formModel} ${formYear}`);
 
@@ -264,14 +269,14 @@ export async function getVehiclePricing(
         SELECT sale_price, vin, lot_year, lot_make, lot_model
         FROM vehicle_pricing
         WHERE UPPER(lot_make) = ${formMake.toUpperCase()}
-        AND UPPER(lot_model) = ${formModel.toUpperCase()}
+        AND UPPER(lot_model) LIKE ${`%${formModel.toUpperCase()}%`}
         AND sale_price > 0
         ORDER BY lot_year DESC
         LIMIT 100
       `);
 
       rows = Array.isArray(result[0]) ? result[0] : [];
-      console.log(`Form-based search found ${rows.length} rows before year filtering`);
+      console.log(`Form-based search found ${rows.length} rows`);
 
       // Filter by form year with tolerance
       if (rows.length > 0 && formYear) {
