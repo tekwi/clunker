@@ -165,6 +165,19 @@ export function getYearFromVin(vin: string): number | null {
   return Math.max(...possibleYears);
 }
 
+// Function to calculate median price
+function calculateMedianPrice(prices: number[]): number {
+  if (prices.length === 0) return 0;
+  if (prices.length === 1) return prices[0];
+
+  const sortedPrices = [...prices].sort((a, b) => a - b);
+  const mid = Math.floor(sortedPrices.length / 2);
+  
+  return sortedPrices.length % 2 === 0
+    ? Math.round((sortedPrices[mid - 1] + sortedPrices[mid]) / 2)
+    : sortedPrices[mid];
+}
+
 // Function to remove outliers and calculate median
 function calculateMedianWithoutOutliers(prices: number[]): number {
   if (prices.length === 0) return 0;
