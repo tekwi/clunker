@@ -1335,7 +1335,7 @@ export function MultiStepForm() {
                         </div>
                         <div className="flex items-center justify-center space-x-2 mt-2">
                           <span className="text-green-500 text-2xl">💰</span>
-                          <p className="text-lg text-gray-600 font-semibold">Cash on pickup</p>
+                          <p className="text-lg text-gray-600 font-semibold">Payment on pickup</p>
                           <span className="text-green-500 text-2xl">💰</span>
                         </div>
                       </div>
