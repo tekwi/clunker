@@ -365,8 +365,12 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <i className="fas fa-car text-xl"></i>
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <img 
+              src="/brand-avatar.png" 
+              alt="TrackWala Brand Avatar" 
+              className="w-12 h-12 rounded-full"
+            />
             <span className="text-lg font-semibold">TrackWala</span>
           </div>
           <p className="text-sm text-gray-400">
