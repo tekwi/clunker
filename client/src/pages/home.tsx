@@ -6,11 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MultiStepForm } from "@/components/MultiStepForm";
 import { VinScanner } from "@/components/VinScanner";
 import { Camera } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [vinInput, setVinInput] = useState("");
   const [showVinScanner, setShowVinScanner] = useState(false);
+  const isMobile = useIsMobile();
 
   // Check for affiliate ref parameter and auto-show form
   useState(() => {
@@ -63,15 +65,17 @@ export default function Home() {
                   className="text-lg p-4 h-14 flex-1"
                   maxLength={17}
                 />
-                <Button
-                  onClick={() => setShowVinScanner(true)}
-                  variant="outline"
-                  size="lg"
-                  className="h-14 px-6 bg-primary text-white border-primary hover:bg-primary/90"
-                  title="Scan VIN"
-                >
-                  <Camera className="h-5 w-5" />
-                </Button>
+                {isMobile && (
+                  <Button
+                    onClick={() => setShowVinScanner(true)}
+                    variant="outline"
+                    size="lg"
+                    className="h-14 px-6 bg-primary text-white border-primary hover:bg-primary/90"
+                    title="Scan VIN"
+                  >
+                    <Camera className="h-5 w-5" />
+                  </Button>
+                )}
                 <Button
                   onClick={handleVinSubmit}
                   disabled={vinInput.length !== 17}
