@@ -10,9 +10,14 @@ import AffiliateDashboard from "./pages/affiliate-dashboard";
 import NotFound from "./pages/not-found";
 
 function Router() {
+  const params = new URLSearchParams(window.location.search);
+  const showForm = params.get('start') === 'true';
+
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/">
+        {showForm ? <Home showForm={true} /> : <Home showForm={false} />}
+      </Route>
       <Route path="/view/:submissionId" component={ViewSubmission} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/affiliate-dashboard" component={AffiliateDashboard} />
