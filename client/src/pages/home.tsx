@@ -81,7 +81,6 @@ export default function Home() {
                     <Camera className="h-5 w-5" />
                   </Button>
                 )}
-                <br />
                 <Button
                   onClick={handleVinSubmit}
                   disabled={vinInput.length !== 17}
