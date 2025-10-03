@@ -4,6 +4,9 @@ import { getVehiclePricing, importPricingData } from '../vinPricing';
 import csv from 'csv-parser';
 import multer from 'multer';
 import { Readable } from 'stream';
+import { db } from '../db';
+import { adminSettings } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -21,7 +24,7 @@ router.post('/lookup', async (req, res) => {
       return res.status(400).json({ error: 'VIN must be 17 characters long' });
     }
     
-    const pricing = await getVehiclePricing(
+    const rawPricing = await getVehiclePricing(
       vin, 
       parseInt(year), 
       false, 
@@ -30,13 +33,60 @@ router.post('/lookup', async (req, res) => {
       vehicleYear || undefined
     );
     
-    if (pricing === null) {
+    if (rawPricing === null) {
       console.log(`❌ API Response: 404 - No pricing data found for VIN: ${vin}, Year: ${year}`);
       return res.status(404).json({ error: 'No pricing data found for this vehicle' });
     }
     
-    console.log(`✅ API Response: $${pricing} for VIN: ${vin}, Year: ${year}`);
-    res.json({ price: pricing });
+    // Fetch margin and service charge settings
+    const settings = await db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.settingKey, 'margin_type'))
+      .limit(1);
+    
+    const marginType = settings[0]?.settingValue || 'percentage';
+    
+    const marginValueSettings = await db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.settingKey, 'margin_value'))
+      .limit(1);
+    
+    const marginValue = parseFloat(marginValueSettings[0]?.settingValue || '10');
+    
+    const serviceChargeSettings = await db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.settingKey, 'service_charge'))
+      .limit(1);
+    
+    const serviceCharge = parseFloat(serviceChargeSettings[0]?.settingValue || '50');
+    
+    // Calculate final price with margin and service charge
+    let finalPrice = rawPricing;
+    
+    // Apply margin
+    if (marginType === 'percentage') {
+      finalPrice = rawPricing * (1 - marginValue / 100);
+    } else {
+      finalPrice = rawPricing - marginValue;
+    }
+    
+    // Subtract service charge
+    finalPrice = finalPrice - serviceCharge;
+    
+    // Ensure price doesn't go negative
+    finalPrice = Math.max(0, finalPrice);
+    
+    console.log(`✅ Pricing Calculation for VIN: ${vin}`);
+    console.log(`   Raw Price: $${rawPricing}`);
+    console.log(`   Margin Type: ${marginType}`);
+    console.log(`   Margin Value: ${marginType === 'percentage' ? marginValue + '%' : '$' + marginValue}`);
+    console.log(`   Service Charge: $${serviceCharge}`);
+    console.log(`   Final Offer Price: $${finalPrice.toFixed(2)}`);
+    
+    res.json({ price: Math.round(finalPrice) });
     
   } catch (error) {
     console.error('Pricing lookup error:', error);
