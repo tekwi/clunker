@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MultiStepForm } from "@/components/MultiStepForm";
 import { VinScanner } from "@/components/VinScanner";
 import { Camera } from "lucide-react";
@@ -50,7 +55,7 @@ export default function Home() {
             Transparent instant pricing. No haggling. No hassle. <br />
             Same-day to 2-day pickup.
           </p>
-          
+
           {/* VIN Input Section */}
           <div className="max-w-2xl mx-auto mb-6">
             <div className="bg-white rounded-lg p-6 shadow-2xl">
@@ -76,6 +81,7 @@ export default function Home() {
                     <Camera className="h-5 w-5" />
                   </Button>
                 )}
+                <br />
                 <Button
                   onClick={handleVinSubmit}
                   disabled={vinInput.length !== 17}
@@ -86,8 +92,8 @@ export default function Home() {
                 </Button>
               </div>
               <p className="text-sm text-gray-500 mt-2 text-left">
-                {vinInput.length > 0 
-                  ? `${vinInput.length}/17 characters` 
+                {vinInput.length > 0
+                  ? `${vinInput.length}/17 characters`
                   : "Find your VIN on your dashboard or driver's side door"}
               </p>
             </div>
@@ -107,7 +113,7 @@ export default function Home() {
               Start Without VIN
             </Button>
           </div>
-          
+
           <p className="text-white/80 mt-4 text-sm">
             ⚡ Takes less than 2 minutes
           </p>
