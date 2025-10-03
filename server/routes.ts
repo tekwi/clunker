@@ -17,8 +17,11 @@ import vehicleRoutes from "./routes/vehicles";
 export async function registerRoutes(app: Express): Promise<Server> {
   const objectStorageService = new ObjectStorageService();
 
-  // Simple session storage for demo purposes
+  // In-memory session storage (in production, use Redis or a database)
   const sessions = new Map<string, { adminId: string; username: string; expiresAt: number }>();
+
+  // Store sessions in app.locals so admin routes can access it
+  app.locals.sessions = sessions;
 
   // Auth middleware
   const requireAuth = (req: any, res: any, next: any) => {

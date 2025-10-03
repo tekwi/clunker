@@ -7,66 +7,40 @@ import { notificationService } from "../notifications";
 
 const router = Router();
 
-// Store active sessions in memory (in production, use Redis or database)
-const activeSessions = new Map<string, { adminId: string; createdAt: Date }>();
-
-// Admin authentication middleware
+// Admin authentication middleware that works with the main session storage
 const requireAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   const sessionId = authHeader?.replace('Bearer ', '');
   
   if (!sessionId) {
+    console.log('❌ No session ID in request');
     return res.status(401).json({ error: "Authentication required" });
   }
   
-  const session = activeSessions.get(sessionId);
+  // Access the sessions map from the main routes file via request app locals
+  const sessions = req.app.locals.sessions;
+  if (!sessions) {
+    console.log('❌ Sessions map not found in app.locals');
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  const session = sessions.get(sessionId);
   if (!session) {
+    console.log('❌ Session not found:', sessionId);
     return res.status(401).json({ error: "Invalid or expired session" });
   }
   
-  // Session is valid, attach admin info to request
+  // Check if session expired
+  if (session.expiresAt < Date.now()) {
+    console.log('❌ Session expired:', sessionId);
+    sessions.delete(sessionId);
+    return res.status(401).json({ error: "Session expired" });
+  }
+  
+  console.log('✅ Session validated:', sessionId);
   req.adminId = session.adminId;
   next();
 };
-
-// Admin login
-router.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-      // Generate a unique session ID
-      const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      
-      // Store session
-      activeSessions.set(sessionId, {
-        adminId: 'admin',
-        createdAt: new Date()
-      });
-      
-      console.log('✅ Session stored:', sessionId);
-      res.json({ sessionId });
-    } else {
-      res.status(401).json({ error: "Invalid credentials" });
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Login failed" });
-  }
-});
-
-// Admin logout
-router.post("/logout", requireAuth, async (req, res) => {
-  const authHeader = req.headers.authorization;
-  const sessionId = authHeader?.replace('Bearer ', '');
-  
-  if (sessionId) {
-    activeSessions.delete(sessionId);
-    console.log('✅ Session removed:', sessionId);
-  }
-  
-  res.json({ success: true });
-});
 
 // Get all submissions for admin dashboard
 router.get("/submissions", requireAuth, async (req, res) => {
