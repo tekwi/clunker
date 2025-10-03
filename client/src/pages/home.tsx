@@ -34,7 +34,10 @@ export default function Home({ showForm: initialShowForm = false }: HomeProps) {
             Transparent instant pricing. No haggling. No hassle. Same-day to 2-day pickup.
           </p>
           <Button
-            onClick={() => setLocation("/?start=true")}
+            onClick={() => {
+              window.history.pushState({}, '', '/?start=true');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
             size="lg"
             className="h-16 px-12 text-xl bg-white text-primary hover:bg-gray-100 shadow-2xl"
           >
@@ -216,7 +219,10 @@ export default function Home({ showForm: initialShowForm = false }: HomeProps) {
           No test drives. No haggling. No strangers. Just fast, fair cash.
         </p>
         <Button
-          onClick={() => setLocation("/?start=true")}
+          onClick={() => {
+            window.history.pushState({}, '', '/?start=true');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }}
           size="lg"
           className="h-16 px-12 text-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-2xl"
         >

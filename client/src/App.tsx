@@ -11,13 +11,14 @@ import NotFound from "./pages/not-found";
 
 function Router() {
   const [location] = useLocation();
+  // Force re-render when URL changes by including location in the key
   const params = new URLSearchParams(window.location.search);
   const showForm = params.get('start') === 'true';
 
   return (
     <Switch>
       <Route path="/">
-        {showForm ? <Home showForm={true} /> : <Home showForm={false} />}
+        <Home key={window.location.search} showForm={showForm} />
       </Route>
       <Route path="/view/:submissionId" component={ViewSubmission} />
       <Route path="/admin" component={AdminDashboard} />
