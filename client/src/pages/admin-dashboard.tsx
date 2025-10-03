@@ -267,37 +267,10 @@ export default function AdminDashboard() {
   const { data: settings = [], refetch: refetchSettings } = useQuery<AdminSetting[]>({
     queryKey: ["admin-settings"],
     queryFn: async () => {
-      const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
-      if (!currentSessionId) {
-        throw new Error("No session ID available");
-      }
-      
-      const headers: any = { "Content-Type": "application/json" };
-      headers.Authorization = `Bearer ${currentSessionId}`;
-
-      const response = await fetch("/api/admin/settings", {
-        method: "GET",
-        headers,
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Authentication required");
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await apiRequest("GET", "/api/admin/settings");
       return response.json();
     },
     enabled: isAuthenticated,
-    retry: (failureCount, error: any) => {
-      if (error.message.includes('401') || error.message.includes('Authentication required')) {
-        setIsAuthenticated(false);
-        setSessionId(null);
-        localStorage.removeItem("adminSessionId");
-        return false;
-      }
-      return failureCount < 3;
-    },
   });
 
   const updateOfferMutation = useMutation({
