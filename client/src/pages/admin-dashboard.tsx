@@ -67,6 +67,16 @@ interface Affiliate {
   createdAt: string;
 }
 
+interface AdminSetting {
+  id: string;
+  settingKey: string;
+  settingValue: string;
+  settingType: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const affiliateFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
@@ -82,7 +92,7 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editingOffer, setEditingOffer] = useState<AdminOffer | null>(null);
   const [editForm, setEditForm] = useState({ offerPrice: "", notes: "" });
-  const [activeTab, setActiveTab] = useState<"offers" | "submissions" | "affiliates">("offers");
+  const [activeTab, setActiveTab] = useState<"offers" | "submissions" | "affiliates" | "settings">("offers");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -254,6 +264,37 @@ export default function AdminDashboard() {
     },
   });
 
+  const { data: settings = [], refetch: refetchSettings } = useQuery<AdminSetting[]>({
+    queryKey: ["admin-settings"],
+    queryFn: async () => {
+      const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
+      const headers: any = { "Content-Type": "application/json" };
+      if (currentSessionId) {
+        headers.Authorization = `Bearer ${currentSessionId}`;
+      }
+
+      const response = await fetch("/api/admin/settings", {
+        method: "GET",
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
+    enabled: isAuthenticated,
+    retry: (failureCount, error: any) => {
+      if (error.message.includes('401') || error.message.includes('Authentication required')) {
+        setIsAuthenticated(false);
+        setSessionId(null);
+        localStorage.removeItem("adminSessionId");
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
   const updateOfferMutation = useMutation({
     mutationFn: async ({ offerId, updates }: { offerId: string; updates: any }) => {
       await apiRequest("PUT", `/api/admin/offers/${offerId}`, updates);
@@ -342,6 +383,20 @@ export default function AdminDashboard() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update affiliate", variant: "destructive" });
+    },
+  });
+
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ settingKey, settingValue }: { settingKey: string; settingValue: string }) => {
+      await apiRequest("PUT", `/api/admin/settings/${settingKey}`, { settingValue });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      refetchSettings();
+      toast({ title: "Success", description: "Setting updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update setting", variant: "destructive" });
     },
   });
 
@@ -618,6 +673,12 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab("affiliates")}
               >
                 Affiliates ({stats.totalAffiliates})
+              </Button>
+              <Button
+                variant={activeTab === "settings" ? "default" : "outline"}
+                onClick={() => setActiveTab("settings")}
+              >
+                Settings
               </Button>
             </div>
             {statusFilter && (
@@ -903,6 +964,114 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </>
+            )}
+
+            {activeTab === "settings" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Application Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Margin Settings */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Offer Margin Configuration</h3>
+                      <p className="text-sm text-gray-600">
+                        The margin is deducted from the calculated offer amount shown to customers.
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Margin Type</label>
+                          <select
+                            className="w-full p-2 border rounded-md"
+                            value={settings.find(s => s.settingKey === 'margin_type')?.settingValue || 'percentage'}
+                            onChange={(e) => updateSettingMutation.mutate({ 
+                              settingKey: 'margin_type', 
+                              settingValue: e.target.value 
+                            })}
+                          >
+                            <option value="percentage">Percentage</option>
+                            <option value="fixed">Fixed Amount</option>
+                          </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Margin Value {settings.find(s => s.settingKey === 'margin_type')?.settingValue === 'percentage' ? '(%)' : '($)'}
+                          </label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={settings.find(s => s.settingKey === 'margin_value')?.settingValue || '10'}
+                            onChange={(e) => updateSettingMutation.mutate({ 
+                              settingKey: 'margin_value', 
+                              settingValue: e.target.value 
+                            })}
+                            placeholder={settings.find(s => s.settingKey === 'margin_type')?.settingValue === 'percentage' ? 'e.g., 10' : 'e.g., 500'}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 bg-blue-50 rounded-md">
+                        <p className="text-sm text-blue-900">
+                          <strong>Example:</strong> If the calculated offer is $5,000 and margin is{' '}
+                          {settings.find(s => s.settingKey === 'margin_type')?.settingValue === 'percentage' 
+                            ? `${settings.find(s => s.settingKey === 'margin_value')?.settingValue || '10'}%`
+                            : `$${settings.find(s => s.settingKey === 'margin_value')?.settingValue || '500'}`
+                          }, the customer will see an offer of{' '}
+                          {settings.find(s => s.settingKey === 'margin_type')?.settingValue === 'percentage'
+                            ? `$${(5000 * (1 - parseFloat(settings.find(s => s.settingKey === 'margin_value')?.settingValue || '10') / 100)).toFixed(2)}`
+                            : `$${(5000 - parseFloat(settings.find(s => s.settingKey === 'margin_value')?.settingValue || '500')).toFixed(2)}`
+                          }.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold mb-4">Service Charge</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Fixed service charge per vehicle (in addition to margin).
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Service Charge per Car ($)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={settings.find(s => s.settingKey === 'service_charge')?.settingValue || '50'}
+                          onChange={(e) => updateSettingMutation.mutate({ 
+                            settingKey: 'service_charge', 
+                            settingValue: e.target.value 
+                          })}
+                          placeholder="e.g., 50.00"
+                          className="max-w-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold mb-4">Last Updated</h3>
+                      <div className="space-y-2">
+                        {settings.map((setting) => (
+                          <div key={setting.id} className="flex justify-between items-center text-sm">
+                            <span className="font-medium">{setting.description || setting.settingKey}</span>
+                            <Badge variant="outline">
+                              {new Date(setting.updatedAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {activeTab === "affiliates" && (

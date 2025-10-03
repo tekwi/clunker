@@ -129,6 +129,18 @@ export const vehicleModels = mysqlTable("vehicle_models", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
+export const adminSettings = mysqlTable("admin_settings", {
+  id: varchar("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  settingKey: varchar("setting_key", { length: 100 }).notNull().unique(),
+  settingValue: varchar("setting_value", { length: 255 }).notNull(),
+  settingType: varchar("setting_type", { length: 50 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
 // Schema definitions
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
@@ -177,6 +189,8 @@ export type VehicleMake = typeof vehicleMakes.$inferSelect;
 export type NewVehicleMake = typeof vehicleMakes.$inferInsert;
 export type VehicleModel = typeof vehicleModels.$inferSelect;
 export type NewVehicleModel = typeof vehicleModels.$inferInsert;
+export type AdminSetting = typeof adminSettings.$inferSelect;
+export type NewAdminSetting = typeof adminSettings.$inferInsert;
 
 // Additional type aliases for compatibility
 export type InsertSubmission = typeof submissions.$inferInsert;

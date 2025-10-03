@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 import { db } from "../db";
-import { submissions, offers, pictures, affiliates } from "../../shared/schema";
+import { submissions, offers, pictures, affiliates, adminSettings } from "../../shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { notificationService } from "../notifications";
 
@@ -274,6 +274,51 @@ router.put("/affiliates/:affiliateId", requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Error updating affiliate:", error);
     res.status(500).json({ error: "Failed to update affiliate" });
+  }
+});
+
+// Get all settings
+router.get("/settings", requireAuth, async (req, res) => {
+  try {
+    const settings = await db
+      .select()
+      .from(adminSettings)
+      .orderBy(adminSettings.settingKey);
+
+    res.json(settings);
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+    res.status(500).json({ error: "Failed to fetch settings" });
+  }
+});
+
+// Update setting
+router.put("/settings/:settingKey", requireAuth, async (req, res) => {
+  try {
+    const { settingKey } = req.params;
+    const { settingValue } = req.body;
+
+    if (settingValue === undefined) {
+      return res.status(400).json({ error: "Setting value is required" });
+    }
+
+    const [updatedSetting] = await db
+      .update(adminSettings)
+      .set({ 
+        settingValue: String(settingValue),
+        updatedAt: new Date()
+      })
+      .where(eq(adminSettings.settingKey, settingKey))
+      .returning();
+
+    if (!updatedSetting) {
+      return res.status(404).json({ error: "Setting not found" });
+    }
+
+    res.json(updatedSetting);
+  } catch (error) {
+    console.error("Error updating setting:", error);
+    res.status(500).json({ error: "Failed to update setting" });
   }
 });
 
