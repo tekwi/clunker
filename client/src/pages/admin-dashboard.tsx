@@ -288,7 +288,7 @@ export default function AdminDashboard() {
       }
       return response.json();
     },
-    enabled: isAuthenticated && activeTab === "settings",
+    enabled: isAuthenticated,
     retry: (failureCount, error: any) => {
       if (error.message.includes('401') || error.message.includes('Authentication required')) {
         setIsAuthenticated(false);
