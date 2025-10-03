@@ -45,7 +45,7 @@ export default function Home({ showForm: initialShowForm = false }: HomeProps) {
       </div>
 
       {/* Trust Indicators */}
-      <div className="max-w-6xl mx-auto px-4 -mt-12">
+      <div className="max-w-6xl mx-auto px-4 mt-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="p-6 text-center shadow-xl bg-white">
             <div className="text-4xl mb-3">🚀</div>
