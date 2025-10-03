@@ -303,14 +303,21 @@ router.put("/settings/:settingKey", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Setting value is required" });
     }
 
-    const [updatedSetting] = await db
+    // Update the setting
+    await db
       .update(adminSettings)
       .set({ 
         settingValue: String(settingValue),
         updatedAt: new Date()
       })
+      .where(eq(adminSettings.settingKey, settingKey));
+
+    // Fetch the updated setting
+    const [updatedSetting] = await db
+      .select()
+      .from(adminSettings)
       .where(eq(adminSettings.settingKey, settingKey))
-      .returning();
+      .limit(1);
 
     if (!updatedSetting) {
       return res.status(404).json({ error: "Setting not found" });
