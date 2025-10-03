@@ -8,7 +8,11 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
 
   if (showForm) {
-    return <MultiStepForm />;
+    return (
+      <div className="min-h-screen">
+        <MultiStepForm />
+      </div>
+    );
   }
 
   return (
@@ -24,7 +28,10 @@ export default function Home() {
             Transparent instant pricing. No haggling. No hassle. Same-day to 2-day pickup.
           </p>
           <Button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              console.log("CTA button clicked - showing form");
+              setShowForm(true);
+            }}
             size="lg"
             className="h-16 px-12 text-xl bg-white text-primary hover:bg-gray-100 shadow-2xl"
           >
@@ -206,7 +213,10 @@ export default function Home() {
           No test drives. No haggling. No strangers. Just fast, fair cash.
         </p>
         <Button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            console.log("Second CTA button clicked - showing form");
+            setShowForm(true);
+          }}
           size="lg"
           className="h-16 px-12 text-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-2xl"
         >
