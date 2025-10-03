@@ -1,15 +1,23 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { MultiStepForm } from "@/components/MultiStepForm";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
+  const [vinInput, setVinInput] = useState("");
+
+  const handleVinSubmit = () => {
+    if (vinInput.length === 17) {
+      setShowForm(true);
+    }
+  };
 
   if (showForm) {
     return (
       <div className="min-h-screen">
-        <MultiStepForm />
+        <MultiStepForm initialVin={vinInput} />
       </div>
     );
   }
@@ -27,16 +35,53 @@ export default function Home() {
             Transparent instant pricing. No haggling. No hassle. <br />
             Same-day to 2-day pickup.
           </p>
-          <Button
-            onClick={() => {
-              console.log("CTA button clicked - showing form");
-              setShowForm(true);
-            }}
-            size="lg"
-            className="h-16 px-12 text-xl bg-white text-primary hover:bg-gray-100 shadow-2xl"
-          >
-            Get My Instant Cash Offer
-          </Button>
+          
+          {/* VIN Input Section */}
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-white rounded-lg p-6 shadow-2xl">
+              <label className="block text-left text-gray-700 font-semibold mb-2">
+                Enter Your VIN to Get Started
+              </label>
+              <div className="flex gap-3">
+                <Input
+                  value={vinInput}
+                  onChange={(e) => setVinInput(e.target.value.toUpperCase())}
+                  placeholder="Enter 17-character VIN"
+                  className="text-lg p-4 h-14 flex-1"
+                  maxLength={17}
+                />
+                <Button
+                  onClick={handleVinSubmit}
+                  disabled={vinInput.length !== 17}
+                  size="lg"
+                  className="h-14 px-8 bg-primary hover:bg-primary/90"
+                >
+                  Get Offer
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500 mt-2 text-left">
+                {vinInput.length > 0 
+                  ? `${vinInput.length}/17 characters` 
+                  : "Find your VIN on your dashboard or driver's side door"}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-white/80 text-sm mb-2">or</p>
+            <Button
+              onClick={() => {
+                console.log("CTA button clicked - showing form");
+                setShowForm(true);
+              }}
+              variant="outline"
+              size="lg"
+              className="h-14 px-10 text-lg bg-white/10 text-white border-white hover:bg-white/20"
+            >
+              Start Without VIN
+            </Button>
+          </div>
+          
           <p className="text-white/80 mt-4 text-sm">
             ⚡ Takes less than 2 minutes
           </p>

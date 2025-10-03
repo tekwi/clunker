@@ -171,8 +171,12 @@ const STEPS: Step[] = [
   },
 ];
 
-export function MultiStepForm() {
-  const [currentStep, setCurrentStep] = useState(0);
+interface MultiStepFormProps {
+  initialVin?: string;
+}
+
+export function MultiStepForm({ initialVin = "" }: MultiStepFormProps) {
+  const [currentStep, setCurrentStep] = useState(initialVin ? 1 : 0);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [showVinScanner, setShowVinScanner] = useState(false);
   const [locationDetected, setLocationDetected] = useState(false);
@@ -192,7 +196,9 @@ export function MultiStepForm() {
   const [isDecodingVin, setIsDecodingVin] = useState(false);
 
   // Simple form with direct state management
-  const [formData, setFormData] = useState<Partial<SubmissionForm>>({});
+  const [formData, setFormData] = useState<Partial<SubmissionForm>>({
+    vin: initialVin
+  });
 
   const form = useForm<SubmissionForm>({
     resolver: zodResolver(submissionSchema),
@@ -224,6 +230,13 @@ export function MultiStepForm() {
   useEffect(() => {
     fetchVehicleMakes();
   }, []);
+
+  // Auto-decode VIN if initialVin is provided
+  useEffect(() => {
+    if (initialVin && initialVin.length === 17) {
+      decodeVinToVehicleInfo(initialVin);
+    }
+  }, [initialVin]);
 
   // Countdown timer effect
   useEffect(() => {
