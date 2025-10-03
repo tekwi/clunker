@@ -2,11 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MultiStepForm } from "@/components/MultiStepForm";
+import { VinScanner } from "@/components/VinScanner";
+import { Camera } from "lucide-react";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [vinInput, setVinInput] = useState("");
+  const [showVinScanner, setShowVinScanner] = useState(false);
 
   const handleVinSubmit = () => {
     if (vinInput.length === 17) {
@@ -50,6 +54,14 @@ export default function Home() {
                   className="text-lg p-4 h-14 flex-1"
                   maxLength={17}
                 />
+                <Button
+                  onClick={() => setShowVinScanner(true)}
+                  variant="outline"
+                  size="lg"
+                  className="h-14 px-6 bg-white/10 text-white border-white hover:bg-white/20"
+                >
+                  <Camera className="h-5 w-5" />
+                </Button>
                 <Button
                   onClick={handleVinSubmit}
                   disabled={vinInput.length !== 17}
@@ -298,6 +310,26 @@ export default function Home() {
           </span>
         </div>
       </div>
+
+      {/* VIN Scanner Dialog */}
+      <Dialog open={showVinScanner} onOpenChange={setShowVinScanner}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle>Scan Your VIN</DialogTitle>
+          </DialogHeader>
+          <VinScanner
+            onVinDetected={(vin) => {
+              setVinInput(vin);
+              setShowVinScanner(false);
+              // Auto-submit if VIN is 17 characters
+              if (vin.length === 17) {
+                setTimeout(() => setShowForm(true), 300);
+              }
+            }}
+            onClose={() => setShowVinScanner(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8 px-4">
