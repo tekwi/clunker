@@ -12,6 +12,15 @@ export default function Home() {
   const [vinInput, setVinInput] = useState("");
   const [showVinScanner, setShowVinScanner] = useState(false);
 
+  // Check for affiliate ref parameter and auto-show form
+  useState(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const affiliateRef = searchParams.get("ref");
+    if (affiliateRef) {
+      setShowForm(true);
+    }
+  });
+
   const handleVinSubmit = () => {
     if (vinInput.length === 17) {
       setShowForm(true);
