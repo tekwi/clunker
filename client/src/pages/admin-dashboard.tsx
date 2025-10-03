@@ -268,10 +268,12 @@ export default function AdminDashboard() {
     queryKey: ["admin-settings"],
     queryFn: async () => {
       const currentSessionId = sessionId || localStorage.getItem("adminSessionId");
-      const headers: any = { "Content-Type": "application/json" };
-      if (currentSessionId) {
-        headers.Authorization = `Bearer ${currentSessionId}`;
+      if (!currentSessionId) {
+        throw new Error("No session ID available");
       }
+      
+      const headers: any = { "Content-Type": "application/json" };
+      headers.Authorization = `Bearer ${currentSessionId}`;
 
       const response = await fetch("/api/admin/settings", {
         method: "GET",
@@ -279,11 +281,14 @@ export default function AdminDashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Authentication required");
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return response.json();
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && activeTab === "settings",
     retry: (failureCount, error: any) => {
       if (error.message.includes('401') || error.message.includes('Authentication required')) {
         setIsAuthenticated(false);
