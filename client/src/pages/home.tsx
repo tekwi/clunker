@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,7 +24,8 @@ export default function Home() {
             Get Cash for Your Car in 24-48 Hours
           </h1>
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-            Transparent instant pricing. No haggling. No hassle. Same-day to 2-day pickup.
+            Transparent instant pricing. No haggling. No hassle. <br />
+            Same-day to 2-day pickup.
           </p>
           <Button
             onClick={() => {
@@ -37,7 +37,9 @@ export default function Home() {
           >
             Get My Instant Cash Offer
           </Button>
-          <p className="text-white/80 mt-4 text-sm">⚡ Takes less than 2 minutes</p>
+          <p className="text-white/80 mt-4 text-sm">
+            ⚡ Takes less than 2 minutes
+          </p>
         </div>
       </div>
 
@@ -46,13 +48,19 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="p-6 text-center shadow-xl bg-white">
             <div className="text-4xl mb-3">🚀</div>
-            <h3 className="font-bold text-lg mb-2">Same-Day Pickup Available</h3>
-            <p className="text-gray-600 text-sm">We come to you within 24-48 hours</p>
+            <h3 className="font-bold text-lg mb-2">
+              Same-Day Pickup Available
+            </h3>
+            <p className="text-gray-600 text-sm">
+              We come to you within 24-48 hours
+            </p>
           </Card>
           <Card className="p-6 text-center shadow-xl bg-white">
             <div className="text-4xl mb-3">💵</div>
             <h3 className="font-bold text-lg mb-2">Instant Cash Payment</h3>
-            <p className="text-gray-600 text-sm">Get paid on the spot, guaranteed</p>
+            <p className="text-gray-600 text-sm">
+              Get paid on the spot, guaranteed
+            </p>
           </Card>
           <Card className="p-6 text-center shadow-xl bg-white">
             <div className="text-4xl mb-3">✅</div>
@@ -67,31 +75,8 @@ export default function Home() {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           Perfect For Busy People & Quick Sales
         </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="p-8 hover:shadow-lg transition-shadow">
-            <div className="flex items-start space-x-4">
-              <div className="text-3xl">🔧</div>
-              <div>
-                <h3 className="font-bold text-xl mb-3">Damaged or Non-Running Vehicles</h3>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-start">
-                    <span className="text-secondary mr-2">✓</span>
-                    <span>Accident damage - we still want it</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-secondary mr-2">✓</span>
-                    <span>Won't start or run - no problem</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-secondary mr-2">✓</span>
-                    <span>High mileage - we'll make an offer</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </Card>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card className="p-8 hover:shadow-lg transition-shadow">
             <div className="flex items-start space-x-4">
               <div className="text-3xl">⏰</div>
@@ -119,7 +104,9 @@ export default function Home() {
             <div className="flex items-start space-x-4">
               <div className="text-3xl">🛡️</div>
               <div>
-                <h3 className="font-bold text-xl mb-3">Want a Safe, Hassle-Free Sale</h3>
+                <h3 className="font-bold text-xl mb-3">
+                  Want a Safe, Hassle-Free Sale
+                </h3>
                 <ul className="space-y-2 text-gray-600">
                   <li className="flex items-start">
                     <span className="text-secondary mr-2">✓</span>
@@ -140,9 +127,36 @@ export default function Home() {
 
           <Card className="p-8 hover:shadow-lg transition-shadow">
             <div className="flex items-start space-x-4">
+              <div className="text-3xl">🔧</div>
+              <div>
+                <h3 className="font-bold text-xl mb-3">
+                  Damaged or Non-Running Vehicles
+                </h3>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-start">
+                    <span className="text-secondary mr-2">✓</span>
+                    <span>Accident damage - we still want it</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-secondary mr-2">✓</span>
+                    <span>Won't start or run - no problem</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-secondary mr-2">✓</span>
+                    <span>High mileage - we'll make an offer</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-8 hover:shadow-lg transition-shadow">
+            <div className="flex items-start space-x-4">
               <div className="text-3xl">🚗</div>
               <div>
-                <h3 className="font-bold text-xl mb-3">Older or High-Mileage Vehicles</h3>
+                <h3 className="font-bold text-xl mb-3">
+                  Older or High-Mileage Vehicles
+                </h3>
                 <ul className="space-y-2 text-gray-600">
                   <li className="flex items-start">
                     <span className="text-secondary mr-2">✓</span>
@@ -169,7 +183,7 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             Get Your Cash in 3 Simple Steps
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="bg-primary text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold mx-auto mb-4">
@@ -187,7 +201,8 @@ export default function Home() {
               </div>
               <h3 className="font-bold text-xl mb-3">Get Instant Offer</h3>
               <p className="text-gray-600">
-                Receive a transparent cash offer immediately. No negotiations needed.
+                Receive a transparent cash offer immediately. No negotiations
+                needed.
               </p>
             </div>
 
@@ -197,7 +212,8 @@ export default function Home() {
               </div>
               <h3 className="font-bold text-xl mb-3">Get Paid & Picked Up</h3>
               <p className="text-gray-600">
-                Accept the offer and we'll pick up your vehicle in 24-48 hours with cash in hand.
+                Accept the offer and we'll pick up your vehicle in 24-48 hours
+                with cash in hand.
               </p>
             </div>
           </div>
@@ -220,7 +236,7 @@ export default function Home() {
           size="lg"
           className="h-16 px-12 text-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-2xl"
         >
-          Get My Instant Cash Offer Now
+          Get My Cash Offer Now
         </Button>
         <div className="mt-6 flex items-center justify-center space-x-8 text-sm text-gray-500">
           <span className="flex items-center">
@@ -245,7 +261,9 @@ export default function Home() {
             <i className="fas fa-car text-xl"></i>
             <span className="text-lg font-semibold">TrackWala</span>
           </div>
-          <p className="text-sm text-gray-400">Fast, fair, and hassle-free vehicle buyouts</p>
+          <p className="text-sm text-gray-400">
+            Fast, fair, and hassle-free vehicle buyouts
+          </p>
         </div>
       </footer>
     </div>
