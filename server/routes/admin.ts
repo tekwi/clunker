@@ -7,15 +7,25 @@ import { notificationService } from "../notifications";
 
 const router = Router();
 
+// Store active sessions in memory (in production, use Redis or database)
+const activeSessions = new Map<string, { adminId: string; createdAt: Date }>();
+
 // Admin authentication middleware
 const requireAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   const sessionId = authHeader?.replace('Bearer ', '');
   
-  if (!sessionId || sessionId !== process.env.ADMIN_SESSION_ID) {
+  if (!sessionId) {
     return res.status(401).json({ error: "Authentication required" });
   }
   
+  const session = activeSessions.get(sessionId);
+  if (!session) {
+    return res.status(401).json({ error: "Invalid or expired session" });
+  }
+  
+  // Session is valid, attach admin info to request
+  req.adminId = session.adminId;
   next();
 };
 
@@ -25,7 +35,16 @@ router.post("/login", async (req, res) => {
     const { username, password } = req.body;
     
     if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-      const sessionId = process.env.ADMIN_SESSION_ID || 'admin-session-123';
+      // Generate a unique session ID
+      const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      
+      // Store session
+      activeSessions.set(sessionId, {
+        adminId: 'admin',
+        createdAt: new Date()
+      });
+      
+      console.log('✅ Session stored:', sessionId);
       res.json({ sessionId });
     } else {
       res.status(401).json({ error: "Invalid credentials" });
@@ -38,6 +57,14 @@ router.post("/login", async (req, res) => {
 
 // Admin logout
 router.post("/logout", requireAuth, async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const sessionId = authHeader?.replace('Bearer ', '');
+  
+  if (sessionId) {
+    activeSessions.delete(sessionId);
+    console.log('✅ Session removed:', sessionId);
+  }
+  
   res.json({ success: true });
 });
 
