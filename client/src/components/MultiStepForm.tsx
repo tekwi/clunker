@@ -256,11 +256,13 @@ export function MultiStepForm({ initialVin = "" }: MultiStepFormProps) {
   };
 
   const handleAcceptOffer = async () => {
-    if (!submissionId) return;
+    if (!submissionId || !estimatedPrice) return;
 
     try {
       // Find the offer for this submission and update its status
-      const response = await apiRequest("PUT", `/api/submissions/${submissionId}/offer/accept`, {});
+      const response = await apiRequest("PUT", `/api/submissions/${submissionId}/offer/accept`, {
+        offerPrice: estimatedPrice
+      });
 
       if (response.ok) {
         setOfferAccepted(true);

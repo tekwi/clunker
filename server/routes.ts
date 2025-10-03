@@ -387,15 +387,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/offers/:offerId/accept", async (req, res) => {
     try {
       const { offerId } = req.params;
+      const { offerPrice } = req.body; // Get offerPrice from request body
 
       const updatedOffer = await storage.updateOffer(offerId, {
         status: "accepted",
-        acceptedAt: new Date()
+        acceptedAt: new Date(),
+        offerPrice: offerPrice !== undefined ? offerPrice.toString() : undefined, // Save the offerPrice if provided
       });
 
       if (!updatedOffer) {
         return res.status(404).json({ error: "Offer not found" });
       }
+
+      // Update submission status to "offer_accepted"
+      // Assuming storage.updateSubmissionStatus exists and takes submissionId and new status
+      // If not, this might need to be adjusted based on available storage methods
+      await storage.updateSubmissionStatus(offerId, "offer_accepted");
+
 
       // Handle affiliate commission calculation
       try {
@@ -403,6 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (submission && submission.affiliateCode) {
           const affiliate = await storage.getAffiliateByCode(submission.affiliateCode);
           if (affiliate) {
+            // Use the updated offerPrice for commission calculation
             const commissionAmount = (parseFloat(updatedOffer.offerPrice) * parseFloat(affiliate.commissionRate)).toFixed(2);
             await storage.updateCommissionStatus(submission.id, "earned", commissionAmount);
           }
