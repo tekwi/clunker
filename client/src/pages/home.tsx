@@ -67,7 +67,8 @@ export default function Home() {
                   onClick={() => setShowVinScanner(true)}
                   variant="outline"
                   size="lg"
-                  className="h-14 px-6 bg-white/10 text-white border-white hover:bg-white/20"
+                  className="h-14 px-6 bg-primary text-white border-primary hover:bg-primary/90"
+                  title="Scan VIN"
                 >
                   <Camera className="h-5 w-5" />
                 </Button>

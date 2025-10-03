@@ -631,10 +631,10 @@ export function MultiStepForm({ initialVin = "" }: MultiStepFormProps) {
 
       try {
         const price = await getPricingForVin(
-          vin, 
-          year, 
-          formData.vehicleMake || null, 
-          formData.vehicleModel || null, 
+          vin,
+          year,
+          formData.vehicleMake || null,
+          formData.vehicleModel || null,
           formData.vehicleYear || null
         );
         setEstimatedPrice(price);
@@ -783,6 +783,7 @@ export function MultiStepForm({ initialVin = "" }: MultiStepFormProps) {
                 variant="outline"
                 onClick={() => setShowVinScanner(true)}
                 className="h-14 px-6"
+                style={{ color: 'black' }} // Explicitly set color to black for visibility
               >
                 Scan
               </Button>

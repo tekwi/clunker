@@ -387,23 +387,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/offers/:offerId/accept", async (req, res) => {
     try {
       const { offerId } = req.params;
-      const { offerPrice } = req.body; // Get offerPrice from request body
+      const { offerPrice } = req.body;
 
-      const updatedOffer = await storage.updateOffer(offerId, {
-        status: "accepted",
-        acceptedAt: new Date(),
-        offerPrice: offerPrice !== undefined ? offerPrice.toString() : undefined, // Save the offerPrice if provided
-      });
+      console.log('📥 Accept offer request:', { offerId, offerPrice });
 
-      if (!updatedOffer) {
+      // Get the current offer to access submissionId
+      const currentOffer = await storage.getOffer(offerId);
+      if (!currentOffer) {
+        console.log('❌ Offer not found:', offerId);
         return res.status(404).json({ error: "Offer not found" });
       }
 
-      // Update submission status to "offer_accepted"
-      // Assuming storage.updateSubmissionStatus exists and takes submissionId and new status
-      // If not, this might need to be adjusted based on available storage methods
-      await storage.updateSubmissionStatus(offerId, "offer_accepted");
+      console.log('📋 Current offer:', currentOffer);
 
+      // Update the offer with accepted status and price
+      const updateData: any = {
+        status: "accepted",
+        acceptedAt: new Date(),
+      };
+
+      // Only update price if provided
+      if (offerPrice !== undefined) {
+        updateData.offerPrice = offerPrice.toString();
+      }
+
+      const updatedOffer = await storage.updateOffer(offerId, updateData);
+      console.log('✅ Offer updated:', updatedOffer);
+
+      // Update submission status
+      try {
+        const submission = await storage.getSubmission(currentOffer.submissionId);
+        if (submission) {
+          await storage.updateSubmission(submission.id, { 
+            status: "offer_accepted" 
+          });
+          console.log('✅ Submission status updated to offer_accepted');
+        }
+      } catch (error) {
+        console.error('⚠️ Failed to update submission status:', error);
+      }
 
       // Handle affiliate commission calculation
       try {
@@ -411,13 +433,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (submission && submission.affiliateCode) {
           const affiliate = await storage.getAffiliateByCode(submission.affiliateCode);
           if (affiliate) {
-            // Use the updated offerPrice for commission calculation
-            const commissionAmount = (parseFloat(updatedOffer.offerPrice) * parseFloat(affiliate.commissionRate)).toFixed(2);
+            const finalPrice = offerPrice || updatedOffer.offerPrice;
+            const commissionAmount = (parseFloat(finalPrice) * parseFloat(affiliate.commissionRate)).toFixed(2);
             await storage.updateCommissionStatus(submission.id, "earned", commissionAmount);
+            console.log('💰 Commission calculated:', commissionAmount);
           }
         }
       } catch (error) {
-        console.error('Failed to calculate affiliate commission:', error);
+        console.error('⚠️ Failed to calculate affiliate commission:', error);
       }
 
       // Send notification
@@ -425,9 +448,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const submission = await storage.getSubmissionByOfferId(offerId);
         if (submission) {
           await notificationService.sendOfferStatusUpdate(submission, updatedOffer, "accepted");
+          console.log('📧 Notification sent');
         }
       } catch (error) {
-        console.error('Failed to send acceptance notification:', error);
+        console.error('⚠️ Failed to send acceptance notification:', error);
       }
 
       res.json({ 
@@ -435,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         offer: updatedOffer 
       });
     } catch (error) {
-      console.error("Error accepting offer:", error);
+      console.error("❌ Error accepting offer:", error);
       res.status(500).json({ error: "Failed to accept offer" });
     }
   });
