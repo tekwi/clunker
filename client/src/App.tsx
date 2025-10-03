@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +10,7 @@ import AffiliateDashboard from "./pages/affiliate-dashboard";
 import NotFound from "./pages/not-found";
 
 function Router() {
+  const [location] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const showForm = params.get('start') === 'true';
 
