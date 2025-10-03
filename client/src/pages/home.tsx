@@ -81,15 +81,27 @@ export default function Home() {
                     <Camera className="h-5 w-5" />
                   </Button>
                 )}
+                {!isMobile && (
+                  <Button
+                    onClick={handleVinSubmit}
+                    disabled={vinInput.length !== 17}
+                    size="lg"
+                    className="h-14 px-8 bg-primary hover:bg-primary/90"
+                  >
+                    Get Offer
+                  </Button>
+                )}
+              </div>
+              {isMobile && (
                 <Button
                   onClick={handleVinSubmit}
                   disabled={vinInput.length !== 17}
                   size="lg"
-                  className="h-14 px-8 bg-primary hover:bg-primary/90"
+                  className="w-full h-14 mt-3 bg-primary hover:bg-primary/90"
                 >
                   Get Offer
                 </Button>
-              </div>
+              )}
               <p className="text-sm text-gray-500 mt-2 text-left">
                 {vinInput.length > 0
                   ? `${vinInput.length}/17 characters`
