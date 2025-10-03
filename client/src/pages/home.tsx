@@ -1,21 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MultiStepForm } from "@/components/MultiStepForm";
 
-interface HomeProps {
-  showForm?: boolean;
-}
-
-export default function Home({ showForm: initialShowForm = false }: HomeProps) {
-  const [, setLocation] = useLocation();
-  const [showForm, setShowForm] = useState(initialShowForm);
-
-  useEffect(() => {
-    setShowForm(initialShowForm);
-  }, [initialShowForm]);
+export default function Home() {
+  const [showForm, setShowForm] = useState(false);
 
   if (showForm) {
     return <MultiStepForm />;
@@ -34,10 +24,7 @@ export default function Home({ showForm: initialShowForm = false }: HomeProps) {
             Transparent instant pricing. No haggling. No hassle. Same-day to 2-day pickup.
           </p>
           <Button
-            onClick={() => {
-              window.history.pushState({}, '', '/?start=true');
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            }}
+            onClick={() => setShowForm(true)}
             size="lg"
             className="h-16 px-12 text-xl bg-white text-primary hover:bg-gray-100 shadow-2xl"
           >
@@ -219,10 +206,7 @@ export default function Home({ showForm: initialShowForm = false }: HomeProps) {
           No test drives. No haggling. No strangers. Just fast, fair cash.
         </p>
         <Button
-          onClick={() => {
-            window.history.pushState({}, '', '/?start=true');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          }}
+          onClick={() => setShowForm(true)}
           size="lg"
           className="h-16 px-12 text-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-2xl"
         >
