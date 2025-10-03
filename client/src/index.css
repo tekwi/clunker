@@ -49,6 +49,10 @@
   animation: pulse-green 2s infinite;
 }
 
+.from-primary {
+  --tw-gradient-stops: var(--tw-gradient-from), hsl(6.5deg 100% 72.76%);
+}
+
 :root {
   --background: hsl(210, 20%, 98%);
   --foreground: hsl(210, 25%, 7.8431%);
