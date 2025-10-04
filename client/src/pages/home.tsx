@@ -382,9 +382,14 @@ export default function Home() {
             />
             <span className="text-lg font-semibold">TrackWala</span>
           </div>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-400 mb-3">
             Fast, fair, and hassle-free vehicle buyouts
           </p>
+          <div className="flex justify-center space-x-4 text-sm">
+            <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+              Privacy Policy
+            </a>
+          </div>
         </div>
       </footer>
     </div>

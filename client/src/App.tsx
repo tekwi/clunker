@@ -7,6 +7,7 @@ import Home from "./pages/home";
 import ViewSubmission from "./pages/view-submission";
 import AdminDashboard from "./pages/admin-dashboard";
 import AffiliateDashboard from "./pages/affiliate-dashboard";
+import PrivacyPolicy from "./pages/privacy-policy";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/view/:submissionId" component={ViewSubmission} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/affiliate-dashboard" component={AffiliateDashboard} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route component={NotFound} />
     </Switch>
   );
