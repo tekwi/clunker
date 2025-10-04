@@ -47,7 +47,7 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-primary to-secondary py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="text-6xl mb-6 animate-bounce">💰</div>
+          <div className="text-6xl mb-6"><img src="/brand-avatar.png" alt="TrackWala Brand Avatar" class="w-12 h-12 rounded-full"></div>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Get Cash for Your Car in 24-48 Hours
           </h1>
