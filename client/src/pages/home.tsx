@@ -47,7 +47,13 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-primary to-secondary py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="text-6xl mb-6"><img src="/brand-avatar.png" alt="TrackWala Brand Avatar" class="w-12 h-12 rounded-full"></div>
+          <div className="text-6xl mb-6">
+            <img
+              src="/brand-avatar.png"
+              alt="TrackWala Brand Avatar"
+              class="w-12 h-12 rounded-full"
+            ></img>
+          </div>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Get Cash for Your Car in 24-48 Hours
           </h1>
@@ -366,9 +372,9 @@ export default function Home() {
       <footer className="bg-gray-800 text-white py-8 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <img 
-              src="/brand-avatar.png" 
-              alt="TrackWala Brand Avatar" 
+            <img
+              src="/brand-avatar.png"
+              alt="TrackWala Brand Avatar"
               className="w-12 h-12 rounded-full"
             />
             <span className="text-lg font-semibold">TrackWala</span>
