@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertSubmissionSchema, insertOfferSchema, adminLoginSchema, insertAffiliateSchema } from "@shared/schema";
+import { adminUsers, affiliates, affiliateSubmissions, submissions, pictures, offers, insertSubmissionSchema, insertPictureSchema, insertOfferSchema, insertAffiliateSchema, adminSettings, vehicleMakes, vehicleModels } from "@shared/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
+import { sendNewSubmissionNotification } from "./notifications";
+import { getVehiclePricing, getYearFromVin } from "./vinPricing";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { s3Storage } from "./s3Storage";
@@ -261,42 +264,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit new car submission
   app.post("/api/submissions", async (req, res) => {
     try {
-      const validatedData = insertSubmissionSchema.parse(req.body);
+      const submissionData = insertSubmissionSchema.parse(req.body);
 
-      // Create submission
-      const submission = await storage.createSubmission(validatedData);
+      const [newSubmission] = await storage.createSubmission(submissionData);
 
-      // If submission has affiliate code, create affiliate submission tracking
-      if (submission.affiliateCode) {
-        try {
-          const affiliate = await storage.getAffiliateByCode(submission.affiliateCode);
-          if (affiliate) {
-            await storage.createAffiliateSubmission({
-              affiliateId: affiliate.id,
-              submissionId: submission.id,
-              status: "pending"
-            });
-          }
-        } catch (error) {
-          console.error('Failed to create affiliate submission tracking:', error);
-          // Continue processing even if affiliate tracking fails
+      const submissionId = newSubmission.id;
+
+      // Calculate and save the initial offer price
+      const year = submissionData.vehicleYear 
+        ? parseInt(submissionData.vehicleYear) 
+        : getYearFromVin(submissionData.vin);
+
+      const rawPrice = await getVehiclePricing(
+        submissionData.vin,
+        year,
+        false,
+        submissionData.vehicleMake || undefined,
+        submissionData.vehicleModel || undefined,
+        submissionData.vehicleYear || undefined
+      );
+
+      if (rawPrice) {
+        // Fetch margin and service charge settings
+        const marginSettings = await storage.getAdminSetting('margin_type');
+        const marginType = marginSettings?.settingValue || 'percentage';
+
+        const marginValueSettings = await storage.getAdminSetting('margin_value');
+        const marginValue = parseFloat(marginValueSettings?.settingValue || '10');
+
+        const serviceChargeSettings = await storage.getAdminSetting('service_charge');
+        const serviceCharge = parseFloat(serviceChargeSettings?.settingValue || '50');
+
+        // Calculate final price
+        let finalPrice = rawPrice;
+        if (marginType === 'percentage') {
+          finalPrice = rawPrice * (1 - marginValue / 100);
+        } else {
+          finalPrice = rawPrice - marginValue;
+        }
+        finalPrice = Math.max(0, finalPrice - serviceCharge);
+
+        // Create pending offer with calculated price
+        await storage.createOffer({
+          submissionId: submissionId,
+          offerPrice: Math.round(finalPrice).toString(),
+          status: "pending",
+          notes: `Auto-generated offer based on VIN pricing`
+        });
+      }
+
+      // Handle affiliate if code is provided
+      if (submissionData.affiliateCode) {
+        const affiliate = await storage.getAffiliateByCode(submissionData.affiliateCode);
+        if (affiliate) {
+          await storage.createAffiliateSubmission({
+            affiliateId: affiliate.id,
+            submissionId: submissionId,
+            status: "pending",
+          });
         }
       }
 
-      // Send email notifications via Zapier webhook
+      // Send notification email to admin
       try {
-        await notificationService.sendSubmissionConfirmation(submission);
-      } catch (error) {
-        console.error('Failed to send submission confirmation email:', error);
-        // Continue processing even if email fails
-      }
-
-      // Send admin notification email
-      try {
-        await notificationService.sendAdminSubmissionNotification(submission);
+        await notificationService.sendAdminSubmissionNotification(newSubmission);
       } catch (error) {
         console.error('Failed to send admin notification email:', error);
-        // Continue processing even if email fails
       }
 
       res.json({
