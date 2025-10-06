@@ -138,7 +138,43 @@ export default function PrivacyPolicy() {
 
             <section className="mb-8">
               <h3 className="text-xl font-bold mb-4">
-                5. Right to Refuse Service
+                5. Title Transfer and Power of Attorney
+              </h3>
+
+              <p className="text-gray-700 mb-4">
+                <strong>IMPORTANT - Title Transfer Requirements:</strong>
+              </p>
+              <ul className="list-disc pl-6 text-gray-700 space-y-2">
+                <li>
+                  Transfer of vehicle ownership and title is NOT guaranteed without a properly executed Power of Attorney (POA)
+                </li>
+                <li>
+                  You may be required to provide a signed POA authorizing TrackWala to handle title transfer and registration on your behalf
+                </li>
+                <li>
+                  All POA documents must be notarized and comply with state-specific requirements
+                </li>
+                <li>
+                  We cannot complete the vehicle purchase or transfer title without proper legal documentation
+                </li>
+                <li>
+                  You are responsible for ensuring all title transfer documents are accurate, complete, and legally valid
+                </li>
+                <li>
+                  TrackWala is not liable for any delays, fees, or complications arising from incomplete or improper POA documentation
+                </li>
+              </ul>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+                <p className="text-amber-900 font-medium">
+                  ⚠️ Without a valid POA, you may need to appear in person for title transfer, which could delay or prevent the completion of your vehicle sale.
+                </p>
+              </div>
+            </section>
+
+            <section className="mb-8">
+              <h3 className="text-xl font-bold mb-4">
+                6. Right to Refuse Service
               </h3>
 
               <p className="text-gray-700 mb-4">
@@ -178,7 +214,7 @@ export default function PrivacyPolicy() {
 
             <section className="mb-8">
               <h3 className="text-xl font-bold mb-4">
-                6. Limitation of Liability
+                7. Limitation of Liability
               </h3>
               <p className="text-gray-700 mb-4">
                 TO THE MAXIMUM EXTENT PERMITTED BY LAW:
@@ -208,7 +244,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h3 className="text-xl font-bold mb-4">7. Data Security</h3>
+              <h3 className="text-xl font-bold mb-4">8. Data Security</h3>
               <p className="text-gray-700 mb-4">
                 We implement reasonable security measures to protect your
                 information, including:
@@ -227,7 +263,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h3 className="text-xl font-bold mb-4">8. Information Sharing</h3>
+              <h3 className="text-xl font-bold mb-4">9. Information Sharing</h3>
               <p className="text-gray-700 mb-4">
                 We may share your information with:
               </p>
@@ -252,7 +288,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h3 className="text-xl font-bold mb-4">9. Your Rights</h3>
+              <h3 className="text-xl font-bold mb-4">10. Your Rights</h3>
               <p className="text-gray-700 mb-4">You have the right to:</p>
               <ul className="list-disc pl-6 text-gray-700 space-y-2">
                 <li>Access the personal information we hold about you</li>
@@ -268,7 +304,7 @@ export default function PrivacyPolicy() {
 
             <section className="mb-8">
               <h3 className="text-xl font-bold mb-4">
-                10. Cookies and Tracking
+                11. Cookies and Tracking
               </h3>
               <p className="text-gray-700 mb-4">
                 We use cookies and similar tracking technologies to improve user
@@ -278,7 +314,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h3 className="text-xl font-bold mb-4">11. Third-Party Links</h3>
+              <h3 className="text-xl font-bold mb-4">12. Third-Party Links</h3>
               <p className="text-gray-700">
                 Our service may contain links to third-party websites. We are
                 not responsible for the privacy practices or content of these
@@ -287,7 +323,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h3 className="text-xl font-bold mb-4">12. Children's Privacy</h3>
+              <h3 className="text-xl font-bold mb-4">13. Children's Privacy</h3>
               <p className="text-gray-700">
                 Our services are not intended for individuals under 18 years of
                 age. We do not knowingly collect information from children.
@@ -296,7 +332,7 @@ export default function PrivacyPolicy() {
 
             <section className="mb-8">
               <h3 className="text-xl font-bold mb-4">
-                13. Changes to This Policy
+                14. Changes to This Policy
               </h3>
               <p className="text-gray-700">
                 We may update this Privacy Policy periodically. Changes will be
@@ -308,7 +344,7 @@ export default function PrivacyPolicy() {
 
             <section className="mb-8">
               <h3 className="text-xl font-bold mb-4">
-                14. Dispute Resolution and Arbitration
+                15. Dispute Resolution and Arbitration
               </h3>
               <p className="text-gray-700 mb-4">
                 Any disputes arising from or relating to our services shall be
@@ -319,7 +355,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h3 className="text-xl font-bold mb-4">15. Contact Us</h3>
+              <h3 className="text-xl font-bold mb-4">16. Contact Us</h3>
               <p className="text-gray-700 mb-4">
                 If you have questions about this Privacy Policy or wish to
                 exercise your rights, please contact us:
@@ -335,7 +371,7 @@ export default function PrivacyPolicy() {
 
             <section>
               <h3 className="text-xl font-bold mb-4">
-                16. Acceptance of Terms
+                17. Acceptance of Terms
               </h3>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-gray-700">
