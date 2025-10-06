@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
             <h1 className="text-3xl font-bold text-white">TrackWala</h1>
           </div>
           <h2 className="text-2xl font-bold text-white">Privacy Policy</h2>
-          <p className="text-white/90 mt-2">Last Updated: January 2025</p>
+          <p className="text-white/90 mt-2">Last Updated: August 2025</p>
         </div>
       </div>
 
@@ -146,30 +146,37 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="list-disc pl-6 text-gray-700 space-y-2">
                 <li>
-                  Transfer of vehicle ownership and title is NOT guaranteed without a properly executed Power of Attorney (POA)
+                  Transfer of vehicle ownership and title is NOT guaranteed
+                  without a properly executed Power of Attorney (POA)
                 </li>
                 <li>
-                  You may be required to provide a signed POA authorizing TrackWala to handle title transfer and registration on your behalf
+                  You may be required to provide a signed POA authorizing
+                  TrackWala to handle title transfer and registration on your
+                  behalf
                 </li>
                 <li>
-                  All POA documents must be notarized and comply with state-specific requirements
+                  All POA documents must be notarized and comply with
+                  state-specific requirements
                 </li>
                 <li>
-                  We cannot complete the vehicle purchase or transfer title without proper legal documentation
+                  We cannot complete the vehicle purchase or transfer title
+                  without proper legal documentation
                 </li>
                 <li>
-                  You are responsible for ensuring all title transfer documents are accurate, complete, and legally valid
+                  You are responsible for ensuring all title transfer documents
+                  are accurate, complete, and legally valid
                 </li>
                 <li>
-                  TrackWala is not liable for any delays, fees, or complications arising from incomplete or improper POA documentation
+                  TrackWala is not liable for any delays, fees, or complications
+                  arising from incomplete or improper POA documentation
                 </li>
               </ul>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
-                <p className="text-amber-900 font-medium">
-                  ⚠️ Without a valid POA, you may need to appear in person for title transfer, which could delay or prevent the completion of your vehicle sale.
-                </p>
-              </div>
+              <p className="text-amber-900 font-medium">
+                Without a valid POA, you may need to appear in person for title
+                transfer, which could delay or prevent the completion of your
+                vehicle sale.
+              </p>
             </section>
 
             <section className="mb-8">
