@@ -172,7 +172,7 @@ export default function PrivacyPolicy() {
                 </li>
               </ul>
 
-              <p className="text-amber-900 font-medium">
+              <p className="text-gray-700">
                 Without a valid POA, you may need to appear in person for title
                 transfer, which could delay or prevent the completion of your
                 vehicle sale.
