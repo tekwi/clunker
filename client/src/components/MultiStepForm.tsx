@@ -69,10 +69,16 @@ const getYearFromVin = (vin: string): number => {
 
   if (possibleYears.length === 0) return new Date().getFullYear();
 
+  const currentYear = new Date().getFullYear();
+  
+  // Filter out any years in the future
+  const validYears = possibleYears.filter(year => year <= currentYear);
+  
+  if (validYears.length === 0) return currentYear;
+
   // For VIN year characters that map to two possible years,
-  // choose the later year (2010-2039 range) for newer vehicles
-  // since we're past 2010 and most vehicles being processed are likely newer
-  return Math.max(...possibleYears);
+  // choose the most recent valid year (but not future)
+  return Math.max(...validYears);
 };
 
 // Vehicle makes will be loaded from API

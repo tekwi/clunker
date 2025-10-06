@@ -126,7 +126,7 @@ export function getMakeFromVin(vin: string): string | null {
 // Function to decode model from VIN using vehicle_pricing table
 export async function getModelFromVin(vin: string): Promise<string | null> {
   if (vin.length < 8) return null;
-  
+
   try {
     // Get the first 8 characters of the VIN for matching
     const vinPrefix = vin.substring(0, 8).toUpperCase();
@@ -160,9 +160,16 @@ export function getYearFromVin(vin: string): number | null {
 
   if (possibleYears.length === 0) return null;
 
+  const currentYear = new Date().getFullYear();
+
+  // Filter out any years in the future
+  const validYears = possibleYears.filter(year => year <= currentYear);
+
+  if (validYears.length === 0) return null;
+
   // For VIN year characters that map to two possible years,
-  // choose the later year (2010-2039 range) for newer vehicles
-  return Math.max(...possibleYears);
+  // choose the most recent valid year (but not future)
+  return Math.max(...validYears);
 }
 
 // Function to calculate median price
@@ -172,7 +179,7 @@ function calculateMedianPrice(prices: number[]): number {
 
   const sortedPrices = [...prices].sort((a, b) => a - b);
   const mid = Math.floor(sortedPrices.length / 2);
-  
+
   return sortedPrices.length % 2 === 0
     ? Math.round((sortedPrices[mid - 1] + sortedPrices[mid]) / 2)
     : sortedPrices[mid];
