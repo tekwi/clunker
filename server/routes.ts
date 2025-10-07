@@ -280,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const submissionData = insertSubmissionSchema.parse(req.body);
 
-      const [newSubmission] = await storage.createSubmission(submissionData);
+      const newSubmission = await storage.createSubmission(submissionData);
 
       const submissionId = newSubmission.id;
 
