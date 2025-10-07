@@ -54,7 +54,7 @@ export default function Home() {
               alt="TrackWala Brand Avatar"
               className="w-16 h-16 md:w-20 md:h-20 rounded-full shadow-lg"
             />
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
+            <h2 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-brand)' }}>
               TrackWala
             </h2>
           </div>
@@ -382,7 +382,7 @@ export default function Home() {
               alt="TrackWala Brand Avatar"
               className="w-12 h-12 rounded-full"
             />
-            <span className="text-lg font-semibold">TrackWala</span>
+            <span className="text-lg font-semibold" style={{ fontFamily: 'var(--font-brand)' }}>TrackWala</span>
           </div>
           <p className="text-sm text-gray-400 mb-3">
             Fast, fair, and hassle-free vehicle buyouts
