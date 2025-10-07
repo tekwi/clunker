@@ -63,6 +63,7 @@ export const offers = mysqlTable("offers", {
   ),
   createdAt: timestamp("created_at").defaultNow(),
   acceptedAt: timestamp("accepted_at"),
+  reminderSentAt: timestamp("reminder_sent_at"), // Added reminderSentAt field
 });
 
 export const affiliates = mysqlTable("affiliates", {
@@ -157,6 +158,7 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
   id: true,
   createdAt: true,
   acceptedAt: true,
+  reminderSentAt: true, // Added to omit reminderSentAt from insert schema
 });
 
 export const insertAffiliateSchema = createInsertSchema(affiliates).omit({

@@ -130,6 +130,112 @@ export class NotificationService {
     });
   }
 
+  async sendOfferReminderEmail(submission: any, offer: any): Promise<void> {
+    const subject = '⏰ Reminder: Your Cash Offer Expires Soon!';
+    const viewUrl = `https://trackwala.com/view/${submission.id}`;
+    const offerAmount = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(offer.offerPrice);
+
+    const body = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Reminder</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, hsl(30, 100%, 48%) 0%, hsl(30, 100%, 38%) 100%); padding: 40px 32px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">⏰ Don't Miss Out!</h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 16px;">Your cash offer is waiting</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 40px 32px;">
+            <h2 style="color: #1e293b; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">Hello ${submission.ownerName},</h2>
+
+            <p style="color: #475569; line-height: 1.6; margin: 0 0 24px 0; font-size: 16px;">
+                We noticed you haven't responded to our cash offer yet. We wanted to remind you that your offer is still available, but it won't last forever!
+            </p>
+
+            <!-- Offer Amount Card -->
+            <div style="background: linear-gradient(135deg, hsl(30, 100%, 48%) 0%, hsl(30, 100%, 38%) 100%); border-radius: 12px; padding: 32px; margin: 24px 0; text-align: center; color: white;">
+                <h3 style="color: white; margin: 0 0 16px 0; font-size: 18px; font-weight: 600; opacity: 0.9;">Your Cash Offer</h3>
+                <div style="font-size: 48px; font-weight: 800; margin: 16px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    ${offerAmount}
+                </div>
+                <p style="color: rgba(255, 255, 255, 0.8); margin: 16px 0 0 0; font-size: 14px;">
+                    For VIN: <span style="font-family: monospace; font-weight: 600;">${submission.vin}</span>
+                </p>
+            </div>
+
+            <!-- Urgency Notice -->
+            <div style="background-color: #fef2f2; border: 2px solid #fecaca; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+                <p style="color: #dc2626; margin: 0; font-weight: 600; font-size: 16px;">
+                    ⚠️ This offer expires in 4 days!
+                </p>
+                <p style="color: #dc2626; margin: 8px 0 0 0; font-size: 14px;">
+                    Act now to secure this cash offer for your vehicle
+                </p>
+            </div>
+
+            <p style="color: #475569; line-height: 1.6; margin: 24px 0; font-size: 16px;">
+                Don't let this opportunity slip away. Click the button below to review and accept your offer today.
+            </p>
+
+            <!-- Call to Action Button -->
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${viewUrl}" style="display: inline-block; background: linear-gradient(135deg, hsl(30, 100%, 48%) 0%, hsl(30, 100%, 38%) 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3); transition: all 0.3s ease;">
+                    Accept Offer Now
+                </a>
+            </div>
+
+            <!-- Benefits List -->
+            <div style="background-color: #f1f5f9; border-radius: 8px; padding: 24px; margin: 24px 0;">
+                <h4 style="color: #1e293b; margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Why Choose TrackWala?</h4>
+                <ul style="color: #475569; margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Fast cash payment - no waiting</li>
+                    <li>Free vehicle pickup within 24-48 hours</li>
+                    <li>No hidden fees or surprises</li>
+                    <li>Simple, hassle-free process</li>
+                </ul>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 24px 0 0 0; text-align: center;">
+                Have questions? Simply reply to this email or visit:<br>
+                <a href="${viewUrl}" style="color: hsl(30, 100%, 48%); text-decoration: none;">${viewUrl}</a>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #64748b; margin: 0; font-size: 14px;">
+                Best regards,<br>
+                <strong style="color: #1e293b;">TrackWala Team</strong>
+            </p>
+            <p style="color: #94a3b8; margin: 16px 0 0 0; font-size: 12px;">
+                This is a reminder about your pending offer. If you're no longer interested, you can safely ignore this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `.trim();
+
+    await this.sendEmail({
+      to: submission.email,
+      name: submission.ownerName,
+      subject,
+      body,
+    });
+  }
+
   async sendOfferNotification(submission: any, offer: any): Promise<void> {
     const subject = 'You have received a cash offer for your vehicle!';
     const viewUrl = `https://trackwala.com/view/${submission.id}`;

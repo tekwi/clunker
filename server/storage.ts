@@ -19,7 +19,7 @@ import {
   type AdminLogin
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -33,6 +33,26 @@ export interface IStorage {
   // Offers
   createOffer(offer: InsertOffer): Promise<Offer>;
   getOfferBySubmissionId(submissionId: string): Promise<Offer | undefined>;
+  updateOffer(offerId: string, updates: Partial<InsertOffer>): Promise<Offer | undefined>;
+  deleteOffer(offerId: string): Promise<void>;
+  getOffersNeedingReminders(): Promise<
+    {
+      offer: Offer;
+      submission: {
+        id: string;
+        vin: string | null;
+        ownerName: string | null;
+        email: string | null;
+        phoneNumber: string | null;
+        titleCondition: string | null;
+        vehicleCondition: string | null;
+        odometerReading: string | null;
+        address: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      };
+    }[]
+  >;
 
   // Admin
   authenticateAdmin(credentials: AdminLogin): Promise<
@@ -55,8 +75,6 @@ export interface IStorage {
       address: string | null;
     })[]
   >;
-  updateOffer(offerId: string, updates: Partial<InsertOffer>): Promise<Offer | undefined>;
-  deleteOffer(offerId: string): Promise<void>;
 
   // Affiliates
   createAffiliate(affiliate: InsertAffiliate): Promise<Affiliate>;
@@ -64,7 +82,7 @@ export interface IStorage {
   getAffiliateByCode(code: string): Promise<Affiliate | undefined>;
   updateAffiliate(affiliateId: string, updates: Partial<InsertAffiliate>): Promise<Affiliate | undefined>;
   deleteAffiliate(affiliateId: string): Promise<void>;
-  
+
   // Affiliate Submissions
   createAffiliateSubmission(affiliateSubmission: InsertAffiliateSubmission): Promise<AffiliateSubmission>;
   getAffiliateSubmissions(affiliateId: string): Promise<AffiliateSubmission[]>;
@@ -72,6 +90,8 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  constructor(private db: any) {} // Assuming db is passed in or accessible
+
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
     // Generate ID for the submission
     const submissionId = randomUUID();
@@ -85,12 +105,12 @@ export class DatabaseStorage implements IStorage {
     };
 
     // Insert the submission with the generated ID
-    await db
+    await this.db
       .insert(submissions)
       .values(cleanedData);
 
     // Get the inserted submission
-    const submission = await db
+    const submission = await this.db
       .select()
       .from(submissions)
       .where(eq(submissions.id, submissionId))
@@ -105,7 +125,7 @@ export class DatabaseStorage implements IStorage {
 
   async getSubmission(id: string): Promise<SubmissionWithRelations | undefined> {
     // Get the submission first
-    const submission = await db
+    const submission = await this.db
       .select()
       .from(submissions)
       .where(eq(submissions.id, id))
@@ -116,13 +136,13 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get related pictures
-    const submissionPictures = await db
+    const submissionPictures = await this.db
       .select()
       .from(pictures)
       .where(eq(pictures.submissionId, id));
 
     // Get related offer
-    const submissionOffer = await db
+    const submissionOffer = await this.db
       .select()
       .from(offers)
       .where(eq(offers.submissionId, id))
@@ -139,13 +159,13 @@ export class DatabaseStorage implements IStorage {
     if (insertPictures.length === 0) return [];
 
     // Insert pictures
-    await db
+    await this.db
       .insert(pictures)
       .values(insertPictures);
 
     // Get the inserted pictures by submission ID
     const submissionId = insertPictures[0].submissionId;
-    const addedPictures = await db
+    const addedPictures = await this.db
       .select()
       .from(pictures)
       .where(eq(pictures.submissionId, submissionId));
@@ -156,14 +176,14 @@ export class DatabaseStorage implements IStorage {
   async createOffer(insertOffer: InsertOffer): Promise<Offer> {
     const offerId = randomUUID();
 
-    await db
+    await this.db
       .insert(offers)
       .values({
         ...insertOffer,
         id: offerId,
       });
 
-    const offer = await db
+    const offer = await this.db
       .select()
       .from(offers)
       .where(eq(offers.id, offerId))
@@ -176,7 +196,7 @@ export class DatabaseStorage implements IStorage {
     console.log("🔍 Authenticating admin:", { username: credentials.username });
 
     try {
-      const admin = await db
+      const admin = await this.db
         .select()
         .from(adminUsers)
         .where(eq(adminUsers.username, credentials.username))
@@ -220,7 +240,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllOffers() {
-    const result = await db
+    const result = await this.db
       .select({
         id: offers.id,
         submissionId: offers.submissionId,
@@ -246,7 +266,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSubmissions() {
-    const result = await db
+    const result = await this.db
       .select()
       .from(submissions)
       .orderBy(desc(submissions.createdAt));
@@ -255,13 +275,13 @@ export class DatabaseStorage implements IStorage {
     const submissionsWithRelations = await Promise.all(
       result.map(async (submission) => {
         // Get pictures
-        const submissionPictures = await db
+        const submissionPictures = await this.db
           .select()
           .from(pictures)
           .where(eq(pictures.submissionId, submission.id));
 
         // Get offer if exists
-        const submissionOffer = await db
+        const submissionOffer = await this.db
           .select()
           .from(offers)
           .where(eq(offers.submissionId, submission.id))
@@ -278,31 +298,38 @@ export class DatabaseStorage implements IStorage {
     return submissionsWithRelations;
   }
 
-  async updateOffer(offerId: string, updates: any) {
-    try {
-      await db
-        .update(offers)
-        .set(updates)
-        .where(eq(offers.id, offerId));
+  async updateOffer(offerId: string, updates: Partial<typeof offers.$inferInsert>) {
+    const [updatedOffer] = await this.db
+      .update(offers)
+      .set(updates)
+      .where(eq(offers.id, offerId))
+      .returning();
+    return updatedOffer;
+  }
 
-      // MySQL doesn't support returning, so fetch the updated record
-      const updatedOffer = await db
-        .select()
-        .from(offers)
-        .where(eq(offers.id, offerId))
-        .limit(1)
-        .then(rows => rows[0]);
+  async getOffersNeedingReminders() {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-      return updatedOffer;
-    } catch (error) {
-      console.error("Error updating offer:", error);
-      throw error;
-    }
+    return await this.db
+      .select({
+        offer: offers,
+        submission: submissions
+      })
+      .from(offers)
+      .innerJoin(submissions, eq(offers.submissionId, submissions.id))
+      .where(
+        and(
+          eq(offers.status, 'pending'),
+          sql`${offers.reminderSentAt} IS NULL`,
+          sql`${offers.createdAt} <= ${threeDaysAgo}`
+        )
+      );
   }
 
   async getSubmissionByOfferId(offerId: string) {
     try {
-      const offer = await db
+      const offer = await this.db
         .select()
         .from(offers)
         .where(eq(offers.id, offerId))
@@ -319,13 +346,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteOffer(offerId: string) {
-    await db
+    await this.db
       .delete(offers)
       .where(eq(offers.id, offerId));
   }
 
   async getOfferBySubmissionId(submissionId: string): Promise<Offer | undefined> {
-    const [offer] = await db
+    const [offer] = await this.db
       .select()
       .from(offers)
       .where(eq(offers.submissionId, submissionId));
@@ -337,7 +364,7 @@ export class DatabaseStorage implements IStorage {
     const affiliateId = randomUUID();
     const uniqueCode = Math.random().toString(36).substring(2, 12).toUpperCase();
 
-    await db
+    await this.db
       .insert(affiliates)
       .values({
         ...insertAffiliate,
@@ -345,7 +372,7 @@ export class DatabaseStorage implements IStorage {
         uniqueCode,
       });
 
-    const affiliate = await db
+    const affiliate = await this.db
       .select()
       .from(affiliates)
       .where(eq(affiliates.id, affiliateId))
@@ -359,14 +386,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllAffiliates(): Promise<Affiliate[]> {
-    return await db
+    return await this.db
       .select()
       .from(affiliates)
       .orderBy(desc(affiliates.createdAt));
   }
 
   async getAffiliateByCode(code: string): Promise<Affiliate | undefined> {
-    const [affiliate] = await db
+    const [affiliate] = await this.db
       .select()
       .from(affiliates)
       .where(eq(affiliates.uniqueCode, code))
@@ -375,12 +402,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAffiliate(affiliateId: string, updates: any): Promise<Affiliate | undefined> {
-    await db
+    await this.db
       .update(affiliates)
       .set(updates)
       .where(eq(affiliates.id, affiliateId));
 
-    const updatedAffiliate = await db
+    const updatedAffiliate = await this.db
       .select()
       .from(affiliates)
       .where(eq(affiliates.id, affiliateId))
@@ -391,7 +418,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteAffiliate(affiliateId: string): Promise<void> {
-    await db
+    await this.db
       .delete(affiliates)
       .where(eq(affiliates.id, affiliateId));
   }
@@ -399,14 +426,14 @@ export class DatabaseStorage implements IStorage {
   async createAffiliateSubmission(insertAffiliateSubmission: InsertAffiliateSubmission): Promise<AffiliateSubmission> {
     const affiliateSubmissionId = randomUUID();
 
-    await db
+    await this.db
       .insert(affiliateSubmissions)
       .values({
         ...insertAffiliateSubmission,
         id: affiliateSubmissionId,
       });
 
-    const affiliateSubmission = await db
+    const affiliateSubmission = await this.db
       .select()
       .from(affiliateSubmissions)
       .where(eq(affiliateSubmissions.id, affiliateSubmissionId))
@@ -416,7 +443,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAffiliateSubmissions(affiliateId: string): Promise<AffiliateSubmission[]> {
-    return await db
+    return await this.db
       .select()
       .from(affiliateSubmissions)
       .where(eq(affiliateSubmissions.affiliateId, affiliateId))
@@ -429,11 +456,11 @@ export class DatabaseStorage implements IStorage {
       updates.commissionAmount = commissionAmount;
     }
 
-    await db
+    await this.db
       .update(affiliateSubmissions)
       .set(updates)
       .where(eq(affiliateSubmissions.submissionId, submissionId));
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new DatabaseStorage(db); // Pass db instance here
