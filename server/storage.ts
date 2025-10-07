@@ -5,6 +5,7 @@ import {
   adminUsers,
   affiliates,
   affiliateSubmissions,
+  adminSettings,
   type Submission,
   type Picture,
   type Offer,
@@ -87,6 +88,9 @@ export interface IStorage {
   createAffiliateSubmission(affiliateSubmission: InsertAffiliateSubmission): Promise<AffiliateSubmission>;
   getAffiliateSubmissions(affiliateId: string): Promise<AffiliateSubmission[]>;
   updateCommissionStatus(submissionId: string, status: string, commissionAmount?: string): Promise<void>;
+
+  // Admin Settings
+  getAdminSetting(settingKey: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -467,6 +471,15 @@ export class DatabaseStorage implements IStorage {
       .update(affiliateSubmissions)
       .set(updates)
       .where(eq(affiliateSubmissions.submissionId, submissionId));
+  }
+
+  async getAdminSetting(settingKey: string): Promise<any> {
+    const [setting] = await this.db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.settingKey, settingKey))
+      .limit(1);
+    return setting || null;
   }
 }
 
