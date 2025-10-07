@@ -299,11 +299,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOffer(offerId: string, updates: Partial<typeof offers.$inferInsert>) {
-    const [updatedOffer] = await this.db
+    await this.db
       .update(offers)
       .set(updates)
+      .where(eq(offers.id, offerId));
+    
+    // MySQL doesn't support .returning(), so we need to fetch the updated record
+    const [updatedOffer] = await this.db
+      .select()
+      .from(offers)
       .where(eq(offers.id, offerId))
-      .returning();
+      .limit(1);
+    
     return updatedOffer;
   }
 
