@@ -54,11 +54,13 @@ export default function Home() {
               alt="TrackWala Brand Avatar"
               className="w-16 h-16 md:w-20 md:h-20 rounded-full shadow-lg"
             />
-            <h2 className="text-3xl md:text-4xl font-bold text-white">TrackWala</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">
+              TrackWala
+            </h2>
           </div>
-          
+
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Get Cash for Your Car in 24-48 Hours
+            Get Cash for Your Car
           </h1>
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
             Transparent instant pricing. No haggling. No hassle. <br />
@@ -386,7 +388,10 @@ export default function Home() {
             Fast, fair, and hassle-free vehicle buyouts
           </p>
           <div className="flex justify-center space-x-4 text-sm">
-            <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+            <a
+              href="/privacy-policy"
+              className="text-gray-400 hover:text-white transition-colors"
+            >
               Privacy Policy
             </a>
           </div>
