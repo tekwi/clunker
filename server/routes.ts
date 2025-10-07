@@ -319,12 +319,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         finalPrice = Math.max(0, finalPrice - serviceCharge);
 
         // Create pending offer with calculated price
-        await storage.createOffer({
+        const offer = await storage.createOffer({
           submissionId: submissionId,
           offerPrice: Math.round(finalPrice).toString(),
           status: "pending",
           notes: `Auto-generated offer based on VIN pricing`
         });
+
+        // Send offer notification to customer
+        try {
+          await notificationService.sendOfferNotification(newSubmission, offer);
+          console.log('✅ Offer notification sent to customer');
+        } catch (error) {
+          console.error('Failed to send offer notification to customer:', error);
+        }
       }
 
       // Handle affiliate if code is provided
