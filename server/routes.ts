@@ -17,6 +17,20 @@ import affiliateRoutes from "./routes/affiliate";
 import pricingRoutes from "./routes/pricing";
 import vehicleRoutes from "./routes/vehicles";
 
+// Define the Zod schema for admin login
+const adminLoginSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
+
+// Helper function to send submission confirmation email
+async function sendSubmissionConfirmationEmail(submission: any) {
+  // This is a placeholder for the actual email sending logic.
+  // In a real application, you would use an email service (e.g., Nodemailer, SendGrid).
+  console.log("Sending submission confirmation email for submission ID:", submission.id);
+  // Example: await mailer.sendMail({ to: submission.email, subject: 'Submission Received', html: '...' });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const objectStorageService = new ObjectStorageService();
 
@@ -333,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({
-        submissionId: submission.id,
+        submissionId: newSubmission.id,
         message: "Submission created successfully"
       });
     } catch (error) {
@@ -344,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: error.errors 
         });
       }
-      res.status(500).json({ error: "Failed to create submission" });
+      res.status(500).json({ error: "Failed to create submission", details: error.message });
     }
   });
 

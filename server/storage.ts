@@ -303,14 +303,14 @@ export class DatabaseStorage implements IStorage {
       .update(offers)
       .set(updates)
       .where(eq(offers.id, offerId));
-    
+
     // MySQL doesn't support .returning(), so we need to fetch the updated record
     const [updatedOffer] = await this.db
       .select()
       .from(offers)
       .where(eq(offers.id, offerId))
       .limit(1);
-    
+
     return updatedOffer;
   }
 
