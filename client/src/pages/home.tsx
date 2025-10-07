@@ -50,7 +50,7 @@ export default function Home() {
           {/* Brand Header */}
           <div className="flex items-center justify-center space-x-3 mb-8">
             <img
-              src="https://trackwala.com/brand-avatar.png"
+              src="https://trackwala.com/trackwala-logo.png"
               alt="TrackWala Brand Avatar"
               className="w-16 h-16 md:w-20 md:h-20 rounded-full shadow-lg"
             />
