@@ -27,6 +27,7 @@ export interface IStorage {
   // Submissions
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmission(id: string): Promise<SubmissionWithRelations | undefined>;
+  updateSubmission(submissionId: string, updates: Partial<InsertSubmission>): Promise<Submission | undefined>;
 
   // Pictures
   addPictures(pictures: InsertPicture[]): Promise<Picture[]>;
@@ -158,6 +159,21 @@ export class DatabaseStorage implements IStorage {
       pictures: submissionPictures,
       offer: submissionOffer[0] || undefined,
     };
+  }
+
+  async updateSubmission(submissionId: string, updates: Partial<InsertSubmission>): Promise<Submission | undefined> {
+    await this.db
+      .update(submissions)
+      .set(updates)
+      .where(eq(submissions.id, submissionId));
+
+    const [updatedSubmission] = await this.db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .limit(1);
+
+    return updatedSubmission || undefined;
   }
 
   async addPictures(insertPictures: InsertPicture[]): Promise<Picture[]> {
