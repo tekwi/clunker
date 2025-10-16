@@ -82,6 +82,10 @@ router.post("/admin/posts", requireAuth, async (req, res) => {
   try {
     const postData = { ...req.body };
     
+    // Remove timestamp fields that are auto-generated
+    delete postData.createdAt;
+    delete postData.updatedAt;
+    
     // Handle publishedAt field conversion
     if (postData.publishedAt !== undefined) {
       if (postData.publishedAt === null || postData.publishedAt === '') {
@@ -119,6 +123,10 @@ router.put("/admin/posts/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
+    
+    // Remove timestamp fields that shouldn't be updated from client
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
     
     // Handle publishedAt field conversion
     if (updateData.publishedAt !== undefined) {
