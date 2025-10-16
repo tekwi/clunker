@@ -142,6 +142,31 @@ export const adminSettings = mysqlTable("admin_settings", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
+export const blogPosts = mysqlTable("blog_posts", {
+  id: varchar("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  metaTitle: varchar("meta_title", { length: 255 }),
+  metaDescription: text("meta_description"),
+  ogTitle: varchar("og_title", { length: 255 }),
+  ogDescription: text("og_description"),
+  ogImage: varchar("og_image", { length: 500 }),
+  postType: mysqlEnum("post_type", ["blog", "sell-my-car", "junk-car-removal"]).default("blog"),
+  vehicleMake: varchar("vehicle_make", { length: 100 }),
+  vehicleModel: varchar("vehicle_model", { length: 100 }),
+  stateName: varchar("state_name", { length: 100 }),
+  cityName: varchar("city_name", { length: 100 }),
+  featuredImage: varchar("featured_image", { length: 500 }),
+  status: mysqlEnum("status", ["draft", "published", "archived"]).default("draft"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
 // Schema definitions
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
@@ -193,6 +218,9 @@ export type VehicleModel = typeof vehicleModels.$inferSelect;
 export type NewVehicleModel = typeof vehicleModels.$inferInsert;
 export type AdminSetting = typeof adminSettings.$inferSelect;
 export type NewAdminSetting = typeof adminSettings.$inferInsert;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type NewBlogPost = typeof blogPosts.$inferInsert;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
 
 // Additional type aliases for compatibility
 export type InsertSubmission = typeof submissions.$inferInsert;

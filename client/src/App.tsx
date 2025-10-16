@@ -8,6 +8,8 @@ import ViewSubmission from "./pages/view-submission";
 import AdminDashboard from "./pages/admin-dashboard";
 import AffiliateDashboard from "./pages/affiliate-dashboard";
 import PrivacyPolicy from "./pages/privacy-policy";
+import BlogManagement from "./pages/blog-management";
+import BlogPost from "./pages/blog-post";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -18,8 +20,12 @@ function Router() {
       </Route>
       <Route path="/view/:submissionId" component={ViewSubmission} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/blog" component={BlogManagement} />
       <Route path="/affiliate-dashboard" component={AffiliateDashboard} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/sell-my-car/:make/:model" component={BlogPost} />
+      <Route path="/junk-car-removal/state/:state/:city" component={BlogPost} />
       <Route component={NotFound} />
     </Switch>
   );

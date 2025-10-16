@@ -16,6 +16,7 @@ import adminRoutes from "./routes/admin";
 import affiliateRoutes from "./routes/affiliate";
 import pricingRoutes from "./routes/pricing";
 import vehicleRoutes from "./routes/vehicles";
+import blogRoutes from "./routes/blog";
 
 // Define the Zod schema for admin login
 const adminLoginSchema = z.object({
@@ -664,6 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/affiliate", affiliateRoutes);
   app.use("/api/pricing", pricingRoutes);
   app.use("/api/vehicles", vehicleRoutes);
+  app.use("/api", blogRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
