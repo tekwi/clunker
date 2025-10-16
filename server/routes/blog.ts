@@ -80,14 +80,18 @@ router.get("/admin/posts/:id", requireAuth, async (req, res) => {
 // Create post (admin)
 router.post("/admin/posts", requireAuth, async (req, res) => {
   try {
-    const postData = req.body;
+    const postData = { ...req.body };
+    
+    // Convert string dates to Date objects
+    if (postData.publishedAt && typeof postData.publishedAt === 'string') {
+      postData.publishedAt = new Date(postData.publishedAt);
+    } else if (postData.status === 'published' && !postData.publishedAt) {
+      postData.publishedAt = new Date();
+    }
     
     const result = await db
       .insert(blogPosts)
-      .values({
-        ...postData,
-        publishedAt: postData.status === 'published' ? new Date() : null,
-      });
+      .values(postData);
     
     // Fetch the created post using the slug (unique field)
     const [post] = await db
@@ -107,7 +111,12 @@ router.post("/admin/posts", requireAuth, async (req, res) => {
 router.put("/admin/posts/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updateData = { ...req.body };
+    
+    // Convert string dates to Date objects
+    if (updateData.publishedAt && typeof updateData.publishedAt === 'string') {
+      updateData.publishedAt = new Date(updateData.publishedAt);
+    }
     
     // If publishing for the first time, set publishedAt
     if (updateData.status === 'published' && !updateData.publishedAt) {
