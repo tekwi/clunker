@@ -71,13 +71,19 @@ router.post("/admin/posts", requireAuth, async (req, res) => {
   try {
     const postData = req.body;
     
-    const [post] = await db
+    const result = await db
       .insert(blogPosts)
       .values({
         ...postData,
         publishedAt: postData.status === 'published' ? new Date() : null,
-      })
-      .returning();
+      });
+    
+    // Fetch the created post using the slug (unique field)
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, postData.slug))
+      .limit(1);
     
     res.json(post);
   } catch (error) {
@@ -97,11 +103,17 @@ router.put("/admin/posts/:id", requireAuth, async (req, res) => {
       updateData.publishedAt = new Date();
     }
     
-    const [post] = await db
+    await db
       .update(blogPosts)
       .set(updateData)
+      .where(eq(blogPosts.id, id));
+    
+    // Fetch the updated post
+    const [post] = await db
+      .select()
+      .from(blogPosts)
       .where(eq(blogPosts.id, id))
-      .returning();
+      .limit(1);
     
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
