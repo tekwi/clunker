@@ -665,6 +665,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/affiliate", affiliateRoutes);
   app.use("/api/pricing", pricingRoutes);
   app.use("/api/vehicles", vehicleRoutes);
+
+  // Import and use blog routes with session context
+  const blogRoutes = (await import("./routes/blog.js")).default;
+
+  // Ensure sessions are available to blog routes
+  app.use((req, res, next) => {
+    if (!req.app.locals.sessions) {
+      req.app.locals.sessions = sessions;
+    }
+    next();
+  });
+
   app.use("/api", blogRoutes);
 
   const httpServer = createServer(app);

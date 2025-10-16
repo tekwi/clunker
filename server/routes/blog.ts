@@ -12,20 +12,31 @@ const requireAuth = (req: any, res: any, next: any) => {
   const sessionId = authHeader?.replace('Bearer ', '');
   
   if (!sessionId) {
+    console.log('❌ No session ID in blog request');
     return res.status(401).json({ error: "Authentication required" });
   }
   
-  const sessions = req.app.locals.sessions;
+  // Access sessions from app.locals (set in main routes.ts)
+  const sessions = req.app?.locals?.sessions;
   if (!sessions) {
+    console.log('❌ Sessions map not found in app.locals');
     return res.status(401).json({ error: "Authentication required" });
   }
   
   const session = sessions.get(sessionId);
-  if (!session || session.expiresAt < Date.now()) {
-    if (session) sessions.delete(sessionId);
+  if (!session) {
+    console.log('❌ Session not found:', sessionId);
     return res.status(401).json({ error: "Invalid or expired session" });
   }
   
+  // Check if session expired
+  if (session.expiresAt < Date.now()) {
+    console.log('❌ Session expired:', sessionId);
+    sessions.delete(sessionId);
+    return res.status(401).json({ error: "Session expired" });
+  }
+  
+  console.log('✅ Blog session validated:', sessionId);
   req.adminId = session.adminId;
   next();
 };
