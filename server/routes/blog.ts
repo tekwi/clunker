@@ -82,10 +82,17 @@ router.post("/admin/posts", requireAuth, async (req, res) => {
   try {
     const postData = { ...req.body };
     
-    // Convert string dates to Date objects
-    if (postData.publishedAt && typeof postData.publishedAt === 'string') {
-      postData.publishedAt = new Date(postData.publishedAt);
-    } else if (postData.status === 'published' && !postData.publishedAt) {
+    // Handle publishedAt field conversion
+    if (postData.publishedAt !== undefined) {
+      if (postData.publishedAt === null || postData.publishedAt === '') {
+        postData.publishedAt = null;
+      } else if (typeof postData.publishedAt === 'string') {
+        postData.publishedAt = new Date(postData.publishedAt);
+      }
+    }
+    
+    // If publishing for the first time, set publishedAt
+    if (postData.status === 'published' && !postData.publishedAt) {
       postData.publishedAt = new Date();
     }
     
@@ -113,9 +120,13 @@ router.put("/admin/posts/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
     const updateData = { ...req.body };
     
-    // Convert string dates to Date objects
-    if (updateData.publishedAt && typeof updateData.publishedAt === 'string') {
-      updateData.publishedAt = new Date(updateData.publishedAt);
+    // Handle publishedAt field conversion
+    if (updateData.publishedAt !== undefined) {
+      if (updateData.publishedAt === null || updateData.publishedAt === '') {
+        updateData.publishedAt = null;
+      } else if (typeof updateData.publishedAt === 'string') {
+        updateData.publishedAt = new Date(updateData.publishedAt);
+      }
     }
     
     // If publishing for the first time, set publishedAt
