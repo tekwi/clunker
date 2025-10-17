@@ -249,8 +249,15 @@ export default function BlogManagement() {
         const quill = quillRef.current?.getEditor();
         if (quill) {
           const range = quill.getSelection(true);
-          quill.insertEmbed(range.index, 'image', photoUrl);
-          quill.setSelection(range.index + 1);
+          if (range) {
+            quill.insertEmbed(range.index, 'image', photoUrl);
+            quill.setSelection(range.index + 1);
+          } else {
+            // If no selection, insert at the end
+            const length = quill.getLength();
+            quill.insertEmbed(length - 1, 'image', photoUrl);
+            quill.setSelection(length);
+          }
         }
 
         toast({ title: "Image uploaded successfully" });
