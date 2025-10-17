@@ -25,7 +25,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/sell-my-car/:make/:model" component={BlogPost} />
-      <Route path="/junk-car-removal/state/:state/:city" component={BlogPost} />
+      <Route path="/junk-car-removal/:state/:city" component={BlogPost} />
       <Route component={NotFound} />
     </Switch>
   );

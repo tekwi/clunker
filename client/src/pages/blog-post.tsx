@@ -32,7 +32,7 @@ export default function BlogPost() {
   } else if (pathParts[0] === "sell-my-car") {
     endpoint = `/api/sell-my-car/${pathParts[1]}/${pathParts[2]}`;
   } else if (pathParts[0] === "junk-car-removal") {
-    endpoint = `/api/junk-car-removal/${pathParts[2]}/${pathParts[3]}`;
+    endpoint = `/api/junk-car-removal/${pathParts[1]}/${pathParts[2]}`;
   }
 
   const { data: post, isLoading } = useQuery<BlogPost>({
