@@ -19,11 +19,16 @@ export default function Home() {
   const [showVinScanner, setShowVinScanner] = useState(false);
   const isMobile = useIsMobile();
 
-  // Check for affiliate ref parameter and auto-show form
+  // Check for affiliate ref or VIN parameter and auto-show form
   useState(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const affiliateRef = searchParams.get("ref");
-    if (affiliateRef) {
+    const vinParam = searchParams.get("vin");
+    
+    if (vinParam && vinParam.length === 17) {
+      setVinInput(vinParam);
+      setShowForm(true);
+    } else if (affiliateRef) {
       setShowForm(true);
     }
   });

@@ -1,9 +1,10 @@
 
-import { useEffect } from "react";
-import { useParams } from "wouter";
+import { useEffect, useState } from "react";
+import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface BlogPost {
   id: string;
@@ -22,6 +23,8 @@ interface BlogPost {
 export default function BlogPost() {
   const params = useParams();
   const slug = params.slug || params["*"];
+  const [, setLocation] = useLocation();
+  const [vinInput, setVinInput] = useState("");
   
   // Determine the endpoint based on URL pattern
   let endpoint = "";
@@ -88,16 +91,40 @@ export default function BlogPost() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header with Logo */}
+      {/* Header with Logo and VIN Input */}
       <header className="border-b bg-white sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
-          <a href="/" className="flex items-center gap-3">
-            <img 
-              src="/trackwala-logo.png" 
-              alt="TrackWala" 
-              className="h-10 w-auto"
-            />
-          </a>
+          <div className="flex items-center justify-between gap-6">
+            <a href="/" className="flex items-center gap-3 flex-shrink-0">
+              <img 
+                src="/trackwala-logo.png" 
+                alt="TrackWala" 
+                className="h-10 w-auto"
+              />
+            </a>
+            <div className="flex items-center gap-3 flex-1 max-w-md">
+              <Input
+                value={vinInput}
+                onChange={(e) => setVinInput(e.target.value.toUpperCase())}
+                placeholder="Enter VIN to get offer"
+                className="h-10"
+                maxLength={17}
+              />
+              <Button
+                onClick={() => {
+                  if (vinInput.length === 17) {
+                    setLocation(`/?vin=${vinInput}`);
+                  } else {
+                    setLocation('/');
+                  }
+                }}
+                size="sm"
+                className="whitespace-nowrap"
+              >
+                Get Offer
+              </Button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -154,32 +181,26 @@ export default function BlogPost() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white mt-12">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-3">
-              <img 
-                src="/trackwala-logo.png" 
-                alt="TrackWala" 
-                className="h-8 w-auto brightness-0 invert"
-              />
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-6 text-sm">
-              <a href="/privacy-policy" className="hover:text-gray-300 transition-colors">
-                Privacy Policy
-              </a>
-              <a href="/" className="hover:text-gray-300 transition-colors">
-                Get Cash for Your Car
-              </a>
-              <a href="/blog" className="hover:text-gray-300 transition-colors">
-                Blog
-              </a>
-            </div>
+      <footer className="bg-gray-800 text-white py-8 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <img
+              src="/trackwala-logo.png"
+              alt="TrackWala Brand Avatar"
+              className="w-12 h-12 rounded-full"
+            />
+            <span className="text-lg font-semibold" style={{ fontFamily: 'var(--font-brand)' }}>TrackWala</span>
           </div>
-          
-          <div className="mt-6 pt-6 border-t border-gray-800 text-center text-sm text-gray-400">
-            © {new Date().getFullYear()} TrackWala. All rights reserved.
+          <p className="text-sm text-gray-400 mb-3">
+            Fast, fair, and hassle-free vehicle buyouts
+          </p>
+          <div className="flex justify-center space-x-4 text-sm">
+            <a
+              href="/privacy-policy"
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              Privacy Policy
+            </a>
           </div>
         </div>
       </footer>
