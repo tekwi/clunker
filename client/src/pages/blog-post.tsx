@@ -93,21 +93,21 @@ export default function BlogPost() {
     <div className="min-h-screen flex flex-col">
       {/* Header with Logo and VIN Input */}
       <header className="border-b bg-white sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-6">
-            <a href="/" className="flex items-center gap-3 flex-shrink-0">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
+            <a href="/" className="flex items-center gap-3">
               <img 
                 src="/trackwala-logo.png" 
                 alt="TrackWala" 
                 className="h-10 w-auto"
               />
             </a>
-            <div className="flex items-center gap-3 flex-1 max-w-md">
+            <div className="flex items-center gap-3 w-full md:w-auto md:max-w-md">
               <Input
                 value={vinInput}
                 onChange={(e) => setVinInput(e.target.value.toUpperCase())}
                 placeholder="Enter VIN to get offer"
-                className="h-10"
+                className="h-10 flex-1"
                 maxLength={17}
               />
               <Button
