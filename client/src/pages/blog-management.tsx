@@ -260,7 +260,16 @@ export default function BlogManagement() {
           }
         }
 
-        toast({ title: "Image uploaded successfully" });
+        // Auto-set as featured image if none is set
+        if (!formData.featuredImage) {
+          setFormData({ ...formData, featuredImage: photoUrl });
+          toast({ 
+            title: "Image uploaded successfully", 
+            description: "Set as featured image" 
+          });
+        } else {
+          toast({ title: "Image uploaded successfully" });
+        }
       } catch (error) {
         console.error('Image upload error:', error);
         toast({ 
@@ -366,11 +375,72 @@ export default function BlogManagement() {
 
                   <div>
                     <Label htmlFor="featuredImage">Featured Image URL</Label>
-                    <Input
-                      id="featuredImage"
-                      value={formData.featuredImage || ""}
-                      onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="featuredImage"
+                        value={formData.featuredImage || ""}
+                        onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                        placeholder="Enter URL or upload image"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          const input = document.createElement('input');
+                          input.setAttribute('type', 'file');
+                          input.setAttribute('accept', 'image/*');
+                          input.click();
+
+                          input.onchange = async () => {
+                            const file = input.files?.[0];
+                            if (!file) return;
+
+                            setIsUploadingImage(true);
+                            try {
+                              const response = await fetch('/api/objects/upload', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contentType: file.type || 'image/jpeg' })
+                              });
+
+                              if (!response.ok) throw new Error('Failed to get upload URL');
+
+                              const { uploadURL, photoUrl } = await response.json();
+
+                              const uploadResponse = await fetch(uploadURL, {
+                                method: 'PUT',
+                                body: file,
+                                headers: { 'Content-Type': file.type || 'image/jpeg' }
+                              });
+
+                              if (!uploadResponse.ok) throw new Error('Failed to upload file');
+
+                              setFormData({ ...formData, featuredImage: photoUrl });
+                              toast({ title: "Featured image uploaded successfully" });
+                            } catch (error) {
+                              console.error('Upload error:', error);
+                              toast({ 
+                                title: "Upload failed", 
+                                description: "Please try again",
+                                variant: "destructive" 
+                              });
+                            } finally {
+                              setIsUploadingImage(false);
+                            }
+                          };
+                        }}
+                        disabled={isUploadingImage}
+                      >
+                        {isUploadingImage ? 'Uploading...' : 'Upload'}
+                      </Button>
+                    </div>
+                    {formData.featuredImage && (
+                      <img 
+                        src={formData.featuredImage} 
+                        alt="Featured preview" 
+                        className="mt-2 max-w-xs rounded border"
+                      />
+                    )}
                   </div>
                 </TabsContent>
 
