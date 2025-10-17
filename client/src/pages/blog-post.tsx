@@ -87,55 +87,102 @@ export default function BlogPost() {
   const shareText = post.title;
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <Card>
-        <CardContent className="p-8">
-          {post.featuredImage && (
-            <img
-              src={post.featuredImage}
-              alt={post.title}
-              className="w-full h-64 object-cover rounded-lg mb-6"
+    <div className="min-h-screen flex flex-col">
+      {/* Header with Logo */}
+      <header className="border-b bg-white sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-4">
+          <a href="/" className="flex items-center gap-3">
+            <img 
+              src="/trackwala-logo.png" 
+              alt="TrackWala" 
+              className="h-10 w-auto"
             />
-          )}
-          
-          <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-          
-          {post.publishedAt && (
-            <p className="text-sm text-muted-foreground mb-6">
-              Published on {new Date(post.publishedAt).toLocaleDateString()}
-            </p>
-          )}
-          
-          <div className="prose max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content }} />
-          
-          <div className="flex gap-4 pt-6 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, "_blank")}
-            >
-              <i className="fab fa-twitter mr-2"></i>
-              Share on Twitter
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank")}
-            >
-              <i className="fab fa-facebook mr-2"></i>
-              Share on Facebook
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank")}
-            >
-              <i className="fab fa-linkedin mr-2"></i>
-              Share on LinkedIn
-            </Button>
+          </a>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto p-6 max-w-4xl">
+        <Card>
+          <CardContent className="p-8">
+            {post.featuredImage && (
+              <img
+                src={post.featuredImage}
+                alt={post.title}
+                className="w-full h-64 object-cover rounded-lg mb-6"
+              />
+            )}
+            
+            <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+            
+            {post.publishedAt && (
+              <p className="text-sm text-muted-foreground mb-6">
+                Published on {new Date(post.publishedAt).toLocaleDateString()}
+              </p>
+            )}
+            
+            <div className="prose max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content }} />
+            
+            <div className="flex gap-4 pt-6 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, "_blank")}
+              >
+                <i className="fab fa-twitter mr-2"></i>
+                Share on Twitter
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank")}
+              >
+                <i className="fab fa-facebook mr-2"></i>
+                Share on Facebook
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank")}
+              >
+                <i className="fab fa-linkedin mr-2"></i>
+                Share on LinkedIn
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white mt-12">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3">
+              <img 
+                src="/trackwala-logo.png" 
+                alt="TrackWala" 
+                className="h-8 w-auto brightness-0 invert"
+              />
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-6 text-sm">
+              <a href="/privacy-policy" className="hover:text-gray-300 transition-colors">
+                Privacy Policy
+              </a>
+              <a href="/" className="hover:text-gray-300 transition-colors">
+                Get Cash for Your Car
+              </a>
+              <a href="/blog" className="hover:text-gray-300 transition-colors">
+                Blog
+              </a>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="mt-6 pt-6 border-t border-gray-800 text-center text-sm text-gray-400">
+            © {new Date().getFullYear()} TrackWala. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

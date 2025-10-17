@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface BlogPost {
   id: string;
@@ -193,12 +195,22 @@ export default function BlogManagement() {
 
                   <div>
                     <Label htmlFor="content">Content</Label>
-                    <Textarea
-                      id="content"
+                    <ReactQuill
+                      theme="snow"
                       value={formData.content || ""}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      rows={12}
-                      required
+                      onChange={(value) => setFormData({ ...formData, content: value })}
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                          [{ 'align': [] }],
+                          ['link', 'image'],
+                          ['clean']
+                        ],
+                      }}
+                      className="bg-white"
+                      style={{ minHeight: '300px' }}
                     />
                   </div>
 
