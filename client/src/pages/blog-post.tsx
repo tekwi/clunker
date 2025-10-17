@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -25,11 +24,11 @@ export default function BlogPost() {
   const slug = params.slug || params["*"];
   const [, setLocation] = useLocation();
   const [vinInput, setVinInput] = useState("");
-  
+
   // Determine the endpoint based on URL pattern
   let endpoint = "";
   const pathParts = window.location.pathname.split("/").filter(Boolean);
-  
+
   if (pathParts[0] === "blog") {
     endpoint = `/api/blog/${pathParts[1]}`;
   } else if (pathParts[0] === "sell-my-car") {
@@ -51,26 +50,41 @@ export default function BlogPost() {
   useEffect(() => {
     if (post) {
       document.title = post.metaTitle || post.title;
-      
+
       // Update meta tags
-      const metaDescription = document.querySelector('meta[name="description"]');
+      const metaDescription = document.querySelector(
+        'meta[name="description"]',
+      );
       if (metaDescription) {
-        metaDescription.setAttribute("content", post.metaDescription || post.excerpt || "");
+        metaDescription.setAttribute(
+          "content",
+          post.metaDescription || post.excerpt || "",
+        );
       }
-      
+
       // Update OG tags
-      const ogTitle = document.querySelector('meta[property="og:title"]') || document.createElement("meta");
+      const ogTitle =
+        document.querySelector('meta[property="og:title"]') ||
+        document.createElement("meta");
       ogTitle.setAttribute("property", "og:title");
       ogTitle.setAttribute("content", post.ogTitle || post.title);
       if (!ogTitle.parentElement) document.head.appendChild(ogTitle);
-      
-      const ogDescription = document.querySelector('meta[property="og:description"]') || document.createElement("meta");
+
+      const ogDescription =
+        document.querySelector('meta[property="og:description"]') ||
+        document.createElement("meta");
       ogDescription.setAttribute("property", "og:description");
-      ogDescription.setAttribute("content", post.ogDescription || post.excerpt || "");
-      if (!ogDescription.parentElement) document.head.appendChild(ogDescription);
-      
+      ogDescription.setAttribute(
+        "content",
+        post.ogDescription || post.excerpt || "",
+      );
+      if (!ogDescription.parentElement)
+        document.head.appendChild(ogDescription);
+
       if (post.ogImage) {
-        const ogImage = document.querySelector('meta[property="og:image"]') || document.createElement("meta");
+        const ogImage =
+          document.querySelector('meta[property="og:image"]') ||
+          document.createElement("meta");
         ogImage.setAttribute("property", "og:image");
         ogImage.setAttribute("content", post.ogImage);
         if (!ogImage.parentElement) document.head.appendChild(ogImage);
@@ -96,12 +110,18 @@ export default function BlogPost() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
             <a href="/" className="flex items-center gap-3">
-              <img 
-                src="/trackwala-logo.png" 
-                alt="TrackWala" 
+              <img
+                src="/trackwala-logo.png"
+                alt="TrackWala"
                 className="h-10 w-auto"
               />
             </a>
+            <span
+              className="text-lg font-semibold"
+              style={{ fontFamily: "var(--font-brand)" }}
+            >
+              TrackWala
+            </span>
             <div className="flex items-center gap-3 w-full md:w-auto md:max-w-md">
               <Input
                 value={vinInput}
@@ -115,7 +135,7 @@ export default function BlogPost() {
                   if (vinInput.length === 17) {
                     setLocation(`/?vin=${vinInput}`);
                   } else {
-                    setLocation('/');
+                    setLocation("/");
                   }
                 }}
                 size="sm"
@@ -139,22 +159,30 @@ export default function BlogPost() {
                 className="w-full h-64 object-cover rounded-lg mb-6"
               />
             )}
-            
+
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-            
+
             {post.publishedAt && (
               <p className="text-sm text-muted-foreground mb-6">
                 Published on {new Date(post.publishedAt).toLocaleDateString()}
               </p>
             )}
-            
-            <div className="prose max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content }} />
-            
+
+            <div
+              className="prose max-w-none mb-8"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+
             <div className="flex gap-4 pt-6 border-t">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, "_blank")}
+                onClick={() =>
+                  window.open(
+                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+                    "_blank",
+                  )
+                }
               >
                 <i className="fab fa-twitter mr-2"></i>
                 Share on Twitter
@@ -162,7 +190,12 @@ export default function BlogPost() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank")}
+                onClick={() =>
+                  window.open(
+                    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+                    "_blank",
+                  )
+                }
               >
                 <i className="fab fa-facebook mr-2"></i>
                 Share on Facebook
@@ -170,7 +203,12 @@ export default function BlogPost() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank")}
+                onClick={() =>
+                  window.open(
+                    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+                    "_blank",
+                  )
+                }
               >
                 <i className="fab fa-linkedin mr-2"></i>
                 Share on LinkedIn
@@ -189,7 +227,12 @@ export default function BlogPost() {
               alt="TrackWala Brand Avatar"
               className="w-12 h-12 rounded-full"
             />
-            <span className="text-lg font-semibold" style={{ fontFamily: 'var(--font-brand)' }}>TrackWala</span>
+            <span
+              className="text-lg font-semibold"
+              style={{ fontFamily: "var(--font-brand)" }}
+            >
+              TrackWala
+            </span>
           </div>
           <p className="text-sm text-gray-400 mb-3">
             Fast, fair, and hassle-free vehicle buyouts
