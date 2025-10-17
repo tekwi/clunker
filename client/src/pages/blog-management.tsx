@@ -9,6 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -39,6 +49,7 @@ export default function BlogManagement() {
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [postToArchive, setPostToArchive] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState<Partial<BlogPost>>({
     postType: "blog",
     status: "draft",
@@ -99,18 +110,26 @@ export default function BlogManagement() {
     },
   });
 
-  const deleteMutation = useMutation({
+  const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/admin/posts/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${sessionId}` },
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({ status: "archived" }),
       });
-      if (!response.ok) throw new Error("Failed to delete post");
+      if (!response.ok) throw new Error("Failed to archive post");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
-      toast({ title: "Post deleted successfully" });
+      toast({ 
+        title: "Post Archived", 
+        description: "The post has been archived and is no longer published." 
+      });
+      setPostToArchive(null);
     },
   });
 
@@ -455,7 +474,14 @@ export default function BlogManagement() {
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => handleEdit(post)}>Edit</Button>
-                      <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(post.id)}>Delete</Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => setPostToArchive(post)}
+                        disabled={post.status === "archived"}
+                      >
+                        {post.status === "archived" ? "Archived" : "Archive"}
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -464,6 +490,28 @@ export default function BlogManagement() {
           })}
         </div>
       )}
+
+      {/* Archive Confirmation Dialog */}
+      <AlertDialog open={!!postToArchive} onOpenChange={(open) => !open && setPostToArchive(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive This Post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will archive the post "{postToArchive?.title}" and remove it from public view. 
+              The post will not be deleted and can be republished later by editing it and changing the status.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => postToArchive && archiveMutation.mutate(postToArchive.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Archive Post
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
