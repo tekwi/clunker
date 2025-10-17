@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { useRef } from 'react';
 
 interface BlogPost {
   id: string;
@@ -50,6 +51,8 @@ export default function BlogManagement() {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [postToArchive, setPostToArchive] = useState<BlogPost | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const quillRef = useRef<ReactQuill>(null);
   const [formData, setFormData] = useState<Partial<BlogPost>>({
     postType: "blog",
     status: "draft",
@@ -200,6 +203,70 @@ export default function BlogManagement() {
       .replace(/(^-|-$)/g, "");
   };
 
+  const handleImageUpload = async () => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      setIsUploadingImage(true);
+      try {
+        // Get upload URL from server
+        const response = await fetch('/api/objects/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contentType: file.type || 'image/jpeg'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get upload URL');
+        }
+
+        const { uploadURL, photoUrl } = await response.json();
+
+        // Upload file to S3
+        const uploadResponse = await fetch(uploadURL, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type || 'image/jpeg'
+          }
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload file');
+        }
+
+        // Insert image into editor
+        const quill = quillRef.current?.getEditor();
+        if (quill) {
+          const range = quill.getSelection(true);
+          quill.insertEmbed(range.index, 'image', photoUrl);
+          quill.setSelection(range.index + 1);
+        }
+
+        toast({ title: "Image uploaded successfully" });
+      } catch (error) {
+        console.error('Image upload error:', error);
+        toast({ 
+          title: "Image upload failed", 
+          description: "Please try again",
+          variant: "destructive" 
+        });
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -259,19 +326,31 @@ export default function BlogManagement() {
 
                   <div>
                     <Label htmlFor="content">Content</Label>
+                    {isUploadingImage && (
+                      <div className="mb-2 p-2 bg-blue-50 text-blue-700 text-sm rounded">
+                        <i className="fas fa-spinner fa-spin mr-2"></i>
+                        Uploading image...
+                      </div>
+                    )}
                     <ReactQuill
+                      ref={quillRef}
                       theme="snow"
                       value={formData.content || ""}
                       onChange={(value) => setFormData({ ...formData, content: value })}
                       modules={{
-                        toolbar: [
-                          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                          ['bold', 'italic', 'underline', 'strike'],
-                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                          [{ 'align': [] }],
-                          ['link', 'image'],
-                          ['clean']
-                        ],
+                        toolbar: {
+                          container: [
+                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                          ],
+                          handlers: {
+                            image: handleImageUpload
+                          }
+                        },
                       }}
                       className="bg-white"
                       style={{ minHeight: '300px' }}
