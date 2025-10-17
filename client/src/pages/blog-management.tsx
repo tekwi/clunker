@@ -87,8 +87,16 @@ export default function BlogManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
       toast({ title: "Post created successfully" });
+      setSelectedPost(null);
       setIsCreating(false);
       setFormData({ postType: "blog", status: "draft" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to create post", 
+        description: "Please try again",
+        variant: "destructive" 
+      });
     },
   });
 
@@ -109,7 +117,15 @@ export default function BlogManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
       toast({ title: "Post updated successfully" });
       setSelectedPost(null);
+      setIsCreating(false);
       setFormData({ postType: "blog", status: "draft" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to update post", 
+        description: "Please try again",
+        variant: "destructive" 
+      });
     },
   });
 
