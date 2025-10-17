@@ -156,7 +156,7 @@ export default function BlogPost() {
               <img
                 src={post.featuredImage}
                 alt={post.title}
-                className="w-full h-64 object-cover rounded-lg mb-6"
+                className="w-full object-cover rounded-lg mb-6"
               />
             )}
 
@@ -238,7 +238,7 @@ export default function BlogPost() {
             <p className="text-sm text-gray-400 mb-4">
               Fast, fair, and hassle-free vehicle buyouts
             </p>
-            
+
             {/* VIN Input and Get Offer Button */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto mb-4">
               <Input
@@ -263,7 +263,7 @@ export default function BlogPost() {
               </Button>
             </div>
           </div>
-          
+
           <div className="flex justify-center space-x-4 text-sm border-t border-gray-700 pt-4">
             <a
               href="/privacy-policy"
