@@ -114,6 +114,51 @@ export default function BlogManagement() {
     },
   });
 
+  // Auto-generate SEO fields from content
+  const autoFillSeoFields = () => {
+    const updates: Partial<BlogPost> = {};
+    
+    // Generate meta title from title
+    if (formData.title && !formData.metaTitle) {
+      updates.metaTitle = `${formData.title} | TrackWala`;
+    }
+    
+    // Generate meta description from excerpt or content
+    if (!formData.metaDescription) {
+      if (formData.excerpt) {
+        updates.metaDescription = formData.excerpt.substring(0, 160);
+      } else if (formData.content) {
+        // Strip HTML tags and get first 160 chars
+        const textContent = formData.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        updates.metaDescription = textContent.substring(0, 160);
+      }
+    }
+    
+    // Generate OG title from title
+    if (formData.title && !formData.ogTitle) {
+      updates.ogTitle = formData.title;
+    }
+    
+    // Generate OG description from excerpt or content
+    if (!formData.ogDescription) {
+      if (formData.excerpt) {
+        updates.ogDescription = formData.excerpt.substring(0, 200);
+      } else if (formData.content) {
+        const textContent = formData.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        updates.ogDescription = textContent.substring(0, 200);
+      }
+    }
+    
+    // Use featured image for OG image if available
+    if (formData.featuredImage && !formData.ogImage) {
+      updates.ogImage = formData.featuredImage;
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      setFormData({ ...formData, ...updates });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedPost) {
@@ -225,6 +270,20 @@ export default function BlogManagement() {
                 </TabsContent>
 
                 <TabsContent value="seo" className="space-y-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-sm text-muted-foreground">
+                      Fill in SEO fields manually or auto-generate from content
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={autoFillSeoFields}
+                    >
+                      Auto-Fill SEO Fields
+                    </Button>
+                  </div>
+
                   <div>
                     <Label htmlFor="metaTitle">Meta Title</Label>
                     <Input
