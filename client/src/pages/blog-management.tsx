@@ -351,24 +351,46 @@ export default function BlogManagement() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {posts.map((post) => (
-            <Card key={post.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{post.title}</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Type: {post.postType} | Status: {post.status}
-                    </p>
+          {posts.map((post) => {
+            // Generate URL based on post type
+            let postUrl = "";
+            if (post.postType === "blog") {
+              postUrl = `/blog/${post.slug}`;
+            } else if (post.postType === "sell-my-car") {
+              postUrl = `/sell-my-car/${post.vehicleMake}/${post.vehicleModel}`;
+            } else if (post.postType === "junk-car-removal") {
+              postUrl = `/junk-car-removal/${post.stateName}/${post.cityName}`;
+            }
+
+            return (
+              <Card key={post.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle>{post.title}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Type: {post.postType} | Status: {post.status}
+                      </p>
+                      {postUrl && post.status === "published" && (
+                        <a
+                          href={postUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline mt-1 inline-block"
+                        >
+                          View Page →
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleEdit(post)}>Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(post.id)}>Delete</Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleEdit(post)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(post.id)}>Delete</Button>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
