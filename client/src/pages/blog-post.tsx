@@ -233,6 +233,28 @@ export default function BlogPost() {
             >
               TrackWala
             </span>
+            <div className="flex items-center gap-3 w-full md:w-auto md:max-w-md">
+              <Input
+                value={vinInput}
+                onChange={(e) => setVinInput(e.target.value.toUpperCase())}
+                placeholder="Enter VIN to get offer"
+                className="h-10 flex-1"
+                maxLength={17}
+              />
+              <Button
+                onClick={() => {
+                  if (vinInput.length === 17) {
+                    setLocation(`/?vin=${vinInput}`);
+                  } else {
+                    setLocation("/");
+                  }
+                }}
+                size="sm"
+                className="whitespace-nowrap"
+              >
+                Get Offer
+              </Button>
+            </div>
           </div>
           <p className="text-sm text-gray-400 mb-3">
             Fast, fair, and hassle-free vehicle buyouts
