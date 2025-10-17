@@ -220,24 +220,51 @@ export default function BlogPost() {
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <img
-              src="/trackwala-logo.png"
-              alt="TrackWala Brand Avatar"
-              className="w-12 h-12 rounded-full"
-            />
-            <span
-              className="text-lg font-semibold"
-              style={{ fontFamily: "var(--font-brand)" }}
-            >
-              TrackWala
-            </span>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <img
+                src="/trackwala-logo.png"
+                alt="TrackWala Brand Avatar"
+                className="w-12 h-12 rounded-full"
+              />
+              <span
+                className="text-lg font-semibold"
+                style={{ fontFamily: "var(--font-brand)" }}
+              >
+                TrackWala
+              </span>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">
+              Fast, fair, and hassle-free vehicle buyouts
+            </p>
+            
+            {/* VIN Input and Get Offer Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto mb-4">
+              <Input
+                value={vinInput}
+                onChange={(e) => setVinInput(e.target.value.toUpperCase())}
+                placeholder="Enter VIN to get offer"
+                className="h-10 flex-1 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                maxLength={17}
+              />
+              <Button
+                onClick={() => {
+                  if (vinInput.length === 17) {
+                    setLocation(`/?vin=${vinInput}`);
+                  } else {
+                    setLocation("/");
+                  }
+                }}
+                size="sm"
+                className="whitespace-nowrap w-full sm:w-auto"
+              >
+                Get Offer
+              </Button>
+            </div>
           </div>
-          <p className="text-sm text-gray-400 mb-3">
-            Fast, fair, and hassle-free vehicle buyouts
-          </p>
-          <div className="flex justify-center space-x-4 text-sm">
+          
+          <div className="flex justify-center space-x-4 text-sm border-t border-gray-700 pt-4">
             <a
               href="/privacy-policy"
               className="text-gray-400 hover:text-white transition-colors"
