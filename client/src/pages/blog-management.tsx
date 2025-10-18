@@ -207,9 +207,9 @@ export default function BlogManagement() {
   };
 
   const handleEdit = (post: BlogPost) => {
+    setIsCreating(true);
     setSelectedPost(post);
     setFormData(post);
-    setIsCreating(true);
   };
 
   const generateSlug = (title: string) => {
@@ -365,6 +365,7 @@ export default function BlogManagement() {
                       </div>
                     )}
                     <ReactQuill
+                      key={selectedPost?.id || 'new'}
                       ref={quillRef}
                       theme="snow"
                       value={formData.content || ""}
